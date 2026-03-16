@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Portfolio Kalkulačka</title>
+<style>
+/* ══════════════════════════════════════════
+   CLAUDE LIGHT PALETTE + HELVETICA
+══════════════════════════════════════════ */
+:root {
+  /* Claude light backgrounds */
+  --bg:          #f9f7f4;   /* warm off-white Claude canvas */
+  --bg-2:        #f2ede6;   /* slightly warmer panel */
+  --bg-card:     #ffffff;
+  --bg-input:    #f5f0ea;
+
+  /* Claude brand */
+  --coral:       #c96442;   /* Claude primary coral */
+  --coral-l:     #e07a58;
+  --coral-d:     #a8502f;
+  --sand:        #b8966a;
+  --teal:        #3a9e94;
+  --purple:      #6b5ce7;
+
+  /* Asset colours */
+  --col-growth:  #6b5ce7;
+  --col-div:     #3a9e94;
+  --col-crypto:  #c96442;
+  --col-cash:    #b8966a;
+
+  /* Text */
+  --text:        #1a1510;
+  --text-2:      #4a3f35;
+  --text-3:      #8a7a6e;
+  --text-inv:    #ffffff;
+
+  /* Borders */
+  --border:      #e2d8ce;
+  --border-2:    #cdc0b4;
+
+  /* State */
+  --positive:    #2d8a6e;
+  --negative:    #c0392b;
+  --neutral:     #c96442;
+
+  /* Typography — Helvetica stack */
+  --font: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Sizing */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;         /* NO page scroll ever */
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════════════════════════════════
+   DESKTOP LAYOUT (≥ 900px)
+   Normal scrollable two-column layout
+══════════════════════════════════════════ */
+.desktop-wrap {
+  display: none;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 0 20px 40px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* ── DESKTOP HEADER ── */
+.d-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.d-brand { display: flex; align-items: center; gap: 12px; }
+.d-logo {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--coral), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0; color: #fff;
+}
+.d-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.d-title span { color: var(--coral); }
+.d-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; letter-spacing: 0.02em; }
+.d-badge {
+  background: rgba(201,100,66,0.1);
+  border: 1px solid rgba(201,100,66,0.3);
+  color: var(--coral-d); padding: 5px 13px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ── DESKTOP GRID ── */
+.d-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 18px; align-items: start;
+}
+
+/* ── PANELS ── */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.panel:last-child { margin-bottom: 0; }
+
+.p-hd {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+  display: flex; align-items: center; gap: 9px;
+}
+.p-icon {
+  width: 24px; height: 24px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.p-title {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-2);
+}
+.p-bd { padding: 16px; }
+
+/* ── SECTION LABELS ── */
+.sec {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-3);
+  margin: 18px 0 9px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.sec:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+/* ── ASSET ROWS ── */
+.asset-row {
+  margin-bottom: 10px; padding: 11px 13px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: border-color .2s;
+}
+.asset-row:hover { border-color: var(--border-2); }
+.a-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.a-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.a-rate { font-size: 11px; color: var(--text-3); }
+.a-ctrl { display: grid; grid-template-columns: 1fr 105px; gap: 8px; align-items: center; }
+.a-hint { font-size: 10px; color: var(--text-3); margin-top: 5px; }
+
+/* ── SLIDERS ── */
+.sl-wrap { position: relative; display: flex; align-items: center; }
+input[type=range] {
+  width: 100%; height: 4px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--border-2); border-radius: 2px;
+  outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--coral); border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  cursor: pointer; transition: transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+input[type=range]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--coral); border: 2px solid #fff; cursor: pointer;
+}
+.sl-fill {
+  position: absolute; top: 50%; left: 0;
+  height: 4px; border-radius: 2px;
+  transform: translateY(-50%); pointer-events: none;
+  transition: width .1s; opacity: 0.65;
+}
+
+/* ── NUMBER INPUTS ── */
+.ni { position: relative; }
+.ni input[type=number] {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 9px 34px 9px 10px;
+  color: var(--text);
+  font-family: var(--font); font-size: 13px;
+  outline: none; transition: border-color .2s;
+  -moz-appearance: textfield;
+}
+.ni input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ni input[type=number]:focus { border-color: var(--coral); }
+.ni-unit {
+  position: absolute; right: 8px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px; color: var(--text-3); pointer-events: none;
+}
+
+/* ── TOGGLE ── */
+.tgl-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.tgl-row:last-child { border-bottom: none; }
+.tgl-lbl { font-size: 13px; font-weight: 500; line-height: 1.35; color: var(--text); }
+.tgl-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle input { display: none; }
+.ttrack {
+  position: absolute; inset: 0;
+  background: var(--border-2); border-radius: 12px;
+  cursor: pointer; transition: background .2s;
+}
+.toggle input:checked + .ttrack { background: var(--teal); }
+.tthumb {
+  position: absolute; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  top: 3px; left: 3px; transition: transform .2s; pointer-events: none;
+}
+.toggle input:checked ~ .tthumb { transform: translateX(18px); }
+
+/* ── TAB GROUP ── */
+.tab-grp {
+  display: flex; background: var(--bg-input);
+  border-radius: var(--r-sm); padding: 3px; gap: 2px; margin-bottom: 13px;
+}
+.tab-btn {
+  flex: 1; padding: 9px 4px;
+  border: none; border-radius: 6px;
+  background: transparent; color: var(--text-3);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.tab-btn.active {
+  background: var(--bg-card); color: var(--coral);
+  border: 1px solid rgba(201,100,66,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-weight: 600;
+}
+
+/* ── SCENARIO PILLS ── */
+.sc-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.sc-btn {
+  padding: 7px 14px; border-radius: 20px;
+  border: 1px solid var(--border-2);
+  background: transparent; color: var(--text-3);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+}
+.sc-btn.active {
+  background: rgba(201,100,66,0.1);
+  border-color: rgba(201,100,66,0.4);
+  color: var(--coral-d); font-weight: 600;
+}
+
+/* ── STAT CARDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px 11px;
+}
+.stat-lbl {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 5px;
+}
+.stat-val {
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 700; line-height: 1.2; word-break: break-word;
+}
+.stat-sub { font-size: 10px; color: var(--text-3); margin-top: 3px; }
+.c-pos { color: var(--positive); }
+.c-neg { color: var(--negative); }
+.c-neu { color: var(--neutral); }
+.c-sand { color: var(--sand); }
+
+/* ── ALLOC BAR ── */
+.alloc-bar { height: 5px; border-radius: 3px; display: flex; overflow: hidden; gap: 2px; margin-bottom: 9px; }
+.alloc-seg { height: 100%; border-radius: 3px; transition: flex .3s; }
+.alloc-legend { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 14px; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-3); }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; height: 240px; margin-bottom: 16px; }
+canvas { width: 100%!important; height: 100%!important; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+th {
+  text-align: left; padding: 9px 12px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-3); border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-2); }
+.yr-cell { color: var(--text-3); font-weight: 600; }
+.total-row td { color: var(--coral-d); font-weight: 700; border-top: 1px solid var(--border); }
+
+/* ── RATE ROWS ── */
+.rate-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; gap: 10px; border-bottom: 1px solid var(--border);
+}
+.rate-row:last-child { border-bottom: none; }
+.rate-name { font-size: 12px; display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; color: var(--text-2); }
+.rate-inp-w { display: flex; align-items: center; gap: 4px; width: 70px; flex-shrink: 0; }
+.rate-inp {
+  width: 48px; background: var(--bg-input);
+  border: 1px solid var(--border-2); border-radius: 6px;
+  padding: 7px 5px; color: var(--text);
+  font-family: var(--font); font-size: 12px;
+  outline: none; text-align: right;
+}
+.rate-inp:focus { border-color: var(--coral); }
+.pct-lbl { font-size: 11px; color: var(--text-3); }
+
+/* ── BIG NUM ── */
+.big-num { font-size: 24px; font-weight: 700; color: var(--coral); }
+
+/* ── SUMMARY BAR ── */
+.sum-bar {
+  margin-top: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap;
+}
+.sum-bar-title {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3); flex-shrink: 0;
+}
+.sum-bar-amounts {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.sum-bar-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 9px;
+  font-size: 11px; font-weight: 600; color: var(--text-2);
+  white-space: nowrap;
+}
+.sum-bar-chip .cdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sum-bar-total {
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+  flex-shrink: 0;
+}
+.sum-bar-total.ok  { color: var(--positive); }
+.sum-bar-total.over { color: var(--negative); }
+.sum-bar-total.low  { color: var(--sand); }
+
+/* Mobile summary bar */
+.m-sum-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 13px;
+  margin-top: 10px;
+}
+.m-sum-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.m-sum-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-3);
+}
+.m-sum-total {
+  font-size: 16px; font-weight: 700;
+}
+.m-sum-total.ok   { color: var(--positive); }
+.m-sum-total.over { color: var(--negative); }
+.m-sum-total.low  { color: var(--sand); }
+.m-sum-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.m-sum-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg-2); border-radius: 20px; padding: 4px 9px;
+  font-size: 11px; font-weight: 600; color: var(--text-2);
+}
+
+/* ── ALLOC ERR ── */
+.alloc-err {
+  display: none;
+  background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25);
+  border-radius: 8px; padding: 9px 12px; font-size: 11px; color: var(--negative); margin-top: 8px;
+}
+
+/* ── WARN BOX ── */
+.warn-box {
+  background: rgba(201,100,66,0.07); border: 1px solid rgba(201,100,66,0.2);
+  border-radius: var(--r-md); padding: 11px 13px;
+  font-size: 11px; color: var(--coral-d); line-height: 1.7; margin-top: 12px;
+}
+
+/* ── HORIZON ROW ── */
+.hz-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.hz-row input { flex: 1; }
+
+/* ══════════════════════════════════════════
+   MOBILE LAYOUT (< 900px)
+   Fixed viewport, tab bar at bottom
+══════════════════════════════════════════ */
+.mobile-wrap {
+  display: none;
+  position: fixed; inset: 0;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Mobile header */
+.m-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 10px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.m-logo {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--coral), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #fff; flex-shrink: 0;
+}
+.m-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.m-title span { color: var(--coral); }
+
+/* Mobile tab content area — fills space between header and tab bar */
+.m-pages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Each page fills the area exactly, scrolls internally */
+.m-page {
+  display: none;
+  position: absolute; inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 14px 6px;
+}
+.m-page.active { display: block; }
+
+/* Mobile bottom tab bar */
+.m-tabbar {
+  display: flex;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.m-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px;
+  padding: 10px 4px 8px;
+  border: none; background: transparent;
+  font-family: var(--font); font-size: 10px; font-weight: 500;
+  color: var(--text-3); cursor: pointer; transition: color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-tab .tab-icon { font-size: 18px; line-height: 1; }
+.m-tab.active { color: var(--coral); font-weight: 700; }
+.m-tab.active .tab-icon { filter: none; }
+
+/* ── MOBILE SECTION STYLES ── */
+.m-sec {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-3);
+  margin: 14px 0 8px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.m-sec:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+.m-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Mobile asset row */
+.m-asset {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px; margin-bottom: 10px;
+}
+.m-asset:last-child { margin-bottom: 0; }
+.m-a-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.m-a-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.m-a-rate { font-size: 11px; color: var(--text-3); }
+
+.m-a-ctrl { display: flex; flex-direction: column; gap: 8px; }
+.m-a-bottom { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.m-a-pct { font-size: 20px; font-weight: 700; color: var(--coral); min-width: 50px; text-align: right; }
+.m-a-hint { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+/* Mobile slider */
+.m-slider { width: 100%; height: 5px; -webkit-appearance:none; appearance:none;
+  background: var(--border-2); border-radius: 3px; outline: none; cursor: pointer; }
+.m-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--coral);
+  border: 2px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,0.2); cursor: pointer;
+}
+.m-slider::-moz-range-thumb {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--coral); border: 2px solid #fff; cursor: pointer;
+}
+
+/* Mobile number input */
+.m-ni { position: relative; }
+.m-ni input[type=number] {
+  width: 110px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 10px 30px 10px 10px;
+  color: var(--text);
+  font-family: var(--font); font-size: 14px; font-weight: 600;
+  outline: none; text-align: right;
+  -moz-appearance: textfield;
+}
+.m-ni input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.m-ni input[type=number]:focus { border-color: var(--coral); }
+.m-ni-u {
+  position: absolute; right: 8px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px; color: var(--text-3); pointer-events: none;
+}
+
+/* Mobile stats 2×3 grid */
+.m-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+.m-stat {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px 11px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.m-stat-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 5px;
+}
+.m-stat-val { font-size: 15px; font-weight: 700; line-height: 1.2; word-break: break-word; }
+.m-stat-sub { font-size: 10px; color: var(--text-3); margin-top: 3px; }
+
+/* Mobile alloc bar */
+.m-alloc-bar { height: 6px; border-radius: 3px; display: flex; overflow: hidden; gap: 2px; margin-bottom: 8px; }
+.m-alloc-seg { height: 100%; border-radius: 3px; transition: flex .3s; }
+.m-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.m-leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-3); }
+.m-leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Mobile chart */
+.m-chart-wrap { position: relative; height: 200px; margin-bottom: 12px; }
+
+/* Mobile toggle */
+.m-tgl-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.m-tgl-row:last-child { border-bottom: none; }
+.m-tgl-lbl { font-size: 14px; font-weight: 500; color: var(--text); }
+.m-tgl-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+/* Mobile tab group */
+.m-tab-grp {
+  display: flex; background: var(--bg-input);
+  border-radius: var(--r-sm); padding: 3px; gap: 2px; margin-bottom: 12px;
+}
+.m-tab-btn {
+  flex: 1; padding: 10px 4px;
+  border: none; border-radius: 6px;
+  background: transparent; color: var(--text-3);
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.m-tab-btn.active {
+  background: var(--bg-card); color: var(--coral);
+  border: 1px solid rgba(201,100,66,0.25);
+  font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Mobile scenario pills */
+.m-sc-row { display: flex; gap: 7px; margin-bottom: 12px; }
+.m-sc-btn {
+  flex: 1; padding: 9px 4px; border-radius: 20px;
+  border: 1px solid var(--border-2);
+  background: transparent; color: var(--text-3);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  cursor: pointer; text-align: center; transition: all .2s;
+}
+.m-sc-btn.active {
+  background: rgba(201,100,66,0.1);
+  border-color: rgba(201,100,66,0.4);
+  color: var(--coral-d); font-weight: 700;
+}
+
+/* Mobile table */
+.m-tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-md); border: 1px solid var(--border); }
+.m-tbl { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 420px; }
+.m-tbl th {
+  padding: 9px 10px; font-size: 9px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--text-3);
+  border-bottom: 1px solid var(--border); background: var(--bg-2); text-align: left;
+}
+.m-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+.m-tbl tr:last-child td { border-bottom: none; }
+
+/* Mobile rate rows */
+.m-rate-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0; gap: 10px; border-bottom: 1px solid var(--border);
+}
+.m-rate-row:last-child { border-bottom: none; }
+.m-rate-name { font-size: 13px; display: flex; align-items: center; gap: 7px; flex: 1; }
+.m-rate-inp-w { display: flex; align-items: center; gap: 4px; width: 75px; flex-shrink: 0; }
+.m-rate-inp {
+  width: 52px; background: var(--bg-input);
+  border: 1px solid var(--border-2); border-radius: 6px;
+  padding: 8px 6px; color: var(--text);
+  font-family: var(--font); font-size: 13px;
+  outline: none; text-align: right;
+}
+.m-rate-inp:focus { border-color: var(--coral); }
+
+/* Mobile capital input */
+.m-capital-row { margin-bottom: 14px; }
+.m-cap-lbl { font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+.m-cap-input {
+  width: 100%; background: var(--bg-input);
+  border: 1.5px solid var(--coral); border-radius: var(--r-sm);
+  padding: 12px 40px 12px 14px;
+  color: var(--text); font-family: var(--font);
+  font-size: 18px; font-weight: 700;
+  outline: none; -moz-appearance: textfield;
+}
+.m-cap-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.m-cap-wrap { position: relative; }
+.m-cap-unit {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px; font-weight: 600; color: var(--text-3);
+}
+
+/* Mobile monthly add */
+.m-monthly-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.m-monthly-lbl { font-size: 13px; font-weight: 500; color: var(--text-2); flex: 1; }
+.m-monthly-inp {
+  width: 110px; background: var(--bg-input);
+  border: 1px solid var(--border-2); border-radius: var(--r-sm);
+  padding: 10px 30px 10px 10px;
+  color: var(--text); font-family: var(--font); font-size: 14px; font-weight: 600;
+  outline: none; text-align: right; -moz-appearance: textfield;
+}
+.m-monthly-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.m-monthly-inp:focus { border-color: var(--coral); }
+
+/* Mobile horizon display */
+.m-hz-row { display: flex; align-items: center; gap: 10px; }
+.m-hz-row input { flex: 1; }
+.m-hz-val { font-size: 28px; font-weight: 700; color: var(--coral); min-width: 42px; text-align: right; }
+
+/* mobile warn */
+.m-warn {
+  background: rgba(201,100,66,0.07); border: 1px solid rgba(201,100,66,0.2);
+  border-radius: var(--r-md); padding: 11px 13px;
+  font-size: 11px; color: var(--coral-d); line-height: 1.7; margin-top: 10px;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE SWITCH
+══════════════════════════════════════════ */
+@media(min-width: 900px) {
+  body { overflow: auto; }
+  .desktop-wrap { display: block; }
+  .mobile-wrap  { display: none !important; }
+}
+@media(max-width: 899px) {
+  .desktop-wrap { display: none !important; }
+  .mobile-wrap  { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     DESKTOP VERSION
+══════════════════════════════════════════ -->
+<div class="desktop-wrap">
+  <header class="d-header">
+    <div class="d-brand">
+      <div class="d-logo">💼</div>
+      <div>
+        <div class="d-title">Portfolio <span>Kalkulačka</span></div>
+        <div class="d-sub">ETF · Dividendy · Krypto · DCA Strategie</div>
+      </div>
+    </div>
+    <div class="d-badge">CZK · 2025</div>
+  </header>
+
+  <div class="d-grid">
+    <!-- LEFT -->
+    <div>
+      <div class="panel">
+        <div class="p-hd"><div class="p-icon" style="background:rgba(107,92,231,0.12)">🏗️</div><div class="p-title">Alokace portfolia</div></div>
+        <div class="p-bd">
+          <div class="sec">Počáteční kapitál</div>
+          <div class="ni" style="margin-bottom:14px">
+            <input type="number" id="d-totalCapital" value="700000" step="10000" min="0">
+            <span class="ni-unit">Kč</span>
+          </div>
+          <div class="sec">Rozdělení aktiv</div>
+          <div class="asset-row">
+            <div class="a-hd"><div class="a-name"><div class="dot" style="background:var(--col-growth)"></div>Růstové ETF</div><div class="a-rate" id="d-ret-g">↑ 9,5 % p.a.</div></div>
+            <div class="a-ctrl">
+              <div class="sl-wrap"><div class="sl-fill" id="d-fill-g" style="background:var(--col-growth)"></div><input type="range" id="d-pct-g" min="0" max="100" value="30" oninput="dSlider('g')"></div>
+              <div class="ni"><input type="number" id="d-amt-g" value="210000" step="5000" oninput="dAmount('g')"></div>
+            </div>
+            <div class="a-hint">VOO · CSPX · VWCE</div>
+          </div>
+          <div class="asset-row">
+            <div class="a-hd"><div class="a-name"><div class="dot" style="background:var(--col-div)"></div>Dividendové ETF</div><div class="a-rate" id="d-ret-d">↑ 3,5 % + 4,5 % div.</div></div>
+            <div class="a-ctrl">
+              <div class="sl-wrap"><div class="sl-fill" id="d-fill-d" style="background:var(--col-div)"></div><input type="range" id="d-pct-d" min="0" max="100" value="40" oninput="dSlider('d')"></div>
+              <div class="ni"><input type="number" id="d-amt-d" value="280000" step="5000" oninput="dAmount('d')"></div>
+            </div>
+            <div class="a-hint">SCHD · VYMI · JEPI</div>
+          </div>
+          <div class="asset-row">
+            <div class="a-hd"><div class="a-name"><div class="dot" style="background:var(--col-crypto)"></div>Krypto</div><div class="a-rate" id="d-ret-c">↑ 25 % p.a. ±50 %</div></div>
+            <div class="a-ctrl">
+              <div class="sl-wrap"><div class="sl-fill" id="d-fill-c" style="background:var(--col-crypto)"></div><input type="range" id="d-pct-c" min="0" max="100" value="20" oninput="dSlider('c')"></div>
+              <div class="ni"><input type="number" id="d-amt-c" value="140000" step="5000" oninput="dAmount('c')"></div>
+            </div>
+            <div class="a-hint">BTC 70 % · ETH 30 %</div>
+          </div>
+          <div class="asset-row">
+            <div class="a-hd"><div class="a-name"><div class="dot" style="background:var(--col-cash)"></div>Hotovost / Rezerva</div><div class="a-rate" id="d-ret-ca">↑ 3,5 % p.a.</div></div>
+            <div class="a-ctrl">
+              <div class="sl-wrap"><div class="sl-fill" id="d-fill-ca" style="background:var(--col-cash)"></div><input type="range" id="d-pct-ca" min="0" max="100" value="10" oninput="dSlider('ca')"></div>
+              <div class="ni"><input type="number" id="d-amt-ca" value="70000" step="5000" oninput="dAmount('ca')"></div>
+            </div>
+            <div class="a-hint">Spořicí účet · T-bills</div>
+          </div>
+          <div class="alloc-err" id="d-alloc-err">⚠️ Součet: <span id="d-alloc-sum">100</span> % — doporučeno 100 %</div>
+
+          <!-- SUMMARY BAR -->
+          <div class="sum-bar">
+            <div class="sum-bar-title">Součet alokací</div>
+            <div class="sum-bar-amounts">
+              <div class="sum-bar-chip"><div class="cdot" style="background:var(--col-growth)"></div><span id="d-s-g">210 000 Kč</span></div>
+              <div class="sum-bar-chip"><div class="cdot" style="background:var(--col-div)"></div><span id="d-s-d">280 000 Kč</span></div>
+              <div class="sum-bar-chip"><div class="cdot" style="background:var(--col-crypto)"></div><span id="d-s-c">140 000 Kč</span></div>
+              <div class="sum-bar-chip"><div class="cdot" style="background:var(--col-cash)"></div><span id="d-s-ca">70 000 Kč</span></div>
+            </div>
+            <div class="sum-bar-total ok" id="d-s-total">= 700 000 Kč</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="p-hd"><div class="p-icon" style="background:rgba(58,158,148,0.12)">⚙️</div><div class="p-title">Strategie</div></div>
+        <div class="p-bd">
+          <div class="sec">Nákupní strategie</div>
+          <div class="tab-grp">
+            <button class="tab-btn active" id="d-strat-s" onclick="dSetStrategy('single')">Jednorázový vklad</button>
+            <button class="tab-btn" id="d-strat-d" onclick="dSetStrategy('dca')">DCA – postupně</button>
+          </div>
+          <div id="d-dca-box" style="display:none;margin-bottom:14px">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:7px">Rozložit po dobu:</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="d-dca-m" min="1" max="24" value="12" oninput="dDcaDisp()" style="flex:1">
+              <span id="d-dca-v" class="big-num" style="font-size:22px">12</span>
+              <span style="font-size:13px;color:var(--text-3)">měs.</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:5px" id="d-dca-info">→ ~58 333 Kč / měsíc</div>
+          </div>
+          <div class="sec">Časový horizont</div>
+          <div class="hz-row">
+            <input type="range" id="d-horizon" min="1" max="30" value="7" oninput="dHzDisp()">
+            <span id="d-hz-v" class="big-num" style="font-size:22px">7</span>
+            <span style="font-size:13px;color:var(--text-3)">let</span>
+          </div>
+          <div class="sec">Dividendy</div>
+          <div class="tgl-row">
+            <div><div class="tgl-lbl">Reinvestovat dividendy (DRIP)</div><div class="tgl-sub">Automaticky reinvestovat zpět do portfolia</div></div>
+            <label class="toggle"><input type="checkbox" id="d-reinvest" checked onchange="dRecalc()"><div class="ttrack"></div><div class="tthumb"></div></label>
+          </div>
+          <div class="sec">Průběžné spoření</div>
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:7px">Měsíční vklad navíc:</div>
+          <div class="ni">
+            <input type="number" id="d-monthly" value="0" step="500" min="0" oninput="dRecalc()">
+            <span class="ni-unit">Kč/měs</span>
+          </div>
+          <div id="d-monthly-info" style="font-size:11px;color:var(--text-3);margin-top:5px;display:none"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="p-hd"><div class="p-icon" style="background:rgba(201,100,66,0.12)">📊</div><div class="p-title">Vlastní výnosové sazby</div></div>
+        <div class="p-bd">
+          <div class="rate-row"><div class="rate-name"><div class="dot" style="background:var(--col-growth)"></div>Růstové ETF – růst</div><div class="rate-inp-w"><input type="number" class="rate-inp" id="d-rg" value="9.5" step="0.5" oninput="dRateDisp()"><span class="pct-lbl">%</span></div></div>
+          <div class="rate-row"><div class="rate-name"><div class="dot" style="background:var(--col-div)"></div>Div. ETF – růst</div><div class="rate-inp-w"><input type="number" class="rate-inp" id="d-rdg" value="3.5" step="0.5" oninput="dRateDisp()"><span class="pct-lbl">%</span></div></div>
+          <div class="rate-row"><div class="rate-name"><div class="dot" style="background:var(--col-div)"></div>Div. ETF – dividenda</div><div class="rate-inp-w"><input type="number" class="rate-inp" id="d-rdy" value="4.5" step="0.5" oninput="dRateDisp()"><span class="pct-lbl">%</span></div></div>
+          <div class="rate-row"><div class="rate-name"><div class="dot" style="background:var(--col-crypto)"></div>Krypto – průměr</div><div class="rate-inp-w"><input type="number" class="rate-inp" id="d-rc" value="25" step="1" oninput="dRateDisp()"><span class="pct-lbl">%</span></div></div>
+          <div class="rate-row"><div class="rate-name"><div class="dot" style="background:var(--col-cash)"></div>Hotovost / spořicí</div><div class="rate-inp-w"><input type="number" class="rate-inp" id="d-rca" value="3.5" step="0.5" oninput="dRateDisp()"><span class="pct-lbl">%</span></div></div>
+        </div>
+      </div>
+    </div><!-- /left -->
+
+    <!-- RIGHT -->
+    <div>
+      <div class="panel">
+        <div class="p-hd"><div class="p-icon" style="background:rgba(58,158,148,0.12)">📈</div><div class="p-title">Výsledky portfolia</div></div>
+        <div class="p-bd">
+          <div class="sc-row">
+            <button class="sc-btn active" onclick="dSetScenario('realistic',this)">Realistický</button>
+            <button class="sc-btn" onclick="dSetScenario('optimistic',this)">Optimistický</button>
+            <button class="sc-btn" onclick="dSetScenario('pessimistic',this)">Pesimistický</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-lbl">Hodnota portfolia</div><div class="stat-val c-pos" id="d-res-total">—</div><div class="stat-sub" id="d-res-total-sub">po N letech</div></div>
+            <div class="stat-card"><div class="stat-lbl">Celkový výnos</div><div class="stat-val c-pos" id="d-res-gain">—</div><div class="stat-sub" id="d-res-gain-pct">%</div></div>
+            <div class="stat-card"><div class="stat-lbl">Roční dividendy</div><div class="stat-val c-neu" id="d-res-div">—</div><div class="stat-sub" id="d-res-div-sub">v posledním roce</div></div>
+            <div class="stat-card"><div class="stat-lbl">Měsíční dividendy</div><div class="stat-val c-neu" id="d-res-divm">—</div><div class="stat-sub">průměr / měsíc</div></div>
+            <div class="stat-card"><div class="stat-lbl">Průměr p.a.</div><div class="stat-val c-pos" id="d-res-avg">—</div><div class="stat-sub">efektivní výnos</div></div>
+            <div class="stat-card"><div class="stat-lbl">Celkem vloženo</div><div class="stat-val c-sand" id="d-res-inv">—</div><div class="stat-sub">počáteční + průběžné</div></div>
+          </div>
+          <div class="alloc-bar">
+            <div class="alloc-seg" id="d-bar-g" style="background:var(--col-growth);flex:30"></div>
+            <div class="alloc-seg" id="d-bar-d" style="background:var(--col-div);flex:40"></div>
+            <div class="alloc-seg" id="d-bar-c" style="background:var(--col-crypto);flex:20"></div>
+            <div class="alloc-seg" id="d-bar-ca" style="background:var(--col-cash);flex:10"></div>
+          </div>
+          <div class="alloc-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--col-growth)"></div><span id="d-leg-g">Růst ETF 30 %</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--col-div)"></div><span id="d-leg-d">Div. ETF 40 %</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--col-crypto)"></div><span id="d-leg-c">Krypto 20 %</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--col-cash)"></div><span id="d-leg-ca">Hotovost 10 %</span></div>
+          </div>
+          <div class="chart-wrap"><canvas id="d-chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="p-hd"><div class="p-icon" style="background:rgba(107,92,231,0.12)">📋</div><div class="p-title">Rok po roku</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Rok</th><th>Hodnota celkem</th><th>Vloženo</th><th>Výnos</th><th>Dividendy/rok</th><th style="color:var(--col-growth)">Růst ETF</th><th style="color:var(--col-div)">Div. ETF</th><th style="color:var(--col-crypto)">Krypto</th><th style="color:var(--col-cash)">Hotovost</th></tr></thead>
+            <tbody id="d-tbl"></tbody>
+          </table>
+        </div>
+        <div class="p-bd"><div class="warn-box">⚠️ <strong>Upozornění:</strong> Pouze ilustrace. Minulé výnosy nezaručují budoucí výsledky. Krypto je vysoce volatilní. Nejsem finanční poradce.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MOBILE VERSION
+══════════════════════════════════════════ -->
+<div class="mobile-wrap">
+  <header class="m-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="m-logo">💼</div>
+      <div class="m-title">Portfolio <span>Kalkulačka</span></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--coral);letter-spacing:0.04em">CZK · 2025</div>
+  </header>
+
+  <div class="m-pages">
+
+    <!-- PAGE 1: Alokace -->
+    <div class="m-page active" id="mp-1">
+      <div class="m-card">
+        <div class="m-cap-lbl">Počáteční kapitál</div>
+        <div class="m-cap-wrap">
+          <input type="number" class="m-cap-input" id="m-totalCapital" value="700000" step="10000" min="0">
+          <span class="m-cap-unit">Kč</span>
+        </div>
+      </div>
+
+      <div class="m-card" style="padding:14px 14px 4px">
+        <div class="m-sec" style="margin-top:0;padding-top:0;border-top:none">Aktiva</div>
+
+        <div class="m-asset">
+          <div class="m-a-hd"><div class="m-a-name"><div class="dot" style="background:var(--col-growth)"></div>Růstové ETF</div><div class="m-a-rate" id="m-ret-g">↑ 9,5 % p.a.</div></div>
+          <div class="m-a-ctrl">
+            <input class="m-slider" type="range" id="m-pct-g" min="0" max="100" value="30" oninput="mSlider('g')">
+            <div class="m-a-bottom">
+              <div class="m-ni"><input type="number" id="m-amt-g" value="210000" step="5000" oninput="mAmount('g')"><span class="m-ni-u">Kč</span></div>
+              <div class="m-a-pct" id="m-pct-g-disp">30 %</div>
+            </div>
+          </div>
+          <div class="m-a-hint">VOO · CSPX · VWCE</div>
+        </div>
+
+        <div class="m-asset">
+          <div class="m-a-hd"><div class="m-a-name"><div class="dot" style="background:var(--col-div)"></div>Dividendové ETF</div><div class="m-a-rate" id="m-ret-d">↑ 3,5 % + 4,5 % div.</div></div>
+          <div class="m-a-ctrl">
+            <input class="m-slider" type="range" id="m-pct-d" min="0" max="100" value="40" oninput="mSlider('d')">
+            <div class="m-a-bottom">
+              <div class="m-ni"><input type="number" id="m-amt-d" value="280000" step="5000" oninput="mAmount('d')"><span class="m-ni-u">Kč</span></div>
+              <div class="m-a-pct" id="m-pct-d-disp">40 %</div>
+            </div>
+          </div>
+          <div class="m-a-hint">SCHD · VYMI · JEPI</div>
+        </div>
+
+        <div class="m-asset">
+          <div class="m-a-hd"><div class="m-a-name"><div class="dot" style="background:var(--col-crypto)"></div>Krypto</div><div class="m-a-rate" id="m-ret-c">↑ 25 % p.a. ±50 %</div></div>
+          <div class="m-a-ctrl">
+            <input class="m-slider" type="range" id="m-pct-c" min="0" max="100" value="20" oninput="mSlider('c')">
+            <div class="m-a-bottom">
+              <div class="m-ni"><input type="number" id="m-amt-c" value="140000" step="5000" oninput="mAmount('c')"><span class="m-ni-u">Kč</span></div>
+              <div class="m-a-pct" id="m-pct-c-disp">20 %</div>
+            </div>
+          </div>
+          <div class="m-a-hint">BTC 70 % · ETH 30 %</div>
+        </div>
+
+        <div class="m-asset" style="margin-bottom:4px">
+          <div class="m-a-hd"><div class="m-a-name"><div class="dot" style="background:var(--col-cash)"></div>Hotovost / Rezerva</div><div class="m-a-rate" id="m-ret-ca">↑ 3,5 % p.a.</div></div>
+          <div class="m-a-ctrl">
+            <input class="m-slider" type="range" id="m-pct-ca" min="0" max="100" value="10" oninput="mSlider('ca')">
+            <div class="m-a-bottom">
+              <div class="m-ni"><input type="number" id="m-amt-ca" value="70000" step="5000" oninput="mAmount('ca')"><span class="m-ni-u">Kč</span></div>
+              <div class="m-a-pct" id="m-pct-ca-disp">10 %</div>
+            </div>
+          </div>
+          <div class="m-a-hint">Spořicí účet · T-bills</div>
+        </div>
+
+        <!-- MOBILE SUMMARY -->
+        <div class="m-sum-bar">
+          <div class="m-sum-row">
+            <div class="m-sum-label">Součet alokací</div>
+            <div class="m-sum-total ok" id="m-s-total">700 000 Kč</div>
+          </div>
+          <div class="m-sum-chips">
+            <div class="m-sum-chip"><div class="cdot" style="background:var(--col-growth)"></div><span id="m-s-g">210 000 Kč</span></div>
+            <div class="m-sum-chip"><div class="cdot" style="background:var(--col-div)"></div><span id="m-s-d">280 000 Kč</span></div>
+            <div class="m-sum-chip"><div class="cdot" style="background:var(--col-crypto)"></div><span id="m-s-c">140 000 Kč</span></div>
+            <div class="m-sum-chip"><div class="cdot" style="background:var(--col-cash)"></div><span id="m-s-ca">70 000 Kč</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: Strategie -->
+    <div class="m-page" id="mp-2">
+      <div class="m-card">
+        <div class="m-sec">Nákupní strategie</div>
+        <div class="m-tab-grp">
+          <button class="m-tab-btn active" id="m-strat-s" onclick="mSetStrategy('single')">Jednorázový vklad</button>
+          <button class="m-tab-btn" id="m-strat-d" onclick="mSetStrategy('dca')">DCA – postupně</button>
+        </div>
+        <div id="m-dca-box" style="display:none">
+          <div style="font-size:13px;color:var(--text-3);margin-bottom:8px">Rozložit nákup po dobu:</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input class="m-slider" type="range" id="m-dca-m" min="1" max="24" value="12" oninput="mDcaDisp()" style="flex:1">
+            <span id="m-dca-v" style="font-size:28px;font-weight:700;color:var(--coral);min-width:40px;text-align:right">12</span>
+            <span style="font-size:14px;color:var(--text-3)">měs.</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:6px" id="m-dca-info">→ ~58 333 Kč / měsíc</div>
+        </div>
+      </div>
+
+      <div class="m-card">
+        <div class="m-sec">Časový horizont</div>
+        <div class="m-hz-row">
+          <input class="m-slider" type="range" id="m-horizon" min="1" max="30" value="7" oninput="mHzDisp()">
+          <div class="m-hz-val" id="m-hz-v">7</div>
+          <span style="font-size:15px;color:var(--text-3)">let</span>
+        </div>
+      </div>
+
+      <div class="m-card">
+        <div class="m-sec">Dividendy</div>
+        <div class="m-tgl-row">
+          <div><div class="m-tgl-lbl">Reinvestovat dividendy (DRIP)</div><div class="m-tgl-sub">Automaticky reinvestovat zpět</div></div>
+          <label class="toggle"><input type="checkbox" id="m-reinvest" checked onchange="recalcAll()"><div class="ttrack"></div><div class="tthumb"></div></label>
+        </div>
+      </div>
+
+      <div class="m-card">
+        <div class="m-sec">Průběžné spoření</div>
+        <div class="m-tgl-row" style="border-bottom:none">
+          <div class="m-tgl-lbl">Měsíční vklad navíc</div>
+          <div style="position:relative">
+            <input class="m-monthly-inp" type="number" id="m-monthly" value="0" step="500" min="0" oninput="recalcAll()">
+            <span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-3);pointer-events:none">Kč/m</span>
+          </div>
+        </div>
+        <div id="m-monthly-info" style="font-size:11px;color:var(--text-3);margin-top:4px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: Výsledky -->
+    <div class="m-page" id="mp-3">
+      <div class="m-sc-row">
+        <button class="m-sc-btn active" onclick="mSetScenario('realistic',this)">Real.</button>
+        <button class="m-sc-btn" onclick="mSetScenario('optimistic',this)">Optim.</button>
+        <button class="m-sc-btn" onclick="mSetScenario('pessimistic',this)">Pesim.</button>
+      </div>
+
+      <div class="m-stats">
+        <div class="m-stat"><div class="m-stat-lbl">Hodnota portfolia</div><div class="m-stat-val c-pos" id="m-res-total">—</div><div class="m-stat-sub" id="m-res-total-sub">po N letech</div></div>
+        <div class="m-stat"><div class="m-stat-lbl">Celkový výnos</div><div class="m-stat-val c-pos" id="m-res-gain">—</div><div class="m-stat-sub" id="m-res-gain-pct">%</div></div>
+        <div class="m-stat"><div class="m-stat-lbl">Roční dividendy</div><div class="m-stat-val c-neu" id="m-res-div">—</div><div class="m-stat-sub" id="m-res-div-sub">v posl. roce</div></div>
+        <div class="m-stat"><div class="m-stat-lbl">Měsíční dividendy</div><div class="m-stat-val c-neu" id="m-res-divm">—</div><div class="m-stat-sub">průměr / měs.</div></div>
+        <div class="m-stat"><div class="m-stat-lbl">Průměr p.a.</div><div class="m-stat-val c-pos" id="m-res-avg">—</div><div class="m-stat-sub">efektivní výnos</div></div>
+        <div class="m-stat"><div class="m-stat-lbl">Celkem vloženo</div><div class="m-stat-val c-sand" id="m-res-inv">—</div><div class="m-stat-sub">poč. + průběžné</div></div>
+      </div>
+
+      <div class="m-card" style="padding:12px">
+        <div class="m-alloc-bar">
+          <div class="m-alloc-seg" id="m-bar-g" style="background:var(--col-growth);flex:30"></div>
+          <div class="m-alloc-seg" id="m-bar-d" style="background:var(--col-div);flex:40"></div>
+          <div class="m-alloc-seg" id="m-bar-c" style="background:var(--col-crypto);flex:20"></div>
+          <div class="m-alloc-seg" id="m-bar-ca" style="background:var(--col-cash);flex:10"></div>
+        </div>
+        <div class="m-legend">
+          <div class="m-leg-item"><div class="m-leg-dot" style="background:var(--col-growth)"></div><span id="m-leg-g">Růst ETF 30 %</span></div>
+          <div class="m-leg-item"><div class="m-leg-dot" style="background:var(--col-div)"></div><span id="m-leg-d">Div. ETF 40 %</span></div>
+          <div class="m-leg-item"><div class="m-leg-dot" style="background:var(--col-crypto)"></div><span id="m-leg-c">Krypto 20 %</span></div>
+          <div class="m-leg-item"><div class="m-leg-dot" style="background:var(--col-cash)"></div><span id="m-leg-ca">Hotovost 10 %</span></div>
+        </div>
+        <div class="m-chart-wrap"><canvas id="m-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: Tabulka -->
+    <div class="m-page" id="mp-4">
+      <div class="m-tbl-wrap">
+        <table class="m-tbl">
+          <thead><tr><th>Rok</th><th>Hodnota</th><th>Výnos</th><th>Dividendy</th><th style="color:var(--col-growth)">Růst ETF</th><th style="color:var(--col-div)">Div. ETF</th><th style="color:var(--col-crypto)">Krypto</th><th style="color:var(--col-cash)">Hotovost</th></tr></thead>
+          <tbody id="m-tbl"></tbody>
+        </table>
+      </div>
+      <div class="m-warn" style="margin-top:12px">⚠️ <strong>Upozornění:</strong> Pouze ilustrace. Minulé výnosy nezaručují budoucí výsledky. Krypto je vysoce volatilní. Nejsem finanční poradce.</div>
+    </div>
+
+    <!-- PAGE 5: Sazby -->
+    <div class="m-page" id="mp-5">
+      <div class="m-card">
+        <div class="m-sec">Vlastní výnosové sazby</div>
+        <div class="m-rate-row"><div class="m-rate-name"><div class="dot" style="background:var(--col-growth)"></div>Růstové ETF – růst</div><div class="m-rate-inp-w"><input type="number" class="m-rate-inp" id="m-rg" value="9.5" step="0.5" oninput="mRateDisp()"><span class="pct-lbl">%</span></div></div>
+        <div class="m-rate-row"><div class="m-rate-name"><div class="dot" style="background:var(--col-div)"></div>Div. ETF – růst</div><div class="m-rate-inp-w"><input type="number" class="m-rate-inp" id="m-rdg" value="3.5" step="0.5" oninput="mRateDisp()"><span class="pct-lbl">%</span></div></div>
+        <div class="m-rate-row"><div class="m-rate-name"><div class="dot" style="background:var(--col-div)"></div>Div. ETF – dividenda</div><div class="m-rate-inp-w"><input type="number" class="m-rate-inp" id="m-rdy" value="4.5" step="0.5" oninput="mRateDisp()"><span class="pct-lbl">%</span></div></div>
+        <div class="m-rate-row"><div class="m-rate-name"><div class="dot" style="background:var(--col-crypto)"></div>Krypto – průměr</div><div class="m-rate-inp-w"><input type="number" class="m-rate-inp" id="m-rc" value="25" step="1" oninput="mRateDisp()"><span class="pct-lbl">%</span></div></div>
+        <div class="m-rate-row"><div class="m-rate-name"><div class="dot" style="background:var(--col-cash)"></div>Hotovost / spořicí</div><div class="m-rate-inp-w"><input type="number" class="m-rate-inp" id="m-rca" value="3.5" step="0.5" oninput="mRateDisp()"><span class="pct-lbl">%</span></div></div>
+      </div>
+    </div>
+
+  </div><!-- /m-pages -->
+
+  <!-- BOTTOM TAB BAR -->
+  <nav class="m-tabbar">
+    <button class="m-tab active" id="mtab-1" onclick="mGoTo(1)"><span class="tab-icon">🏗️</span>Aktiva</button>
+    <button class="m-tab" id="mtab-2" onclick="mGoTo(2)"><span class="tab-icon">⚙️</span>Strategie</button>
+    <button class="m-tab" id="mtab-3" onclick="mGoTo(3)"><span class="tab-icon">📈</span>Výsledky</button>
+    <button class="m-tab" id="mtab-4" onclick="mGoTo(4)"><span class="tab-icon">📋</span>Tabulka</button>
+    <button class="m-tab" id="mtab-5" onclick="mGoTo(5)"><span class="tab-icon">📊</span>Sazby</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CHART.JS + JS
+══════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+/* ── SHARED STATE ── */
+const SM = { realistic:1.0, optimistic:1.35, pessimistic:0.55 };
+let dStrategy='single', dScenario='realistic', dChart=null;
+let mStrategy='single', mScenario='realistic', mChart=null;
+
+const g = id => document.getElementById(id);
+
+function fmtCzk(n) {
+  if(!isFinite(n)||isNaN(n)) return '—';
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2).replace('.',',')+' M Kč';
+  return Math.round(n).toLocaleString('cs-CZ')+' Kč';
+}
+function fmtPct(n) {
+  if(!isFinite(n)||isNaN(n)) return '—';
+  return (n>=0?'+':'')+n.toFixed(1)+' %';
+}
+
+/* ── CORE CALC ── */
+function calc(total, amts, horizon, reinvest, monthlyAdd, dcaMonths, strategy, scenario, rates) {
+  const mult = SM[scenario];
+  const tm = horizon*12;
+  let vals={g:0,d:0,c:0,ca:0}, ti=0, yearData=[], yd=0;
+  const dcaF={g:amts.g/dcaMonths,d:amts.d/dcaMonths,c:amts.c/dcaMonths,ca:amts.ca/dcaMonths};
+  if(strategy==='single'){vals={...amts};ti=total;}
+  for(let m=1;m<=tm;m++){
+    if(strategy==='dca'&&m<=dcaMonths){
+      ['g','d','c','ca'].forEach(k=>{vals[k]+=dcaF[k];ti+=dcaF[k];});
+    }
+    if(monthlyAdd>0){
+      const sv=vals.g+vals.d+vals.c+vals.ca;
+      ['g','d','c','ca'].forEach(k=>{ vals[k]+=sv>0?monthlyAdd*(vals[k]/sv):monthlyAdd/4; });
+      ti+=monthlyAdd;
+    }
+    vals.g  *=Math.pow(1+rates.rg*mult,1/12);
+    vals.d  *=Math.pow(1+rates.rdg*mult,1/12);
+    vals.c  *=Math.pow(1+rates.rc*mult,1/12);
+    vals.ca *=Math.pow(1+rates.rca*mult,1/12);
+    const md=vals.d*rates.rdy*mult/12;
+    yd+=md;
+    if(reinvest) vals.d+=md;
+    if(m%12===0){
+      yearData.push({year:m/12,tv:vals.g+vals.d+vals.c+vals.ca,ti,yd,vg:vals.g,vd:vals.d,vc:vals.c,vca:vals.ca});
+      yd=0;
+    }
+  }
+  return yearData;
+}
+
+/* ── DESKTOP HELPERS ── */
+function dGetTotal(){return parseFloat(g('d-totalCapital').value)||0;}
+function dGetAmts(){return{g:parseFloat(g('d-amt-g').value)||0,d:parseFloat(g('d-amt-d').value)||0,c:parseFloat(g('d-amt-c').value)||0,ca:parseFloat(g('d-amt-ca').value)||0};}
+function dGetRates(){return{rg:parseFloat(g('d-rg').value)/100,rdg:parseFloat(g('d-rdg').value)/100,rdy:parseFloat(g('d-rdy').value)/100,rc:parseFloat(g('d-rc').value)/100,rca:parseFloat(g('d-rca').value)/100};}
+
+function dSlider(k){
+  const t=dGetTotal(),p=parseFloat(g('d-pct-'+k).value);
+  g('d-amt-'+k).value=Math.round(t*p/100);
+  g('d-fill-'+k).style.width=p+'%';
+  dCheckAlloc(); dRecalc();
+}
+function dAmount(k){
+  const t=dGetTotal(),a=parseFloat(g('d-amt-'+k).value)||0;
+  const p=t>0?Math.round(a/t*100):0;
+  g('d-pct-'+k).value=Math.min(100,p);
+  g('d-fill-'+k).style.width=p+'%';
+  dCheckAlloc(); dRecalc();
+}
+function fmtShort(n){
+  if(!isFinite(n)||isNaN(n)) return '—';
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2).replace('.',',')+' M Kč';
+  return Math.round(n).toLocaleString('cs-CZ')+' Kč';
+}
+
+function dCheckAlloc(){
+  const t=dGetTotal(),a=dGetAmts();
+  const s=a.g+a.d+a.c+a.ca;
+  const p=t>0?Math.round(s/t*100):0;
+  g('d-alloc-sum').textContent=p;
+  g('d-alloc-err').style.display=Math.abs(p-100)>2?'block':'none';
+  // update summary chips
+  g('d-s-g').textContent=fmtShort(a.g);
+  g('d-s-d').textContent=fmtShort(a.d);
+  g('d-s-c').textContent=fmtShort(a.c);
+  g('d-s-ca').textContent=fmtShort(a.ca);
+  const tot=g('d-s-total');
+  const diff=s-t;
+  tot.textContent=(diff===0?'= ':'Σ ')+fmtShort(s)+(diff!==0?' ('+(diff>0?'+':'')+fmtShort(diff)+')':'');
+  tot.className='sum-bar-total '+(Math.abs(diff)<500?'ok':diff>0?'over':'low');
+}
+
+function mUpdateSummary(){
+  const t=mGetTotal(),a=mGetAmts();
+  const s=a.g+a.d+a.c+a.ca;
+  g('m-s-g').textContent=fmtShort(a.g);
+  g('m-s-d').textContent=fmtShort(a.d);
+  g('m-s-c').textContent=fmtShort(a.c);
+  g('m-s-ca').textContent=fmtShort(a.ca);
+  const tot=g('m-s-total');
+  const diff=s-t;
+  tot.textContent=(diff===0?'= ':'Σ ')+fmtShort(s)+(diff!==0?' ('+(diff>0?'+':'')+fmtShort(diff)+')':'');
+  tot.className='m-sum-total '+(Math.abs(diff)<500?'ok':diff>0?'over':'low');
+}
+function dFillAll(){['g','d','c','ca'].forEach(k=>g('d-fill-'+k).style.width=parseFloat(g('d-pct-'+k).value)+'%');}
+function dSetStrategy(s){
+  dStrategy=s;
+  g('d-strat-s').classList.toggle('active',s==='single');
+  g('d-strat-d').classList.toggle('active',s==='dca');
+  g('d-dca-box').style.display=s==='dca'?'block':'none';
+  dRecalc();
+}
+function dDcaDisp(){
+  const m=parseInt(g('d-dca-m').value);
+  g('d-dca-v').textContent=m;
+  g('d-dca-info').textContent='→ ~'+fmtCzk(dGetTotal()/m)+' / měsíc';
+  dRecalc();
+}
+function dHzDisp(){g('d-hz-v').textContent=g('d-horizon').value;dRecalc();}
+function dRateDisp(){
+  g('d-ret-g').textContent=`↑ ${g('d-rg').value} % p.a.`;
+  g('d-ret-d').textContent=`↑ ${g('d-rdg').value} % + ${g('d-rdy').value} % div.`;
+  g('d-ret-c').textContent=`↑ ${g('d-rc').value} % p.a. ±50 %`;
+  g('d-ret-ca').textContent=`↑ ${g('d-rca').value} % p.a.`;
+  dRecalc();
+}
+function dSetScenario(s,btn){
+  dScenario=s;
+  document.querySelectorAll('.d-grid .sc-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  dRecalc();
+}
+
+function dRecalc(){
+  const total=dGetTotal(),amts=dGetAmts(),rates=dGetRates();
+  const horizon=parseInt(g('d-horizon').value);
+  const reinvest=g('d-reinvest').checked;
+  const monthly=parseFloat(g('d-monthly').value)||0;
+  const dcaM=parseInt(g('d-dca-m').value);
+  const data=calc(total,amts,horizon,reinvest,monthly,dcaM,dStrategy,dScenario,rates);
+  if(!data.length) return;
+  const last=data[data.length-1];
+  const gain=last.tv-last.ti;
+  const gp=last.ti>0?gain/last.ti*100:0;
+  const avg=last.ti>0&&horizon>0?(Math.pow(last.tv/last.ti,1/horizon)-1)*100:0;
+  g('d-res-total').textContent=fmtCzk(last.tv);
+  g('d-res-total-sub').textContent=`po ${horizon} ${horizon===1?'roce':'letech'}`;
+  g('d-res-gain').textContent=fmtCzk(gain);
+  g('d-res-gain-pct').textContent=fmtPct(gp)+' zhodnocení';
+  g('d-res-gain').className='stat-val '+(gain>=0?'c-pos':'c-neg');
+  g('d-res-div').textContent=fmtCzk(last.yd);
+  g('d-res-div-sub').textContent=reinvest?'reinvestováno':'vypláceno ročně';
+  g('d-res-divm').textContent=fmtCzk(last.yd/12);
+  g('d-res-avg').textContent=fmtPct(avg)+' p.a.';
+  g('d-res-inv').textContent=fmtCzk(last.ti);
+  const mi=g('d-monthly-info');
+  if(monthly>0){mi.style.display='block';mi.textContent=`→ Za ${horizon} let přidáš celkem ${fmtCzk(monthly*12*horizon)}`;}
+  else mi.style.display='none';
+  // alloc bar
+  const sa=amts.g+amts.d+amts.c+amts.ca;
+  const K=['g','d','c','ca'],LBL={g:'Růst ETF',d:'Div. ETF',c:'Krypto',ca:'Hotovost'};
+  K.forEach(k=>{const p=sa>0?amts[k]/sa*100:0;g('d-bar-'+k).style.flex=p;g('d-leg-'+k).textContent=LBL[k]+' '+Math.round(p)+' %';});
+  // table
+  const tb=g('d-tbl');tb.innerHTML='';
+  data.forEach(row=>{
+    const gn=row.tv-row.ti,gp2=row.ti>0?gn/row.ti*100:0;
+    const tr=document.createElement('tr');
+    if(row.year===data.length) tr.className='total-row';
+    tr.innerHTML=`<td class="yr-cell">Rok ${row.year}</td><td style="color:var(--positive);font-weight:600">${fmtCzk(row.tv)}</td><td style="color:var(--text-2)">${fmtCzk(row.ti)}</td><td style="color:${gn>=0?'var(--positive)':'var(--negative)'}">${fmtPct(gp2)}</td><td style="color:var(--neutral)">${fmtCzk(row.yd)}</td><td style="color:var(--col-growth)">${fmtCzk(row.vg)}</td><td style="color:var(--col-div)">${fmtCzk(row.vd)}</td><td style="color:var(--col-crypto)">${fmtCzk(row.vc)}</td><td style="color:var(--col-cash)">${fmtCzk(row.vca)}</td>`;
+    tb.appendChild(tr);
+  });
+  // chart
+  buildChart('d-chart',data,dChart,c=>{dChart=c;});
+}
+
+/* ── MOBILE HELPERS ── */
+function mGetTotal(){return parseFloat(g('m-totalCapital').value)||0;}
+function mGetAmts(){return{g:parseFloat(g('m-amt-g').value)||0,d:parseFloat(g('m-amt-d').value)||0,c:parseFloat(g('m-amt-c').value)||0,ca:parseFloat(g('m-amt-ca').value)||0};}
+function mGetRates(){return{rg:parseFloat(g('m-rg').value)/100,rdg:parseFloat(g('m-rdg').value)/100,rdy:parseFloat(g('m-rdy').value)/100,rc:parseFloat(g('m-rc').value)/100,rca:parseFloat(g('m-rca').value)/100};}
+
+function mSlider(k){
+  const t=mGetTotal(),p=parseFloat(g('m-pct-'+k).value);
+  g('m-amt-'+k).value=Math.round(t*p/100);
+  g('m-pct-'+k+'-disp').textContent=p+' %';
+  mUpdateSummary(); mRecalc();
+}
+function mAmount(k){
+  const t=mGetTotal(),a=parseFloat(g('m-amt-'+k).value)||0;
+  const p=t>0?Math.round(a/t*100):0;
+  g('m-pct-'+k).value=Math.min(100,p);
+  g('m-pct-'+k+'-disp').textContent=Math.min(100,p)+' %';
+  mUpdateSummary(); mRecalc();
+}
+function mSetStrategy(s){
+  mStrategy=s;
+  g('m-strat-s').classList.toggle('active',s==='single');
+  g('m-strat-d').classList.toggle('active',s==='dca');
+  g('m-dca-box').style.display=s==='dca'?'block':'none';
+  mRecalc();
+}
+function mDcaDisp(){
+  const m=parseInt(g('m-dca-m').value);
+  g('m-dca-v').textContent=m;
+  g('m-dca-info').textContent='→ ~'+fmtCzk(mGetTotal()/m)+' / měsíc';
+  mRecalc();
+}
+function mHzDisp(){g('m-hz-v').textContent=g('m-horizon').value;mRecalc();}
+function mRateDisp(){
+  g('m-ret-g').textContent=`↑ ${g('m-rg').value} % p.a.`;
+  g('m-ret-d').textContent=`↑ ${g('m-rdg').value} % + ${g('m-rdy').value} % div.`;
+  g('m-ret-c').textContent=`↑ ${g('m-rc').value} % p.a. ±50 %`;
+  g('m-ret-ca').textContent=`↑ ${g('m-rca').value} % p.a.`;
+  mRecalc();
+}
+function mSetScenario(s,btn){
+  mScenario=s;
+  document.querySelectorAll('.m-sc-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mRecalc();
+}
+function mGoTo(n){
+  for(let i=1;i<=5;i++){
+    g('mp-'+i).classList.toggle('active',i===n);
+    g('mtab-'+i).classList.toggle('active',i===n);
+  }
+}
+
+function mRecalc(){
+  const total=mGetTotal(),amts=mGetAmts(),rates=mGetRates();
+  const horizon=parseInt(g('m-horizon').value);
+  const reinvest=g('m-reinvest').checked;
+  const monthly=parseFloat(g('m-monthly').value)||0;
+  const dcaM=parseInt(g('m-dca-m').value);
+  const data=calc(total,amts,horizon,reinvest,monthly,dcaM,mStrategy,mScenario,rates);
+  if(!data.length) return;
+  const last=data[data.length-1];
+  const gain=last.tv-last.ti;
+  const gp=last.ti>0?gain/last.ti*100:0;
+  const avg=last.ti>0&&horizon>0?(Math.pow(last.tv/last.ti,1/horizon)-1)*100:0;
+  g('m-res-total').textContent=fmtCzk(last.tv);
+  g('m-res-total-sub').textContent=`po ${horizon} ${horizon===1?'roce':'letech'}`;
+  g('m-res-gain').textContent=fmtCzk(gain);
+  g('m-res-gain-pct').textContent=fmtPct(gp)+' zhodnocení';
+  g('m-res-gain').className='m-stat-val '+(gain>=0?'c-pos':'c-neg');
+  g('m-res-div').textContent=fmtCzk(last.yd);
+  g('m-res-div-sub').textContent=reinvest?'reinvest.':'vypláceno';
+  g('m-res-divm').textContent=fmtCzk(last.yd/12);
+  g('m-res-avg').textContent=fmtPct(avg)+' p.a.';
+  g('m-res-inv').textContent=fmtCzk(last.ti);
+  const mi=g('m-monthly-info');
+  if(monthly>0){mi.style.display='block';mi.textContent=`→ Za ${horizon} let přidáš ${fmtCzk(monthly*12*horizon)}`;}
+  else mi.style.display='none';
+  const sa=amts.g+amts.d+amts.c+amts.ca;
+  const K=['g','d','c','ca'],LBL={g:'Růst ETF',d:'Div. ETF',c:'Krypto',ca:'Hotovost'};
+  K.forEach(k=>{const p=sa>0?amts[k]/sa*100:0;g('m-bar-'+k).style.flex=p;g('m-leg-'+k).textContent=LBL[k]+' '+Math.round(p)+' %';});
+  // table
+  const tb=g('m-tbl');tb.innerHTML='';
+  data.forEach(row=>{
+    const gn=row.tv-row.ti,gp2=row.ti>0?gn/row.ti*100:0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:var(--text-3);font-weight:600">Rok ${row.year}</td><td style="color:var(--positive);font-weight:600">${fmtCzk(row.tv)}</td><td style="color:${gn>=0?'var(--positive)':'var(--negative)'}">${fmtPct(gp2)}</td><td style="color:var(--neutral)">${fmtCzk(row.yd)}</td><td style="color:var(--col-growth)">${fmtCzk(row.vg)}</td><td style="color:var(--col-div)">${fmtCzk(row.vd)}</td><td style="color:var(--col-crypto)">${fmtCzk(row.vc)}</td><td style="color:var(--col-cash)">${fmtCzk(row.vca)}</td>`;
+    tb.appendChild(tr);
+  });
+  buildChart('m-chart',data,mChart,c=>{mChart=c;});
+}
+
+function recalcAll(){dRecalc();mRecalc();}
+
+/* ── CHART ── */
+function buildChart(canvasId,data,chartRef,setCb){
+  if(chartRef) chartRef.destroy();
+  const ctx=g(canvasId).getContext('2d');
+  const h=g(canvasId).parentElement.offsetHeight||240;
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(58,158,148,0.2)');
+  grad.addColorStop(1,'rgba(58,158,148,0)');
+  const c=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:data.map(d=>'Rok '+d.year),
+      datasets:[
+        {label:'Hodnota portfolia',data:data.map(d=>Math.round(d.tv)),borderColor:'#3a9e94',backgroundColor:grad,borderWidth:2.5,fill:true,tension:0.4,pointRadius:2,pointBackgroundColor:'#3a9e94',pointHoverRadius:5},
+        {label:'Vloženo celkem',data:data.map(d=>Math.round(d.ti)),borderColor:'#6b5ce7',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],fill:false,tension:0.4,pointRadius:1,pointBackgroundColor:'#6b5ce7'},
+        {label:'Roční dividendy',data:data.map(d=>Math.round(d.yd)),borderColor:'#c96442',backgroundColor:'transparent',borderWidth:1.5,fill:false,tension:0.4,pointRadius:1,pointBackgroundColor:'#c96442',yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:'#8a7a6e',font:{family:'-apple-system,Helvetica Neue,Helvetica,Arial,sans-serif',size:11},boxWidth:10,padding:12,usePointStyle:true}},
+        tooltip:{backgroundColor:'#fff',borderColor:'#e2d8ce',borderWidth:1,titleColor:'#1a1510',bodyColor:'#4a3f35',titleFont:{size:13,weight:'700'},bodyFont:{size:11},padding:11,cornerRadius:8,boxShadow:'0 2px 8px rgba(0,0,0,0.1)',callbacks:{label:c2=>' '+c2.dataset.label+': '+fmtCzk(c2.raw)}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#8a7a6e',font:{family:'-apple-system,Helvetica Neue,Helvetica,Arial,sans-serif',size:10},maxRotation:0,maxTicksLimit:10}},
+        y:{position:'left',grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#8a7a6e',font:{family:'-apple-system,Helvetica Neue,Helvetica,Arial,sans-serif',size:10},callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k'}},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#c96442',font:{family:'-apple-system,Helvetica Neue,Helvetica,Arial,sans-serif',size:10},callback:v=>(v/1000).toFixed(0)+'k'}}
+      }
+    }
+  });
+  setCb(c);
+}
+
+/* ── DESKTOP CAPITAL CHANGE ── */
+g('d-totalCapital').addEventListener('input',()=>{
+  const t=dGetTotal();
+  ['g','d','c','ca'].forEach(k=>{const p=parseFloat(g('d-pct-'+k).value);g('d-amt-'+k).value=Math.round(t*p/100);});
+  dCheckAlloc();dDcaDisp();dRecalc();
+});
+/* ── MOBILE CAPITAL CHANGE ── */
+g('m-totalCapital').addEventListener('input',()=>{
+  const t=mGetTotal();
+  ['g','d','c','ca'].forEach(k=>{const p=parseFloat(g('m-pct-'+k).value);g('m-amt-'+k).value=Math.round(t*p/100);g('m-pct-'+k+'-disp').textContent=p+' %';});
+  mUpdateSummary();mDcaDisp();mRecalc();
+});
+
+/* ── INIT ── */
+dFillAll();dCheckAlloc();dDcaDisp();dRecalc();
+mUpdateSummary();mRecalc();
+</script>
+</body>
+</html>
