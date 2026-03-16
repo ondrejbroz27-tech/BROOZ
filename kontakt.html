@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="color-scheme" content="light only">
 <style>:root{color-scheme:light only;}</style>
-<title>Hry & Zábava — Brooz Studio</title>
+<title>Kontakt — Brooz Studio</title>
 <meta name="author" content="Ondřej Brož">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -81,68 +81,64 @@
     .grid,.filters,.search-wrap,.section-label,.page-header{padding-left:1rem;padding-right:1rem;}
     header{padding:1.5rem 1rem 1rem;}
   }
+
+  .kontakt-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:2.5rem;max-width:600px;margin:0 auto;}
+  .kontakt-row{display:flex;align-items:center;gap:1.2rem;padding:1.2rem 0;border-bottom:1px solid var(--border);}
+  .kontakt-row:last-child{border-bottom:none;}
+  .kontakt-icon{font-size:1.6rem;flex-shrink:0;width:48px;text-align:center;}
+  .kontakt-label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:.2rem;}
+  .kontakt-value{font-family:'Lora',Georgia,serif;font-weight:600;font-size:1.1rem;}
+  .kontakt-value a{color:var(--text);text-decoration:none;border-bottom:2px solid var(--border);transition:border-color .18s;}
+  .kontakt-value a:hover{border-color:var(--accent-business);}
 </style>
 </head>
 <body style="background:#f0ebe3 !important;color:#1a1614 !important;"><nav>
   <a class="back-link" href="index.html">← Brooz Studio</a>
-  <div class="breadcrumb"><a href="index.html">Brooz Studio</a><span>/</span><span>Hry & Zábava</span></div>
+  <div class="breadcrumb"><a href="index.html">Brooz Studio</a><span>/</span><span>Kontakt</span></div>
 </nav><div class="page-header">
-  <span class="page-icon">🎮</span>
-  <h1 class="page-title">Hry <em>&</em> Zábava</h1>
-  <p class="page-desc">Prohlížečové hry bez instalace — spustíš přímo na mobilu i PC, zdarma.</p>
-  <div class="page-meta"><span class="meta-chip">🌐 Běží v prohlížeči</span><span class="meta-chip">📱 Mobil i PC</span><span class="meta-chip">🆓 Zdarma</span></div>
+  <span class="page-icon">📬</span>
+  <h1 class="page-title"><em></em>K<em></em>o<em></em>n<em></em>t<em></em>a<em></em>k<em></em>t<em></em></h1>
+  <p class="page-desc">Napište mi nebo zavolejte. Rád odpovím k projektům, spolupráci nebo čemukoli jinému.</p>
+  <div class="page-meta"><span class="meta-chip">📧 Email</span><span class="meta-chip">📞 Telefon</span></div>
 </div>
-<div class="section-label">Dostupné hry</div>
-<div class="grid">
-<a class="tile"  href="skoda-motorky.html" style="--tile-accent:#c94a0f;">
-    <div class="tile-wash"></div><div class="tile-bar"></div>
-    <div class="tile-icon">🚗</div>
-    <div class="tile-cat">Akční / Střílečka</div>
-    <div class="status live"><span class="status-dot"></span>Hrát hned</div>
-    <div class="tile-title">Škoda vs Motorky</div>
-    <div class="tile-desc">Braň svou Škodu proti nájezdům motorek. Shop systém, coin ekonomika, těžší vlny.</div>
-    <div class="tile-apps"><span class="app-badge">1 hráč</span><span class="app-badge">Mobilní</span><span class="app-badge">Shop & upgrades</span></div>
-    <div class="tile-arrow">↗</div>
-  </a>
-<a class="tile"  href="fotbal-liga.html" style="--tile-accent:#1247a8;">
-    <div class="tile-wash"></div><div class="tile-bar"></div>
-    <div class="tile-icon">⚽</div>
-    <div class="tile-cat">Sport / Fotbal</div>
-    <div class="status live"><span class="status-dot"></span>Hrát hned</div>
-    <div class="tile-title">Fortuna Liga 4v4</div>
-    <div class="tile-desc">Česká fotbalová liga v prohlížeči. Ligový mód, fyzika rohů, localStorage uložení.</div>
-    <div class="tile-apps"><span class="app-badge">Ligový mód</span><span class="app-badge">Ukládání</span></div>
-    <div class="tile-arrow">↗</div>
-  </a>
-<div class="tile coming-soon"  style="--tile-accent:#0a6644;">
-    <div class="tile-wash"></div><div class="tile-bar"></div>
-    <div class="tile-icon">🏆</div>
-    <div class="tile-cat">Sport / Kariéra</div>
-    <div class="status soon"><span class="status-dot"></span>Brzy</div>
-    <div class="tile-title">Football Career</div>
-    <div class="tile-desc">Kariérní fotbalová hra s kreslením cesty míče na canvas — Score Hero styl.</div>
-    <div class="tile-apps"><span class="app-badge">Canvas</span><span class="app-badge">Kariéra</span></div>
-    
-  </div>
-<div class="tile coming-soon"  style="--tile-accent:#6b28a0;">
-    <div class="tile-wash"></div><div class="tile-bar"></div>
-    <div class="tile-icon">📱</div>
-    <div class="tile-cat">Arkáda / Gyro</div>
-    <div class="status soon"><span class="status-dot"></span>Brzy</div>
-    <div class="tile-title">Gyroscope Runner</div>
-    <div class="tile-desc">Runner ovládaný náklonem telefonu přes gyroskop. Čistě mobilní zážitek.</div>
-    <div class="tile-apps"><span class="app-badge">Gyroskop</span><span class="app-badge">Pouze mobil</span></div>
-    
-  </div>
-<div class="tile coming-soon"  style="--tile-accent:#8a6200;">
-    <div class="tile-wash"></div><div class="tile-bar"></div>
-    <div class="tile-icon">🔢</div>
-    <div class="tile-cat">Vzdělávací / Fotbal</div>
-    <div class="status soon"><span class="status-dot"></span>Brzy</div>
-    <div class="tile-title">Fotbal Počítání</div>
-    <div class="tile-desc">Matematická hra pro děti — správnou odpovědí střílíš góly.</div>
-    <div class="tile-apps"><span class="app-badge">Pro děti</span><span class="app-badge">Matematika</span></div>
-    
+<div class="section-label">Spojení</div>
+<div style="max-width:1180px;margin:0 auto 3rem;padding:0 2rem;">
+  <div class="kontakt-card">
+    <div class="kontakt-row">
+      <div class="kontakt-icon">📧</div>
+      <div>
+        <div class="kontakt-label">Email</div>
+        <div class="kontakt-value"><a href="mailto:ondrejbroz27@gmail.com">ondrejbroz27@gmail.com</a></div>
+      </div>
+    </div>
+    <div class="kontakt-row">
+      <div class="kontakt-icon">📞</div>
+      <div>
+        <div class="kontakt-label">Telefon</div>
+        <div class="kontakt-value"><a href="tel:+420775727277">775 727 277</a></div>
+      </div>
+    </div>
+    <div class="kontakt-row">
+      <div class="kontakt-icon">💻</div>
+      <div>
+        <div class="kontakt-label">GitHub</div>
+        <div class="kontakt-value"><a href="https://github.com/ondrejbroz27-tech" target="_blank">ondrejbroz27-tech</a></div>
+      </div>
+    </div>
+    <div class="kontakt-row">
+      <div class="kontakt-icon">▶️</div>
+      <div>
+        <div class="kontakt-label">YouTube</div>
+        <div class="kontakt-value"><a href="https://youtube.com/@Brooz-g7" target="_blank">@Brooz-g7</a></div>
+      </div>
+    </div>
+    <div class="kontakt-row">
+      <div class="kontakt-icon">📍</div>
+      <div>
+        <div class="kontakt-label">Lokalita</div>
+        <div class="kontakt-value">Plzeňský kraj, ČR</div>
+      </div>
+    </div>
   </div>
 </div>
 <footer>
