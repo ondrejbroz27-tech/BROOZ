@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elektro vs Nafta — Kalkulačka nákladů</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Styrene+A:wght@400;500;700&family=Tiempos+Text:ital,wght@0,400;0,500;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f9f7f4;
+    --surface: #ffffff;
+    --surface2: #f4f2ee;
+    --border: #e8e4de;
+    --border-strong: #d4cfc8;
+    --ev-color: #0f7b5e;
+    --ev-light: #e6f4ef;
+    --diesel-color: #c0440a;
+    --diesel-light: #fdf0ea;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --text: #1a1816;
+    --text-muted: #7c756e;
+    --text-soft: #a09990;
+    --purchase: #2563eb;
+    --maintenance: #b45309;
+    --fuel: #0f7b5e;
+    --fuel-diesel: #c0440a;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.75rem 2.5rem;
+    position: relative;
+  }
+
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  h1 span.ev { color: var(--ev-color); }
+  h1 span.vs {
+    color: var(--text-soft);
+    font-style: normal;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    margin: 0 0.2rem;
+  }
+  h1 span.diesel { color: var(--diesel-color); }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: auto;
+  }
+
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+    margin-top: 0.9rem;
+  }
+
+  label:first-of-type { margin-top: 0; }
+
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--ev-color);
+    cursor: pointer;
+    height: 4px;
+  }
+
+  .range-val {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ev-color);
+  }
+
+  input[type=number], input[type=text], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input[type=number]:focus, input[type=text]:focus, select:focus {
+    border-color: var(--ev-color);
+    box-shadow: 0 0 0 3px rgba(15,123,94,0.1);
+    background: var(--surface);
+  }
+
+  select option { background: var(--surface); }
+
+  .moje-auto-card {
+    background: var(--surface);
+    border: 1.5px solid #bfcfef;
+    background: linear-gradient(135deg, #ffffff 0%, #f5f8ff 100%);
+  }
+
+  .moje-auto-card .card-title .dot { background: var(--accent); }
+
+  .graf-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .graf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .graf-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .years-toggle {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .yr-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.3rem 0.85rem;
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .yr-btn.active {
+    background: var(--ev-color);
+    color: #fff;
+    border-color: var(--ev-color);
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .legend-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  canvas { max-height: 420px; }
+
+  .km-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .km-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    color: var(--text);
+  }
+
+  .km-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .km-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    border-left: 3px solid var(--border-strong);
+    transition: transform 0.12s, box-shadow 0.12s;
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+  }
+
+  .km-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .km-card.ev { border-left-color: var(--ev-color); background: linear-gradient(135deg, #fff 0%, #f2faf7 100%); }
+  .km-card.diesel { border-left-color: var(--diesel-color); background: linear-gradient(135deg, #fff 0%, #fdf5f1 100%); }
+  .km-card.moje { border-left-color: var(--accent); background: linear-gradient(135deg, #fff 0%, #f4f7ff 100%); }
+
+  .km-car-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+  }
+
+  .km-badge {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.07em;
+  }
+
+  .km-badge.ev { background: var(--ev-light); color: var(--ev-color); }
+  .km-badge.diesel { background: var(--diesel-light); color: var(--diesel-color); }
+  .km-badge.moje { background: var(--accent-light); color: var(--accent); }
+
+  .km-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .km-unit {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .info-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .info-chip strong { color: var(--text); font-weight: 600; }
+
+  .divider-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 1.5rem 0 1rem;
+  }
+
+  .divider-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .note {
+    font-size: 0.74rem;
+    color: var(--text-soft);
+    margin-top: 0.5rem;
+    line-height: 1.6;
+  }
+
+  .note em { color: var(--ev-color); font-style: normal; font-weight: 500; }
+
+  /* ===== PIE / CHARGING ===== */
+  .charging-card { display: flex; flex-direction: column; }
+
+  .pie-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pie-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 0.8rem;
+  }
+
+  .pie-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .pie-wrap canvas { flex-shrink: 0; }
+
+  .pie-legend { display: flex; flex-direction: column; gap: 0.3rem; }
+
+  .pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .pie-legend-dot {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .pie-legend-val { font-weight: 600; color: var(--text); margin-left: auto; padding-left: 0.5rem; }
+
+  .pie-sliders { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .pie-slider-row {
+    display: grid;
+    grid-template-columns: 10px 58px 1fr 38px;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .pie-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  .pie-label { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+
+  .pie-pct {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+  }
+
+  .pie-slider-row input[type=range] { margin: 0; height: 3px; }
+
+  /* ===== TABS ===== */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.75rem;
+    background: var(--surface);
+    border-radius: 10px 10px 0 0;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .tab-btn {
+    padding: 0.8rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+
+  .tab-btn.active {
+    color: var(--ev-color);
+    border-bottom-color: var(--ev-color);
+    background: var(--surface);
+    font-weight: 600;
+  }
+
+  .tab-btn .tab-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ===== AUTA EDITOR ===== */
+  .auta-editor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .auta-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .auta-group-header {
+    padding: 0.8rem 1.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .auta-group-header.ev-header {
+    background: var(--ev-light);
+    color: var(--ev-color);
+    border-bottom: 1px solid #c5e8dc;
+  }
+
+  .auta-group-header.diesel-header {
+    background: var(--diesel-light);
+    color: var(--diesel-color);
+    border-bottom: 1px solid #f0d0be;
+  }
+
+  .auta-row {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .auta-row:last-child { border-bottom: none; }
+
+  .auta-row-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .auta-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .auta-field label {
+    font-size: 0.68rem;
+    color: var(--text-soft);
+    margin-bottom: 0.2rem;
+    margin-top: 0;
+  }
+
+  .auta-field input {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  .reset-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .reset-btn:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .reset-all-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 1rem;
+  }
+
+  .reset-all-btn:hover {
+    background: var(--border-strong);
+    color: var(--text);
+  }
+
+  .editor-note {
+    font-size: 0.75rem;
+    color: var(--text-soft);
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    line-height: 1.6;
+  }
+
+  .verdict-timing {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0.45rem 0 0.6rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .rec-verdict.buy  .verdict-timing { background: rgba(15,123,94,0.15);  color: #0a5c44; }
+  .rec-verdict.wait .verdict-timing { background: rgba(146,64,14,0.12);  color: #7c3a0e; }
+  .rec-verdict.no   .verdict-timing { background: rgba(153,27,27,0.12);  color: #991b1b; }
+
+  /* Mobile chart containers — scrollable on small screens */
+  .chart-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chart-scroll-wrap canvas {
+    min-width: 520px;  /* ensure chart stays readable on small screens */
+  }
+
+  /* Mobile legend — wrap tightly */
+  @media (max-width: 600px) {
+    .rec-legend { gap: 0.5rem; }
+    .rec-legend-item { font-size: 0.72rem; }
+    canvas { max-height: 260px !important; }
+    .rec-chart-title { font-size: 1rem; }
+    .rec-chart-sub { font-size: 0.72rem; }
+    .verdict-title { font-size: 1.2rem; }
+    .verdict-timing { font-size: 0.76rem; }
+    .verdict-desc { font-size: 0.8rem; }
+  }
+
+  /* ===== DOPORUČENÍ ===== */
+  .rec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .rec-verdict {
+    grid-column: 1 / -1;
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    border: 1.5px solid;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.2rem;
+  }
+
+  .rec-verdict.buy  { background: #f0faf6; border-color: #a7d9c8; }
+  .rec-verdict.wait { background: #fff9f0; border-color: #f5d49a; }
+  .rec-verdict.no   { background: #fff2f0; border-color: #f5b3a7; }
+
+  .verdict-icon { font-size: 2.2rem; line-height: 1; flex-shrink: 0; }
+
+  .verdict-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+  }
+
+  .verdict-title.buy   { color: #0f7b5e; }
+  .verdict-title.wait  { color: #92400e; }
+  .verdict-title.no    { color: #991b1b; }
+
+  .verdict-desc { font-size: 0.875rem; color: var(--text-muted); line-height: 1.65; }
+
+  .rec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .rec-card-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .rec-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .rec-stat:last-child { border-bottom: none; }
+  .rec-stat-label { color: var(--text-muted); }
+
+  .rec-stat-val {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .rec-stat-val.green { color: var(--ev-color); }
+  .rec-stat-val.red   { color: var(--diesel-color); }
+  .rec-stat-val.blue  { color: var(--accent); }
+
+  .rec-chart-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .rec-chart-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    margin-bottom: 0.4rem;
+  }
+
+  .rec-chart-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 1.2rem;
+  }
+
+  .rec-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.8rem;
+  }
+
+  .rec-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .rec-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .rec-legend-dash {
+    width: 18px; height: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .bullet-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .bullet-list li {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding-left: 1.1rem;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .bullet-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--text-soft);
+    font-size: 0.75rem;
+  }
+
+  .bullet-list li strong { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .rec-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .controls-grid { grid-template-columns: 1fr; }
+    main { padding: 1rem; }
+    header { padding: 1.25rem 1rem; }
+    h1 { font-size: 1.7rem; }
+    .subtitle { display: none; }
+    .auta-editor { grid-template-columns: 1fr; }
+    .auta-inputs { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1><span class="ev">Elektro</span> <span class="vs">vs</span> <span class="diesel">Nafta</span></h1>
+    <p class="subtitle">Kalkulačka celkových nákladů vlastnictví — rodinná auta, ČR 2024+</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('kalkulacka')" id="tab-kalkulacka">
+      <span class="tab-icon">📊</span> Kalkulačka
+    </button>
+    <button class="tab-btn" onclick="switchTab('auta')" id="tab-auta">
+      <span class="tab-icon">🚗</span> Úpravy aut
+    </button>
+    <button class="tab-btn" onclick="switchTab('doporuceni')" id="tab-doporuceni">
+      <span class="tab-icon">💡</span> Kdy koupit?
+    </button>
+  </div>
+
+  <!-- TAB 1: Kalkulačka -->
+  <div class="tab-panel active" id="panel-kalkulacka">
+
+    <!-- Info chips -->
+    <div class="info-row" id="info-chips"></div>
+
+    <!-- Controls -->
+    <div class="controls-grid">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--ev-color)"></span>Parametry jízdy</div>
+
+        <label>Roční nájezd: <span class="range-val" id="km-val">25 000 km</span></label>
+        <input type="range" min="22000" max="27000" step="500" value="25000" id="km-slider" oninput="update()">
+
+        <label>Horizont porovnání: <span class="range-val" id="yr-val">5 let</span></label>
+        <input type="range" min="1" max="15" step="1" value="5" id="yr-slider" oninput="update()">
+      </div>
+
+      <div class="card charging-card">
+        <div class="card-title"><span class="dot" style="background:var(--fuel)"></span>Ceny energií</div>
+
+        <label>Cena nafty (Kč/l)</label>
+        <input type="number" id="nafta-price" value="37" step="0.5" oninput="update()">
+
+        <label>Cena el. ze sítě (Kč/kWh)</label>
+        <input type="number" id="el-price" value="5" step="0.1" oninput="update()">
+
+        <label>Cena el. ze solárů (Kč/kWh)</label>
+        <input type="number" id="solar-price" value="0.5" step="0.1" oninput="update()">
+
+        <label>Cena rychlonabíjení (Kč/kWh)</label>
+        <input type="number" id="fast-price" value="12" step="0.5" oninput="update()">
+
+        <div class="pie-section">
+          <div class="pie-title">Podíl zdrojů nabíjení elektroaut</div>
+          <div class="pie-wrap">
+            <canvas id="pieChart" width="130" height="130"></canvas>
+            <div class="pie-legend" id="pie-legend"></div>
+          </div>
+          <div class="pie-sliders">
+            <div class="pie-slider-row">
+              <span class="pie-dot" style="background:#0f7b5e"></span>
+              <span class="pie-label">☀️ Solár</span>
+              <input type="range" min="0" max="100" step="5" value="50" id="share-solar" oninput="onShareChange('solar')">
+              <span class="pie-pct" id="pct-solar">50 %</span>
+            </div>
+            <div class="pie-slider-row">
+              <span class="pie-dot" style="background:#2563eb"></span>
+              <span class="pie-label">🔌 Síť</span>
+              <input type="range" min="0" max="100" step="5" value="40" id="share-grid" oninput="onShareChange('grid')">
+              <span class="pie-pct" id="pct-grid">40 %</span>
+            </div>
+            <div class="pie-slider-row">
+              <span class="pie-dot" style="background:#dc2626"></span>
+              <span class="pie-label">⚡ Rychlo</span>
+              <input type="range" min="0" max="100" step="5" value="10" id="share-fast" oninput="onShareChange('fast')">
+              <span class="pie-pct" id="pct-fast">10 %</span>
+            </div>
+          </div>
+          <p class="note">Ztráta nabíjení: <em>12 %</em> · Průměrná cena: <em id="avg-el-note">—</em></p>
+        </div>
+      </div>
+
+      <div class="card moje-auto-card">
+        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Moje současné auto</div>
+
+        <label>Název / model</label>
+        <input type="text" id="my-name" value="Moje naftové auto" oninput="update()">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+          <div>
+            <label>Rok výroby (RV)</label>
+            <input type="number" id="my-year" value="2017" step="1" min="1990" max="2025" oninput="update()">
+          </div>
+          <div>
+            <label>Celkový nájezd (km)</label>
+            <input type="number" id="my-km-total" value="130000" step="5000" oninput="update()">
+          </div>
+        </div>
+
+        <label>Aktuální tržní cena (Kč)</label>
+        <input type="number" id="my-price" value="450000" step="10000" oninput="update()">
+
+        <label>Spotřeba nafty (l/100 km)</label>
+        <input type="number" id="my-cons" value="6.5" step="0.1" oninput="update()">
+
+        <label>Roční servis + údržba (Kč)</label>
+        <input type="number" id="my-service" value="15000" step="1000" oninput="update()">
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="graf-section">
+      <div class="graf-header">
+        <div class="graf-title">Celkové náklady vlastnictví</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--purchase)"></div>Pořizovací cena</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--maintenance)"></div>Údržba & servis</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--fuel)"></div>Elektřina / palivo</div>
+      </div>
+      <div class="chart-scroll-wrap">
+        <div style="position:relative; height:400px; min-width:600px;">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cena na km -->
+    <div class="km-section">
+      <div class="km-title">Cena na 1 km</div>
+      <div class="km-grid" id="km-grid"></div>
+    </div>
+
+  </div><!-- /panel-kalkulacka -->
+
+  <!-- TAB 2: Úpravy aut -->
+  <div class="tab-panel" id="panel-auta">
+
+    <div class="editor-note">
+      Zde můžeš upravit <strong>pořizovací cenu, roční údržbu a spotřebu</strong> každého auta dle aktuální nabídky nebo tvých konkrétních podmínek. Změny se ihned promítnou do grafu a výpočtů na záložce Kalkulačka.
+    </div>
+
+    <div class="auta-editor" id="auta-editor"></div>
+
+    <button class="reset-all-btn" onclick="resetAll()">↺ Obnovit výchozí hodnoty všech aut</button>
+
+  </div><!-- /panel-auta -->
+
+  <!-- TAB 3: Doporučení -->
+  <div class="tab-panel" id="panel-doporuceni">
+    <div id="rec-content"><!-- filled by JS --></div>
+  </div><!-- /panel-doporuceni -->
+
+</main>
+
+<script>
+// ==================== DATA ====================
+const AUTA_DEFAULT = [
+  // EV
+  { id:'skoda-ev', name:'Škoda Enyaq 85',       type:'ev',     purchase:1150000, maintenance_yr:8000,  consumption:17.5 },
+  { id:'vw-ev',    name:'VW ID.4 Pro',           type:'ev',     purchase:1090000, maintenance_yr:8500,  consumption:18.0 },
+  { id:'audi-ev',  name:'Audi Q4 e-tron',        type:'ev',     purchase:1380000, maintenance_yr:10000, consumption:19.0 },
+  { id:'tesla-ev', name:'Tesla Model Y',          type:'ev',     purchase:1150000, maintenance_yr:7000,  consumption:16.5 },
+  { id:'mb-ev',    name:'Mercedes EQC',           type:'ev',     purchase:1650000, maintenance_yr:12000, consumption:21.0 },
+  // Diesel
+  { id:'skoda-d',  name:'Škoda Octavia 2.0 TDI', type:'diesel', purchase:850000,  maintenance_yr:18000, consumption:5.8 },
+  { id:'vw-d',     name:'VW Passat 2.0 TDI',     type:'diesel', purchase:920000,  maintenance_yr:19000, consumption:6.2 },
+  { id:'audi-d',   name:'Audi A4 2.0 TDI',       type:'diesel', purchase:1100000, maintenance_yr:22000, consumption:6.5 },
+  { id:'mb-d',     name:'Mercedes C 220d',        type:'diesel', purchase:1250000, maintenance_yr:24000, consumption:6.8 },
+];
+
+// Working copy — values here are edited by user
+let AUTA = AUTA_DEFAULT.map(a => ({...a}));
+
+let chart = null;
+
+// ==================== TABS ====================
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'doporuceni') buildRecommendation();
+}
+
+// ==================== CAR EDITOR ====================
+function buildEditor() {
+  const container = document.getElementById('auta-editor');
+  const evCars    = AUTA.filter(c => c.type === 'ev');
+  const dieselCars = AUTA.filter(c => c.type === 'diesel');
+
+  function carRows(cars) {
+    return cars.map(car => {
+      const def = AUTA_DEFAULT.find(d => d.id === car.id);
+      return `
+        <div class="auta-row" id="row-${car.id}">
+          <div>
+            <div class="auta-row-name">${car.name}</div>
+            <div class="auta-inputs">
+              <div class="auta-field">
+                <label>Pořizovací cena (Kč)</label>
+                <input type="number" step="10000"
+                  value="${car.purchase}"
+                  id="ed-purchase-${car.id}"
+                  oninput="onCarEdit('${car.id}')"
+                >
+              </div>
+              <div class="auta-field">
+                <label>Roční údržba (Kč)</label>
+                <input type="number" step="500"
+                  value="${car.maintenance_yr}"
+                  id="ed-maint-${car.id}"
+                  oninput="onCarEdit('${car.id}')"
+                >
+              </div>
+              <div class="auta-field">
+                <label>${car.type === 'ev' ? 'Spotřeba (kWh/100 km)' : 'Spotřeba (l/100 km)'}</label>
+                <input type="number" step="0.1"
+                  value="${car.consumption}"
+                  id="ed-cons-${car.id}"
+                  oninput="onCarEdit('${car.id}')"
+                >
+              </div>
+            </div>
+          </div>
+          <button class="reset-btn" onclick="resetCar('${car.id}')" title="Obnovit výchozí hodnoty">↺ Reset</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="auta-group">
+      <div class="auta-group-header ev-header">⚡ Elektrická auta</div>
+      ${carRows(evCars)}
+    </div>
+    <div class="auta-group">
+      <div class="auta-group-header diesel-header">⛽ Naftová auta</div>
+      ${carRows(dieselCars)}
+    </div>
+  `;
+}
+
+function onCarEdit(id) {
+  const car = AUTA.find(c => c.id === id);
+  if (!car) return;
+  const p = +document.getElementById('ed-purchase-' + id).value;
+  const m = +document.getElementById('ed-maint-'    + id).value;
+  const c = +document.getElementById('ed-cons-'     + id).value;
+  if (!isNaN(p) && p > 0) car.purchase = p;
+  if (!isNaN(m) && m >= 0) car.maintenance_yr = m;
+  if (!isNaN(c) && c > 0) car.consumption = c;
+  update();
+}
+
+function resetCar(id) {
+  const def = AUTA_DEFAULT.find(d => d.id === id);
+  const car = AUTA.find(c => c.id === id);
+  Object.assign(car, {...def});
+  document.getElementById('ed-purchase-' + id).value = def.purchase;
+  document.getElementById('ed-maint-'    + id).value = def.maintenance_yr;
+  document.getElementById('ed-cons-'     + id).value = def.consumption;
+  update();
+}
+
+function resetAll() {
+  AUTA = AUTA_DEFAULT.map(a => ({...a}));
+  buildEditor();
+  update();
+}
+
+// ==================== CHARGING SHARES ====================
+let shares = { solar: 50, grid: 40, fast: 10 }; // percentages, must sum to 100
+let pieChart = null;
+
+function onShareChange(changed) {
+  const solar = +document.getElementById('share-solar').value;
+  const grid  = +document.getElementById('share-grid').value;
+  const fast  = +document.getElementById('share-fast').value;
+
+  // Clamp so sum = 100: adjust the OTHER two proportionally
+  const others = { solar: ['grid','fast'], grid: ['solar','fast'], fast: ['solar','grid'] };
+  const changedVal = changed === 'solar' ? solar : changed === 'grid' ? grid : fast;
+  const remainder = 100 - changedVal;
+
+  const [a, b] = others[changed];
+  const aVal = +document.getElementById('share-' + a).value;
+  const bVal = +document.getElementById('share-' + b).value;
+  const otherSum = aVal + bVal;
+
+  let newA, newB;
+  if (otherSum === 0) {
+    newA = Math.round(remainder / 2);
+    newB = remainder - newA;
+  } else {
+    newA = Math.round((aVal / otherSum) * remainder);
+    newB = remainder - newA;
+  }
+
+  shares = { solar: changed==='solar'?changedVal:a==='solar'?newA:newB,
+             grid:  changed==='grid' ?changedVal:a==='grid' ?newA:newB,
+             fast:  changed==='fast' ?changedVal:a==='fast' ?newA:newB };
+
+  // Clamp negatives
+  shares.solar = Math.max(0, shares.solar);
+  shares.grid  = Math.max(0, shares.grid);
+  shares.fast  = Math.max(0, shares.fast);
+
+  document.getElementById('share-solar').value = shares.solar;
+  document.getElementById('share-grid').value  = shares.grid;
+  document.getElementById('share-fast').value  = shares.fast;
+
+  document.getElementById('pct-solar').textContent = shares.solar + ' %';
+  document.getElementById('pct-grid').textContent  = shares.grid  + ' %';
+  document.getElementById('pct-fast').textContent  = shares.fast  + ' %';
+
+  updatePie();
+  update();
+}
+
+function updatePie() {
+  const p = getParams();
+  const data = [shares.solar, shares.grid, shares.fast];
+  const colors = ['#0f7b5e', '#2563eb', '#dc2626'];
+  const labels = ['☀️ Solár', '🔌 Síť', '⚡ Rychlo'];
+  const prices = [p.solarPrice, p.elPrice, p.fastPrice];
+
+  if (pieChart) pieChart.destroy();
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff', hoverOffset: 4 }]
+    },
+    options: {
+      responsive: false,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#fff',
+          borderColor: '#e8e4de',
+          borderWidth: 1,
+          titleColor: '#1a1816',
+          bodyColor: '#7c756e',
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw} % · ${prices[ctx.dataIndex].toFixed(2)} Kč/kWh`
+          }
+        }
+      }
+    }
+  });
+
+  // Legend
+  const avgEl = avgElPrice(p);
+  document.getElementById('pie-legend').innerHTML = labels.map((l,i) => `
+    <div class="pie-legend-item">
+      <div class="pie-legend-dot" style="background:${colors[i]}"></div>
+      <span>${l}</span>
+      <span class="pie-legend-val">${data[i]} %</span>
+    </div>
+  `).join('');
+
+  document.getElementById('avg-el-note').textContent = avgEl.toFixed(2).replace('.',',') + ' Kč/kWh';
+}
+
+function avgElPrice(p) {
+  return (shares.solar/100)*p.solarPrice + (shares.grid/100)*p.elPrice + (shares.fast/100)*p.fastPrice;
+}
+
+// ==================== CALC ====================
+function getParams() {
+  return {
+    km:        +document.getElementById('km-slider').value,
+    years:     +document.getElementById('yr-slider').value,
+    naftaPrice:+document.getElementById('nafta-price').value,
+    elPrice:   +document.getElementById('el-price').value,
+    solarPrice:+document.getElementById('solar-price').value,
+    fastPrice: +document.getElementById('fast-price').value,
+    myName:     document.getElementById('my-name').value || 'Moje auto',
+    myYear:    +document.getElementById('my-year').value || 2017,
+    myKmTotal: +document.getElementById('my-km-total').value || 130000,
+    myPrice:   +document.getElementById('my-price').value,
+    myCons:    +document.getElementById('my-cons').value,
+    myService: +document.getElementById('my-service').value,
+  };
+}
+
+function calcEV(car, p) {
+  const CHARGING_LOSS = 1.12;
+  const avg = avgElPrice(p);
+  const fuelCostKm = (car.consumption / 100) * CHARGING_LOSS * avg;
+  const fuelTotal  = fuelCostKm * p.km * p.years;
+  const maintTotal = car.maintenance_yr * p.years;
+  return { purchase: car.purchase, maintenance: maintTotal, fuel: fuelTotal,
+           total: car.purchase + maintTotal + fuelTotal, fuelCostKm };
+}
+
+function calcDiesel(car, p) {
+  const fuelCostKm = (car.consumption / 100) * p.naftaPrice;
+  const fuelTotal  = fuelCostKm * p.km * p.years;
+  const maintTotal = car.maintenance_yr * p.years;
+  return { purchase: car.purchase, maintenance: maintTotal, fuel: fuelTotal,
+           total: car.purchase + maintTotal + fuelTotal, fuelCostKm };
+}
+
+function calcMoje(p) {
+  const fuelCostKm = (p.myCons / 100) * p.naftaPrice;
+  const fuelTotal  = fuelCostKm * p.km * p.years;
+  const maintTotal = p.myService * p.years;
+  return { purchase: p.myPrice, maintenance: maintTotal, fuel: fuelTotal,
+           total: p.myPrice + maintTotal + fuelTotal, fuelCostKm };
+}
+
+function fmt(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(2).replace('.',',') + ' M Kč';
+  return Math.round(n).toLocaleString('cs-CZ') + ' Kč';
+}
+
+// ==================== UPDATE ====================
+function update() {
+  const p = getParams();
+
+  document.getElementById('km-val').textContent = p.km.toLocaleString('cs-CZ') + ' km';
+  document.getElementById('yr-val').textContent = p.years + (p.years === 1 ? ' rok' : p.years < 5 ? ' roky' : ' let');
+
+  const avg = avgElPrice(p);
+  document.getElementById('info-chips').innerHTML = `
+    <div class="info-chip">⛽ Nafta <strong>${p.naftaPrice} Kč/l</strong></div>
+    <div class="info-chip">⚡ Průměrná el. <strong>${avg.toFixed(2).replace('.',',')} Kč/kWh</strong></div>
+    <div class="info-chip">🔋 Ztráta nabíjení <strong>12 %</strong></div>
+    <div class="info-chip">☀️ <strong>${shares.solar} %</strong> solár · 🔌 <strong>${shares.grid} %</strong> síť · ⚡ <strong>${shares.fast} %</strong> rychlo</div>
+    <div class="info-chip">📅 Horizont <strong>${p.years} ${p.years===1?'rok':p.years<5?'roky':'let'}</strong></div>
+    <div class="info-chip">🛣️ Nájezd <strong>${p.km.toLocaleString('cs-CZ')} km/rok</strong></div>
+    <div class="info-chip">🚗 Stáv. auto <strong>RV ${p.myYear}</strong> · <strong>${(p.myKmTotal||0).toLocaleString('cs-CZ')} km</strong></div>
+  `;
+  updatePie();
+  // Refresh recommendation panel if visible
+  if (document.getElementById('panel-doporuceni').classList.contains('active')) {
+    buildRecommendation();
+  }
+
+  const labels = [], purchaseData = [], maintData = [], fuelData = [], carTypes = [], carsCalc = [];
+
+  AUTA.forEach(car => {
+    const calc = car.type === 'ev' ? calcEV(car, p) : calcDiesel(car, p);
+    labels.push(car.name);
+    purchaseData.push(calc.purchase);
+    maintData.push(calc.maintenance);
+    fuelData.push(calc.fuel);
+    carTypes.push(car.type);
+    carsCalc.push({ ...calc, name: car.name, type: car.type });
+  });
+
+  // Moje auto
+  const mojeCalc = calcMoje(p);
+  labels.push(p.myName);
+  purchaseData.push(mojeCalc.purchase);
+  maintData.push(mojeCalc.maintenance);
+  fuelData.push(mojeCalc.fuel);
+  carTypes.push('moje');
+  carsCalc.push({ ...mojeCalc, name: p.myName, type: 'moje' });
+
+  const purchaseColors = carTypes.map(t => t === 'ev' ? 'rgba(37,99,235,0.85)' : t === 'moje' ? 'rgba(37,99,235,0.55)' : 'rgba(37,99,235,0.65)');
+  const maintColors    = carTypes.map(() => 'rgba(180,83,9,0.82)');
+  const fuelColors     = carTypes.map(t => t === 'ev' ? 'rgba(15,123,94,0.85)' : 'rgba(192,68,10,0.85)');
+
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Pořizovací cena', data:purchaseData, backgroundColor:purchaseColors, borderRadius:4, stack:'stack' },
+        { label:'Údržba & servis', data:maintData,    backgroundColor:maintColors,    borderRadius:4, stack:'stack' },
+        { label:'Palivo / elektřina', data:fuelData,  backgroundColor:fuelColors,     borderRadius:4, borderSkipped:false, stack:'stack' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: '#e8e4de',
+          borderWidth: 1,
+          titleColor: '#1a1816',
+          bodyColor: '#7c756e',
+          padding: 12,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('cs-CZ')} Kč`,
+            footer: items => `Celkem: ${Math.round(items.reduce((s,i)=>s+i.raw,0)).toLocaleString('cs-CZ')} Kč`
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color:'#a09990', font:{family:'DM Sans',size:10}, maxRotation:50, minRotation:30, autoSkip:false },
+          grid: { color:'rgba(232,228,222,0.8)' }
+        },
+        y: {
+          stacked: true,
+          min: 0,
+          ticks: {
+            color:'#a09990', font:{family:'DM Sans',size:11}, maxTicksLimit:7,
+            callback: v => v>=1e6?(v/1e6).toFixed(2).replace('.',',')+'M':v>=1000?(v/1000).toFixed(0)+'k':v
+          },
+          grid: { color:'rgba(232,228,222,0.8)' }
+        }
+      }
+    }
+  });
+
+  // KM cards
+  const sorted = [...carsCalc].sort((a,b) => {
+    return (a.total/(p.km*p.years)) - (b.total/(p.km*p.years));
+  });
+  document.getElementById('km-grid').innerHTML = sorted.map(car => {
+    const costPerKm = car.total / (p.km * p.years);
+    const tc = car.type === 'ev' ? 'ev' : car.type === 'moje' ? 'moje' : 'diesel';
+    const tl = car.type === 'ev' ? 'ELEKTRO' : car.type === 'moje' ? 'MOJE AUTO' : 'NAFTA';
+    return `
+      <div class="km-card ${tc}">
+        <div class="km-car-name">${car.name}</div>
+        <div><span class="km-badge ${tc}">${tl}</span></div>
+        <div class="km-value">${costPerKm.toFixed(2).replace('.',',')} Kč</div>
+        <div class="km-unit">na km · celkem ${fmt(car.total)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== DOPORUČENÍ ====================
+let recLineChart = null;
+let recBarChart  = null;
+
+function getRecParams() {
+  const p = getParams();
+  const currentYear = 2025;
+  const myYear = +document.getElementById('my-year').value || 2017;
+  const myKmTotal = +document.getElementById('my-km-total').value || 130000;
+  const carAge = currentYear - myYear;
+  return { ...p, myYear, myKmTotal, carAge, currentYear };
+}
+
+// Depreciation model for current diesel car (% residual value vs age)
+// Based on Czech secondary market data
+function dieselResidual(ageYears, kmTotal) {
+  // Base depreciation curve
+  const ageFactor = Math.pow(0.84, ageYears);        // ~16% per year compound
+  const kmFactor  = Math.max(0.3, 1 - (kmTotal / 500000)); // 0 value at 500k km
+  return Math.min(1, ageFactor * 0.95 + (1 - ageFactor) * kmFactor * 0.4);
+}
+
+// Future repair risk cost (annual, increases with age & km)
+function annualRepairRisk(ageYears, kmTotal) {
+  const baseRisk = 8000;
+  const ageMult  = Math.pow(1.12, Math.max(0, ageYears - 4)); // risk rises from age 4
+  const kmMult   = 1 + (kmTotal / 300000);
+  return Math.round(baseRisk * ageMult * kmMult);
+}
+
+// EV secondary market price projection — EVs depreciate faster early, then flatten
+function evResidualPrice(originalPrice, ageYears) {
+  // Heavy drop in first 3 years (~35%), then slower
+  const curve = Math.pow(0.82, Math.min(ageYears, 3)) * Math.pow(0.93, Math.max(0, ageYears - 3));
+  return originalPrice * curve;
+}
+
+function buildRecommendation() {
+  const p = getRecParams();
+  if (!document.getElementById('rec-content')) return;
+
+  const currentYear = p.currentYear;
+  const horizonYears = 10; // fixed 10yr horizon for recommendation
+  const annualKm = p.km;
+
+  // --- MY CAR projections ---
+  const myCurrentValue = p.myPrice;
+  const myCurrentAge   = p.carAge;
+  const myCurrentKm    = p.myKmTotal;
+
+  // Best EV candidate (cheapest per km from AUTA)
+  const avg = avgElPrice(p);
+  const bestEV = AUTA.filter(c => c.type === 'ev').reduce((best, car) => {
+    const costKm = (car.consumption / 100) * 1.12 * avg;
+    const bestKm = (best.consumption / 100) * 1.12 * avg;
+    return costKm < bestKm ? car : best;
+  });
+
+  // Best diesel candidate (lowest total cost per km)
+  const bestDiesel = AUTA.filter(c => c.type === 'diesel').reduce((best, car) => {
+    const costKm = (car.consumption / 100) * p.naftaPrice + car.maintenance_yr / annualKm;
+    const bestKm = (best.consumption / 100) * p.naftaPrice + best.maintenance_yr / annualKm;
+    return costKm < bestKm ? car : best;
+  });
+
+  // Diesel secondary market residual (new diesel, starts at 100%)
+  function newDieselResidual(ageYears) {
+    return Math.pow(0.83, ageYears); // ~17% per year
+  }
+
+  // Build year-by-year data
+  const years      = Array.from({length: horizonYears + 1}, (_, i) => currentYear + i);
+  const myCarValue = [];
+  const myTotalCost = [];           // cumulative running cost (provoz only)
+  const myTotalCostShifted = [];    // cumulative total with current car value as start (= co máš investováno)
+  const evTotalCostBuyNow = [];
+  const evTotalCostBuy2   = [];
+  const evTotalCostBuy4   = [];
+  const myRepairRisk       = [];
+  const evSecondaryPrice   = [];    // best EV secondary market price
+  const bestDieselTotal    = [];    // best diesel car: purchase + cumulative running costs
+  const bestDieselValue    = [];    // best diesel car residual value over time
+
+  let cumKeep   = 0;
+  let cumBuyNow = 0;
+  let cumBuy2   = 0;
+  let cumBuy4   = 0;
+  let cumBestDiesel = 0;
+
+  const evFuelKm      = (bestEV.consumption / 100) * 1.12 * avg;
+  const dslFuelKm     = (p.myCons / 100) * p.naftaPrice;
+  const bestDslFuelKm = (bestDiesel.consumption / 100) * p.naftaPrice;
+
+  for (let i = 0; i <= horizonYears; i++) {
+    const age   = myCurrentAge + i;
+    const kmTot = myCurrentKm + annualKm * i;
+    const resid = dieselResidual(age, kmTot);
+    const val   = Math.round(myCurrentValue * (resid / dieselResidual(myCurrentAge, myCurrentKm)));
+    myCarValue.push(val);
+    evSecondaryPrice.push(Math.round(evResidualPrice(bestEV.purchase, i)));
+
+    // Best diesel car residual
+    const bdVal = Math.round(bestDiesel.purchase * newDieselResidual(i));
+    bestDieselValue.push(bdVal);
+
+    const repRisk = annualRepairRisk(age, kmTot);
+    myRepairRisk.push(repRisk);
+
+    if (i > 0) {
+      // Keep current car: fuel + service + repair risk
+      cumKeep += dslFuelKm * annualKm + p.myService + repRisk;
+      // Buy EV now
+      cumBuyNow += evFuelKm * annualKm + bestEV.maintenance_yr;
+      // Buy EV in 2 years
+      cumBuy2 += i <= 2
+        ? dslFuelKm * annualKm + p.myService + repRisk
+        : evFuelKm * annualKm + bestEV.maintenance_yr;
+      // Buy EV in 4 years
+      cumBuy4 += i <= 4
+        ? dslFuelKm * annualKm + p.myService + repRisk
+        : evFuelKm * annualKm + bestEV.maintenance_yr;
+      // Best diesel annual: fuel + maintenance (no repair risk for new car first 4 years)
+      cumBestDiesel += bestDslFuelKm * annualKm + bestDiesel.maintenance_yr
+        + (i > 4 ? annualRepairRisk(i, annualKm * i) * 0.5 : 0); // half risk for new car
+    }
+
+    myTotalCost.push(Math.round(cumKeep));
+    // Shifted: include current car value as starting investment
+    myTotalCostShifted.push(Math.round(myCurrentValue + cumKeep));
+
+    evTotalCostBuyNow.push(i === 0 ? bestEV.purchase : Math.round(bestEV.purchase + cumBuyNow));
+    const evPriceIn2 = Math.round(evResidualPrice(bestEV.purchase * 0.95, 2));
+    const evPriceIn4 = Math.round(evResidualPrice(bestEV.purchase * 0.90, 4));
+    evTotalCostBuy2.push(i < 2
+      ? Math.round(myCurrentValue + cumBuy2)
+      : Math.round(evPriceIn2 - Math.max(0, val) + myCurrentValue + cumBuy2));
+    evTotalCostBuy4.push(i < 4
+      ? Math.round(myCurrentValue + cumBuy4)
+      : Math.round(evPriceIn4 - Math.max(0, val) + myCurrentValue + cumBuy4));
+    // Best diesel: purchase + running costs (offset by selling current car)
+    bestDieselTotal.push(Math.round(bestDiesel.purchase - myCurrentValue + myCurrentValue + cumBestDiesel));
+  }
+
+  // --- VERDICT LOGIC ---
+  const cost5now   = evTotalCostBuyNow[5];
+  const cost5keep  = myTotalCostShifted[5];
+  const cost10now  = evTotalCostBuyNow[10];
+  const cost10keep = myTotalCostShifted[10];
+
+  const evWinsAt5  = cost5now  < cost5keep;
+  const evWinsAt10 = cost10now < cost10keep;
+  const carTooOld  = myCurrentAge >= 10 || myCurrentKm >= 200000;
+  const carGoodAge = myCurrentAge <= 4  && myCurrentKm <= 80000;
+
+  // Break-even: when does shifted EV cost line cross shifted keep-car line?
+  let breakEven = null;
+  for (let i = 1; i <= horizonYears; i++) {
+    if (evTotalCostBuyNow[i] <= myTotalCostShifted[i]) { breakEven = i; break; }
+  }
+  const breakEvenYear = breakEven ? currentYear + breakEven : null;
+
+  // Find optimal buy year: year when cumulative EV cost first beats keep-car by most
+  let optimalBuyOffset = 0;
+  let bestDiff = Infinity;
+  for (let offset = 0; offset <= 5; offset++) {
+    // Cost if we buy EV at 'offset' years from now
+    let cum = 0;
+    for (let i = 1; i <= horizonYears; i++) {
+      cum += i <= offset
+        ? dslFuelKm * annualKm + p.myService + annualRepairRisk(myCurrentAge + i, myCurrentKm + annualKm * i)
+        : evFuelKm * annualKm + bestEV.maintenance_yr;
+    }
+    const evPriceAtOffset = offset === 0
+      ? bestEV.purchase
+      : Math.round(evResidualPrice(bestEV.purchase * (1 - offset * 0.02), offset));
+    const totalAtOffset = myCurrentValue + cum + evPriceAtOffset - (offset > 0 ? myCarValue[offset] : 0);
+    if (totalAtOffset < bestDiff) { bestDiff = totalAtOffset; optimalBuyOffset = offset; }
+  }
+  const optimalBuyYear = currentYear + optimalBuyOffset;
+  const optimalBuyLabel = optimalBuyOffset === 0
+    ? `ihned (${currentYear})`
+    : `za ${optimalBuyOffset} ${optimalBuyOffset === 1 ? 'rok' : optimalBuyOffset < 5 ? 'roky' : 'let'} — v roce ${optimalBuyYear}`;
+
+  // Concrete recommendation text
+  let verdict, verdictClass, verdictIcon, verdictDesc, verdictTiming;
+
+  if (carTooOld) {
+    verdict = 'Přejít na elektro — doporučeno ihned'; verdictClass = 'buy'; verdictIcon = '✅';
+    verdictTiming = `Nejlepší čas nákupu EV: ihned, nejpozději do ${currentYear + 1}`;
+    verdictDesc = `Vaše auto (${myCurrentAge} let, ${myCurrentKm.toLocaleString('cs-CZ')} km) se blíží hranici spolehlivosti — riziko oprav výrazně roste a tržní hodnota rychle klesá. Každý odložený rok prodraží přechod na EV.
+      ${breakEvenYear ? `Break-even nastane přibližně v roce <strong>${breakEvenYear}</strong> (za ${breakEven} let).` : ''}
+      Optimální čas nákupu: <strong>${optimalBuyLabel}</strong>.`;
+  } else if (carGoodAge && !evWinsAt5) {
+    verdictTiming = `Nejlepší čas nákupu EV: rok ${optimalBuyYear} (za ${optimalBuyOffset} ${optimalBuyOffset < 5 ? 'roky' : 'let'})`;
+    verdict = `Počkejte — doporučený nákup v roce ${optimalBuyYear}`; verdictClass = 'wait'; verdictIcon = '⏳';
+    verdictDesc = `Vaše auto je relativně nové a spolehlivé. Přechod na EV se při aktuálních parametrech vyplatí nejvíce za <strong>${optimalBuyOffset} ${optimalBuyOffset === 1 ? 'rok' : 'roky'}</strong>, tedy v roce <strong>${optimalBuyYear}</strong>.
+      Do té doby EV technologie dozraje a ceny ojetých EV klesnou.
+      ${breakEvenYear ? `Break-even (EV vs stávající auto) nastane v roce <strong>${breakEvenYear}</strong>.` : 'Break-even nastane po roce 2035.'}`;
+  } else if (evWinsAt5) {
+    verdictTiming = `Nejlepší čas nákupu EV: ${optimalBuyLabel}`;
+    verdict = `Vhodný čas — ideálně koupit ${optimalBuyOffset === 0 ? 'nyní' : 'do roku ' + optimalBuyYear}`; verdictClass = 'buy'; verdictIcon = '🟢';
+    verdictDesc = `Při nájezdu <strong>${annualKm.toLocaleString('cs-CZ')} km/rok</strong> a aktuálních cenách energií se EV vyplatí.
+      Optimální nákup: <strong>${optimalBuyLabel}</strong>.
+      Break-even oproti stávajícímu autu nastane ${breakEvenYear ? `v roce <strong>${breakEvenYear}</strong> (za ${breakEven} let)` : 'po roce 2035'}.
+      Nízké provozní náklady EV kompenzují vyšší pořizovací cenu přibližně po ${breakEven ?? '> 10'} letech.`;
+  } else {
+    verdictTiming = `Nejlepší čas nákupu EV: rok ${optimalBuyYear} (za ${optimalBuyOffset} ${optimalBuyOffset < 5 ? 'roky' : 'let'})`;
+    verdict = `Zvažte nákup v roce ${optimalBuyYear}`; verdictClass = 'wait'; verdictIcon = '⏳';
+    verdictDesc = `Analýza naznačuje přesunout se na EV v roce <strong>${optimalBuyYear}</strong> (za ${optimalBuyOffset} ${optimalBuyOffset === 1 ? 'rok' : 'roky'}).
+      Do té doby stávající auto ještě výhodně slouží — jeho roční náklady jsou nižší než u nového EV.
+      ${breakEvenYear ? `Break-even nastane v roce <strong>${breakEvenYear}</strong>.` : 'Break-even nastane po roce 2035.'}
+      Sledujte vývoj cen EV — pokles o 10 % může break-even posunout o 1–2 roky dříve.`;
+  }
+
+  // Current car analysis
+  const currentRepRisk = annualRepairRisk(myCurrentAge, myCurrentKm);
+  const valueIn3 = myCarValue[3];
+  const valueIn5 = myCarValue[5];
+  const valueLoss3 = myCurrentValue - valueIn3;
+  const ann5kmCost = (myCurrentValue - valueIn5 + myTotalCost[5]) / 5;
+
+  // Savings needed
+  const evSavingsNeeded = Math.max(0, bestEV.purchase - myCurrentValue);
+  const monthlySavingsNeeded2yr = Math.round(evSavingsNeeded / 24);
+  const monthlySavingsNeeded4yr = Math.round(evSavingsNeeded / 48);
+
+  // --- RENDER ---
+  const recContent = document.getElementById('rec-content');
+
+  recContent.innerHTML = `
+    <div class="rec-grid">
+      <div class="rec-verdict ${verdictClass}">
+        <div class="verdict-icon">${verdictIcon}</div>
+        <div>
+          <div class="verdict-title ${verdictClass}">${verdict}</div>
+          <div class="verdict-timing">${verdictTiming}</div>
+          <div class="verdict-desc">${verdictDesc}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line chart: value & cumulative costs -->
+    <div class="rec-chart-section">
+      <div class="rec-chart-title">Celkové investované peníze v čase — všechny strategie</div>
+      <div class="rec-chart-sub">Startovní bod = aktuální hodnota vašeho auta (peníze, které v něm máte). Graf ukazuje, kolik celkem utratíte v každém roce pro každou strategii. Nižší křivka = levnější volba.</div>
+      <div class="chart-scroll-wrap">
+        <div style="position:relative; height:380px; min-width:520px;">
+          <canvas id="recLineChart"></canvas>
+        </div>
+      </div>
+      <div class="rec-legend">
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#94a3b8"></div>Hodnota stáv. auta (klesá)</div>
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#dc2626"></div>Stáv. auto — celková investice (hodnota + provoz)</div>
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#0f7b5e"></div>Koupit EV nyní (${bestEV.name})</div>
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#2563eb"></div>Koupit EV za 2 roky</div>
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#f59e0b"></div>Koupit EV za 4 roky</div>
+        <div class="rec-legend-item"><div class="rec-legend-dot" style="background:#7c3aed"></div>Koupit nejlev. diesel (${bestDiesel.name})</div>
+        <div class="rec-legend-item"><div class="rec-legend-dash" style="background:#0f7b5e"></div>EV ojetý trh — cena ${bestEV.name}</div>
+      </div>
+    </div>
+
+    <!-- Annual cost bar chart -->
+    <div class="rec-chart-section">
+      <div class="rec-chart-title">Roční náklady v čase — stávající auto vs EV</div>
+      <div class="rec-chart-sub">Roste riziko oprav, roste servis — EV má nízké a stabilní provozní náklady</div>
+      <div class="chart-scroll-wrap">
+        <div style="position:relative; height:360px; min-width:520px;">
+          <canvas id="recBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="rec-grid">
+      <div class="rec-card">
+        <div class="rec-card-title">🔍 Analýza stávajícího auta</div>
+        <div class="rec-stat"><span class="rec-stat-label">Model / RV</span><span class="rec-stat-val">${p.myName} (${p.myYear})</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Stáří auta</span><span class="rec-stat-val ${myCurrentAge >= 8 ? 'red' : myCurrentAge >= 5 ? 'blue' : 'green'}">${myCurrentAge} let</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Celkový nájezd</span><span class="rec-stat-val ${myCurrentKm >= 150000 ? 'red' : myCurrentKm >= 100000 ? 'blue' : 'green'}">${myCurrentKm.toLocaleString('cs-CZ')} km</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Aktuální tržní hodnota</span><span class="rec-stat-val">${myCurrentValue.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Odh. hodnota za 3 roky</span><span class="rec-stat-val red">${valueIn3.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Ztráta hodnoty za 3 roky</span><span class="rec-stat-val red">−${valueLoss3.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Riziko oprav (letos)</span><span class="rec-stat-val ${currentRepRisk > 25000 ? 'red' : currentRepRisk > 12000 ? 'blue' : 'green'}">${currentRepRisk.toLocaleString('cs-CZ')} Kč/rok</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Průměrné náklady/km (5 let)</span><span class="rec-stat-val">${(ann5kmCost / annualKm).toFixed(2).replace('.',',')} Kč/km</span></div>
+      </div>
+
+      <div class="rec-card">
+        <div class="rec-card-title">⚡ Nejlepší EV volba — ${bestEV.name}</div>
+        <div class="rec-stat"><span class="rec-stat-label">Pořizovací cena</span><span class="rec-stat-val">${bestEV.purchase.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Odh. cena za 2 roky (ojet.)</span><span class="rec-stat-val blue">${Math.round(evResidualPrice(bestEV.purchase,2)).toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Odh. cena za 4 roky (ojet.)</span><span class="rec-stat-val blue">${Math.round(evResidualPrice(bestEV.purchase,4)).toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Průměrná cena el.</span><span class="rec-stat-val green">${avg.toFixed(2).replace('.',',')} Kč/kWh</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Náklady paliva / km</span><span class="rec-stat-val green">${evFuelKm.toFixed(2).replace('.',',')} Kč/km</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Break-even oproti stáv. autu</span><span class="rec-stat-val ${breakEven && breakEven <= 5 ? 'green' : 'blue'}">${breakEven ? breakEven + ' let' : '> 10 let'}</span></div>
+        ${evSavingsNeeded > 0 ? `
+        <div class="rec-stat"><span class="rec-stat-label">Nutno doplatit oproti hodnotě auta</span><span class="rec-stat-val">${evSavingsNeeded.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Spoření (nákup za 2 roky)</span><span class="rec-stat-val blue">${monthlySavingsNeeded2yr.toLocaleString('cs-CZ')} Kč/měs</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Spoření (nákup za 4 roky)</span><span class="rec-stat-val green">${monthlySavingsNeeded4yr.toLocaleString('cs-CZ')} Kč/měs</span></div>
+        ` : `<div class="rec-stat"><span class="rec-stat-label">Prodej stáv. auta pokryje</span><span class="rec-stat-val green">${Math.round((myCurrentValue / bestEV.purchase) * 100)} % ceny EV</span></div>`}
+      </div>
+
+      <div class="rec-card">
+        <div class="rec-card-title">🟣 Alternativa — nejlev. diesel nový: ${bestDiesel.name}</div>
+        <div class="rec-stat"><span class="rec-stat-label">Pořizovací cena</span><span class="rec-stat-val">${bestDiesel.purchase.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Odh. hodnota za 3 roky</span><span class="rec-stat-val blue">${Math.round(bestDiesel.purchase * Math.pow(0.83,3)).toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Odh. hodnota za 5 let</span><span class="rec-stat-val blue">${Math.round(bestDiesel.purchase * Math.pow(0.83,5)).toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Cena paliva / km</span><span class="rec-stat-val">${((bestDiesel.consumption/100)*p.naftaPrice).toFixed(2).replace('.',',')} Kč/km</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Roční údržba</span><span class="rec-stat-val">${bestDiesel.maintenance_yr.toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">Celk. náklady 5 let (provoz)</span><span class="rec-stat-val">${Math.round(bestDieselTotal[5]).toLocaleString('cs-CZ')} Kč</span></div>
+        <div class="rec-stat"><span class="rec-stat-label">vs EV za 5 let</span>
+          <span class="rec-stat-val ${evTotalCostBuyNow[5] < bestDieselTotal[5] ? 'green' : 'red'}">
+            EV ${evTotalCostBuyNow[5] < bestDieselTotal[5] ? 'levnější' : 'dražší'} o ${Math.abs(evTotalCostBuyNow[5] - bestDieselTotal[5]).toLocaleString('cs-CZ')} Kč
+          </span>
+        </div>
+        <div class="rec-stat"><span class="rec-stat-label">Riziko oprav po 5 letech</span><span class="rec-stat-val red">Vysoké (TDI motor)</span></div>
+      </div>
+
+      <div class="rec-card">
+        <div class="rec-card-title">⚠️ Rizikové faktory stávajícího auta</div>
+        <ul class="bullet-list">
+          ${myCurrentAge >= 7 ? '<li>Věk vozu přes 7 let — <strong>zvýšené riziko poruch</strong> převodovky, turba, vstřikovačů</li>' : ''}
+          ${myCurrentKm >= 150000 ? '<li>Nájezd přes 150 000 km — <strong>blíží se výměna rozvodů</strong>, spojky, tlumičů</li>' : ''}
+          ${myCurrentKm >= 200000 ? '<li>Nájezd přes 200 000 km — <strong>vysoké riziko generální opravy</strong> motoru</li>' : ''}
+          ${currentRepRisk > 20000 ? `<li>Odhadované riziko oprav <strong>${currentRepRisk.toLocaleString('cs-CZ')} Kč/rok</strong> — vyplatí se je porovnat s úsporou EV</li>` : ''}
+          <li>Nafta jako palivo podléhá <strong>výkyvům cen</strong> a geopolitickým rizikům</li>
+          <li>Emisní normy EU — zákaz nových spalovacích aut od 2035, <strong>klesající hodnota</strong> naftových aut</li>
+          ${myCurrentAge >= 5 ? '<li>Pravděpodobně se blíží výměna <strong>brzd, baterie startéru, palivového filtru</strong></li>' : ''}
+        </ul>
+      </div>
+
+      <div class="rec-card">
+        <div class="rec-card-title">💡 Výhody čekání na EV</div>
+        <ul class="bullet-list">
+          <li>Ceny EV na sekundárním trhu dále <strong>klesají</strong> — za 2 roky odhadem o ${Math.round((1 - evResidualPrice(1, 2)) * 100)} %</li>
+          <li>Baterie nové generace — <strong>větší dojezd</strong>, rychlejší nabíjení</li>
+          <li>Více modelů = <strong>větší výběr</strong>, lepší cena</li>
+          <li>Mezitím použijte auto a ušetřete na <strong>zálohu pro EV</strong></li>
+          <li>Vyspělejší nabíjecí infrastruktura v ČR — dnes je <strong>rychlonabíječek stále málo</strong></li>
+          ${myCurrentAge < 5 ? '<li>Vaše auto je stále v <strong>dobré kondici</strong> — není důvod spěchat</li>' : ''}
+        </ul>
+      </div>
+    </div>
+  `;
+
+  // --- Draw line chart ---
+  setTimeout(() => {
+    if (recLineChart) recLineChart.destroy();
+    const ctx1 = document.getElementById('recLineChart');
+    if (!ctx1) return;
+    recLineChart = new Chart(ctx1.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: 'Hodnota stáv. auta',
+            data: myCarValue,
+            borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.08)',
+            borderWidth: 2, pointRadius: 3, fill: true, tension: 0.3,
+          },
+          {
+            label: 'Stáv. auto — celková investice',
+            data: myTotalCostShifted,
+            borderColor: '#dc2626', backgroundColor: 'transparent',
+            borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3,
+          },
+          {
+            label: `EV nyní — ${bestEV.name}`,
+            data: evTotalCostBuyNow,
+            borderColor: '#0f7b5e', backgroundColor: 'rgba(15,123,94,0.06)',
+            borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3,
+          },
+          {
+            label: 'EV za 2 roky',
+            data: evTotalCostBuy2,
+            borderColor: '#2563eb', backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 2, fill: false, tension: 0.3,
+          },
+          {
+            label: 'EV za 4 roky',
+            data: evTotalCostBuy4,
+            borderColor: '#f59e0b', backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 2, fill: false, tension: 0.3,
+          },
+          {
+            label: `Nejlev. diesel — ${bestDiesel.name}`,
+            data: bestDieselTotal,
+            borderColor: '#7c3aed', backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 2, fill: false, tension: 0.3,
+          },
+          {
+            label: 'EV ojetý trh (cena)',
+            data: evSecondaryPrice,
+            borderColor: '#0f7b5e', backgroundColor: 'transparent',
+            borderWidth: 1.5, pointRadius: 2, fill: false, tension: 0.3, borderDash: [6,3],
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#fff', borderColor: '#e8e4de', borderWidth: 1,
+            titleColor: '#1a1816', bodyColor: '#7c756e', padding: 10,
+            titleFont: { family: 'DM Sans', size: 11 },
+            bodyFont: { family: 'DM Sans', size: 11 },
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('cs-CZ')} Kč`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: '#a09990',
+              font: { family: 'DM Sans', size: 11 },
+              maxRotation: 0, minRotation: 0,
+              autoSkip: true, maxTicksLimit: 8,
+            },
+            grid: { color: 'rgba(232,228,222,0.8)' }
+          },
+          y: {
+            min: 0,
+            ticks: {
+              color: '#a09990',
+              font: { family: 'DM Sans', size: 11 },
+              maxTicksLimit: 7,
+              callback: v => v >= 1e6 ? (v/1e6).toFixed(2).replace('.',',')+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v
+            },
+            grid: { color: 'rgba(232,228,222,0.8)' }
+          }
+        }
+      }
+    });
+
+    // --- Annual cost bar chart ---
+    if (recBarChart) recBarChart.destroy();
+    const ctx2 = document.getElementById('recBarChart');
+    if (!ctx2) return;
+    const annualYears = years.slice(1); // skip year 0
+    const myAnnualFuel    = annualYears.map(() => Math.round(dslFuelKm * annualKm));
+    const myAnnualService = annualYears.map(() => p.myService);
+    const myAnnualRepair  = annualYears.map((_, i) =>
+      annualRepairRisk(myCurrentAge + i + 1, myCurrentKm + annualKm * (i + 1)));
+    const evAnnualFuel    = annualYears.map(() => Math.round(evFuelKm * annualKm));
+    const evAnnualMaint   = annualYears.map(() => bestEV.maintenance_yr);
+
+    recBarChart = new Chart(ctx2.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: annualYears,
+        datasets: [
+          { label: 'Nafta — palivo',   data: myAnnualFuel,    backgroundColor: 'rgba(192,68,10,0.7)',  stack: 'diesel' },
+          { label: 'Nafta — servis',   data: myAnnualService, backgroundColor: 'rgba(180,83,9,0.55)',  stack: 'diesel' },
+          { label: 'Nafta — opravy',   data: myAnnualRepair,  backgroundColor: 'rgba(220,38,38,0.55)', stack: 'diesel' },
+          { label: 'EV — elektřina',   data: evAnnualFuel,    backgroundColor: 'rgba(15,123,94,0.75)', stack: 'ev' },
+          { label: 'EV — servis',      data: evAnnualMaint,   backgroundColor: 'rgba(37,99,235,0.55)', stack: 'ev' },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: '#7c756e',
+              font: { family: 'DM Sans', size: 11 },
+              boxWidth: 12, boxHeight: 12,
+              padding: 12,
+            }
+          },
+          tooltip: {
+            backgroundColor: '#fff', borderColor: '#e8e4de', borderWidth: 1,
+            titleColor: '#1a1816', bodyColor: '#7c756e', padding: 10,
+            titleFont: { family: 'DM Sans', size: 11 },
+            bodyFont: { family: 'DM Sans', size: 11 },
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString('cs-CZ')} Kč`,
+              footer: items => `Celkem: ${Math.round(items.reduce((s,i)=>s+i.raw,0)).toLocaleString('cs-CZ')} Kč`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            ticks: {
+              color: '#a09990',
+              font: { family: 'DM Sans', size: 11 },
+              maxRotation: 0, minRotation: 0,
+              autoSkip: true, maxTicksLimit: 8,
+            },
+            grid: { color: 'rgba(232,228,222,0.8)' }
+          },
+          y: {
+            stacked: true,
+            min: 0,
+            ticks: {
+              color: '#a09990',
+              font: { family: 'DM Sans', size: 11 },
+              maxTicksLimit: 6,
+              callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v
+            },
+            grid: { color: 'rgba(232,228,222,0.8)' }
+          }
+        }
+      }
+    });
+  }, 50);
+}
+
+
+document.getElementById('pct-solar').textContent = shares.solar + ' %';
+document.getElementById('pct-grid').textContent  = shares.grid  + ' %';
+document.getElementById('pct-fast').textContent  = shares.fast  + ' %';
+buildEditor();
+update();
+</script>
+</body>
+</html>

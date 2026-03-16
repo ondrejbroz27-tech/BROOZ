@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="cs" style="background:#f0ebe3 !important; color-scheme: light !important;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root { color-scheme: light only; }</style>
+<title>Hry & Zábava — Brooz Studio</title>
+<meta name="author" content="Ondřej Brož">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f0ebe3;
+    --surface: #faf7f4;
+    --border: #e8e0d6;
+    --border-hover: #c8bdb0;
+    --accent: #c94a0f;
+    --text: #1a1614;
+    --muted: #8a7e74;
+    --subtle: #ede6dc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Nav ── */
+  nav {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    transition: all 0.18s;
+  }
+  .back-link:hover { color: var(--text); border-color: var(--border-hover); }
+
+  .nav-breadcrumb {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+  .nav-breadcrumb a:hover { color: var(--text); }
+  .nav-breadcrumb span { color: var(--border-hover); }
+
+  /* ── Header ── */
+  header {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1rem 2.5rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+
+  .page-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+
+  .page-title {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .page-title em { font-style: italic; color: var(--accent); }
+
+  .page-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  .page-meta {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    font-size: 0.72rem;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    max-width: 1180px;
+    margin: 0 auto 1.5rem;
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Grid ── */
+  .grid {
+    max-width: 1180px;
+    margin: 0 auto 3rem;
+    padding: 0 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* ── Game tile ── */
+  .game-tile {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.8rem;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    overflow: hidden;
+    transition: transform 0.28s cubic-bezier(0.34,1.4,0.64,1),
+                border-color 0.22s, box-shadow 0.22s;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .game-tile:nth-child(1) { animation-delay: 0.05s; }
+  .game-tile:nth-child(2) { animation-delay: 0.10s; }
+  .game-tile:nth-child(3) { animation-delay: 0.15s; }
+  .game-tile:nth-child(4) { animation-delay: 0.20s; }
+  .game-tile:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .game-tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--tile-accent, var(--border-hover));
+    box-shadow: 0 8px 28px rgba(0,0,0,0.07);
+  }
+
+  .tile-accent-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--tile-accent, transparent);
+    border-radius: 18px 18px 0 0;
+    opacity: 0;
+    transition: opacity 0.22s;
+  }
+  .game-tile:hover .tile-accent-bar { opacity: 1; }
+
+  .tile-bg-wash {
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: var(--tile-accent, transparent);
+    opacity: 0.04;
+    filter: blur(32px);
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .game-tile:hover .tile-bg-wash { opacity: 0.1; transform: scale(1.3); }
+
+  .game-icon { font-size: 2.2rem; display: block; margin-bottom: 1rem; line-height: 1; }
+
+  .game-tag {
+    font-size: 0.67rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tile-accent, var(--muted));
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+
+  .game-title {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .game-desc {
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  .game-badges {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .game-badge {
+    font-size: 0.67rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .tile-arrow {
+    position: absolute;
+    bottom: 1.4rem; right: 1.4rem;
+    font-size: 1rem;
+    opacity: 0;
+    color: var(--tile-accent, var(--muted));
+    transform: translate(-3px, 3px);
+    transition: opacity 0.22s, transform 0.22s;
+  }
+  .game-tile:hover .tile-arrow { opacity: 1; transform: translate(0,0); }
+
+  /* Status */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.67rem;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+  .status.live  { border-color: #0a664430; color: #0a6644; background: #0a664410; }
+  .status.wip   { border-color: #8a620030; color: #7a5500; background: #8a620010; }
+  .status.soon  { border-color: #6b28a030; color: #6b28a0; background: #6b28a010; }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── Coming soon tile ── */
+  .game-tile.coming-soon {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* ── Footer ── */
+  footer {
+    max-width: 1180px;
+    margin: 4rem auto 0;
+    padding: 1.8rem 2.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer p { font-size: 0.76rem; color: var(--muted); }
+  footer a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.76rem;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.18s;
+  }
+  footer a:hover { color: var(--text); }
+</style>
+</head>
+<body style="background:#f0ebe3 !important; color:#1a1614 !important;">
+
+<nav>
+  <a class="back-link" href="index.html">← Brooz Studio</a>
+  <div class="nav-breadcrumb">
+    <a href="index.html">Brooz Studio</a>
+    <span>/</span>
+    <span>Hry & Zábava</span>
+  </div>
+</nav>
+
+<header>
+  <span class="page-icon">🎮</span>
+  <h1 class="page-title">Hry <em>&</em> Zábava</h1>
+  <p class="page-desc">Sbírka prohlížečových her — bez instalace, spustíš přímo v prohlížeči. Od závodů až po fotbal, vše zdarma.</p>
+  <div class="page-meta">
+    <span class="meta-chip">🌐 Běží v prohlížeči</span>
+    <span class="meta-chip">📱 Mobilní i desktop</span>
+    <span class="meta-chip">🆓 Zdarma</span>
+  </div>
+</header>
+
+<div class="section-label">Dostupné hry</div>
+
+<div class="grid">
+
+  <!-- ŠKODA VS MOTORKY -->
+  <a class="game-tile" href="skoda-motorky.html"
+     style="--tile-accent: #c94a0f;">
+    <div class="tile-bg-wash"></div>
+    <div class="tile-accent-bar"></div>
+    <span class="game-icon">🚗</span>
+    <div class="game-tag">Akční / Střílečka</div>
+    <div class="status live"><span class="status-dot"></span>Hrát hned</div>
+    <div class="game-title">Škoda vs Motorky</div>
+    <div class="game-desc">Braň svou Škodu proti nájezdům motorek. Shop systém, coin ekonomika, postupně těžší vlny nepřátel.</div>
+    <div class="game-badges">
+      <span class="game-badge">1 hráč</span>
+      <span class="game-badge">Mobilní</span>
+      <span class="game-badge">Shop & upgrades</span>
+    </div>
+    <div class="tile-arrow">↗</div>
+  </a>
+
+  <!-- FORTUNA LIGA — coming soon -->
+  <div class="game-tile coming-soon"
+     style="--tile-accent: #1247a8;">
+    <div class="tile-bg-wash"></div>
+    <div class="tile-accent-bar"></div>
+    <span class="game-icon">⚽</span>
+    <div class="game-tag">Sport / Fotbal</div>
+    <div class="status soon"><span class="status-dot"></span>Brzy</div>
+    <div class="game-title">Fortuna Liga 4v4</div>
+    <div class="game-desc">Česká fotbalová liga v prohlížeči. Ligový mód, fyzika rohů hřiště, localStorage uložení.</div>
+    <div class="game-badges">
+      <span class="game-badge">Ligový mód</span>
+      <span class="game-badge">Ukládání</span>
+    </div>
+  </div>
+
+  <!-- FOOTBALL CAREER — coming soon -->
+  <div class="game-tile coming-soon"
+     style="--tile-accent: #0a6644;">
+    <div class="tile-bg-wash"></div>
+    <div class="tile-accent-bar"></div>
+    <span class="game-icon">🏆</span>
+    <div class="game-tag">Sport / Kariéra</div>
+    <div class="status soon"><span class="status-dot"></span>Brzy</div>
+    <div class="game-title">Football Career</div>
+    <div class="game-desc">Kariérní fotbalová hra s kreslením cesty míče na canvas — Score Hero styl.</div>
+    <div class="game-badges">
+      <span class="game-badge">Canvas</span>
+      <span class="game-badge">Kariéra</span>
+    </div>
+  </div>
+
+  <!-- GYROSCOPE RUNNER — coming soon -->
+  <div class="game-tile coming-soon"
+     style="--tile-accent: #6b28a0;">
+    <div class="tile-bg-wash"></div>
+    <div class="tile-accent-bar"></div>
+    <span class="game-icon">📱</span>
+    <div class="game-tag">Arkáda / Gyro</div>
+    <div class="status soon"><span class="status-dot"></span>Brzy</div>
+    <div class="game-title">Gyroscope Runner</div>
+    <div class="game-desc">Runner ovládaný náklonem telefonu přes gyroskop. Čistě mobilní zážitek.</div>
+    <div class="game-badges">
+      <span class="game-badge">Gyroskop</span>
+      <span class="game-badge">Pouze mobil</span>
+    </div>
+  </div>
+
+  <!-- MATH FOOTBALL — coming soon -->
+  <div class="game-tile coming-soon"
+     style="--tile-accent: #8a6200;">
+    <div class="tile-bg-wash"></div>
+    <div class="tile-accent-bar"></div>
+    <span class="game-icon">🔢</span>
+    <div class="game-tag">Vzdělávací / Fotbal</div>
+    <div class="status soon"><span class="status-dot"></span>Brzy</div>
+    <div class="game-title">Fotbal Počítání</div>
+    <div class="game-desc">Matematická hra pro děti — správnou odpovědí střílíš góly. Vzdělávání hrou.</div>
+    <div class="game-badges">
+      <span class="game-badge">Pro děti</span>
+      <span class="game-badge">Matematika</span>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2026 Ondřej Brož — Brooz Studio</p>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+    <a href="index.html">← Hlavní stránka</a>
+    <a href="https://github.com/ondrejbroz27-tech" target="_blank">GitHub</a>
+    <a href="mailto:ondrejbroz27@gmail.com">Kontakt</a>
+  </div>
+</footer>
+
+</body>
+</html>
