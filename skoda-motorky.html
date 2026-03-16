@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SKODA VS MOTORKY</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0a;overflow:hidden;touch-action:none;user-select:none;font-family:'Courier New',monospace;}
+canvas{display:block;}
+
+/* ── HUD ── */
+#hud{position:fixed;top:0;left:0;right:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;z-index:10;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);}
+#hudScore{color:#ff6a00;font-size:22px;font-weight:bold;letter-spacing:3px;text-shadow:0 0 10px #ff6a00;}
+#hudLevel{color:#ffdd00;font-size:14px;letter-spacing:3px;text-shadow:0 0 8px #ffdd00;}
+#hudLives{color:#ff3333;font-size:20px;letter-spacing:1px;}
+#hudCoins{color:#ffd700;font-size:14px;letter-spacing:2px;text-shadow:0 0 8px #ffd700;}
+
+/* ── FLASH ── */
+#flashOverlay{position:fixed;inset:0;background:red;opacity:0;pointer-events:none;z-index:15;transition:opacity 0.1s;}
+
+/* ── CONTROL BTN ── */
+#controlBtn{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:230px;height:66px;border-radius:33px;background:rgba(255,106,0,0.12);border:2px solid #ff6a00;z-index:10;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 18px #ff6a0033;overflow:hidden;touch-action:none;}
+#controlBtn .half{width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(255,180,80,0.65);font-size:20px;transition:background 0.08s;user-select:none;}
+#controlBtn .half.active{background:rgba(255,106,0,0.32);}
+#controlBtn .divider{width:1px;height:55%;background:#ff6a0044;flex-shrink:0;}
+#controlBtn{display:none;}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;gap:0;}
+.screen.active{display:flex;}
+
+/* ── MAIN MENU ── */
+#menuScreen{background:radial-gradient(ellipse at 50% 30%,#1a0800,#0a0a0a);}
+#menuTitle{font-size:34px;color:#ff6a00;letter-spacing:5px;text-align:center;line-height:1.25;text-shadow:0 0 30px #ff6a00,0 0 60px #ff4400;animation:pulse 1.8s ease-in-out infinite;margin-bottom:6px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.menuCoins{color:#ffd700;font-size:16px;letter-spacing:3px;text-shadow:0 0 10px #ffd700;margin-bottom:18px;}
+.menuBtn{margin:6px 0;padding:13px 44px;background:transparent;border:2px solid currentColor;font-family:'Courier New',monospace;font-size:16px;letter-spacing:4px;cursor:pointer;transition:background 0.15s,transform 0.1s;width:240px;text-align:center;}
+.menuBtn:active{transform:scale(0.96);}
+.menuBtn.orange{color:#ff6a00;border-color:#ff6a00;box-shadow:0 0 14px #ff6a0044;}
+.menuBtn.orange:active{background:#ff6a0020;}
+.menuBtn.gold{color:#ffd700;border-color:#ffd700;box-shadow:0 0 14px #ffd70044;}
+.menuBtn.gold:active{background:#ffd70018;}
+.menuBtn.blue{color:#00aaff;border-color:#00aaff;box-shadow:0 0 14px #00aaff33;}
+.menuBtn.blue:active{background:#00aaff18;}
+.menuBtn.gray{color:#888;border-color:#555;cursor:not-allowed;opacity:0.5;}
+.roundBadge{color:#aaa;font-size:11px;letter-spacing:2px;margin-top:4px;}
+
+/* ── ROUND SELECT ── */
+#roundScreen{background:radial-gradient(ellipse at 50% 30%,#001a1a,#0a0a0a);padding:20px;}
+.roundGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:320px;margin-top:12px;}
+.roundCell{padding:12px 6px;border:2px solid #333;border-radius:6px;text-align:center;cursor:pointer;transition:all 0.15s;background:#111;}
+.roundCell.unlocked{border-color:#ff6a00;cursor:pointer;}
+.roundCell.unlocked:active{background:#ff6a0018;transform:scale(0.96);}
+.roundCell.locked{opacity:0.35;cursor:not-allowed;}
+.roundCell .rNum{font-size:18px;color:#ff6a00;font-weight:bold;}
+.roundCell .rLvl{font-size:9px;color:#888;letter-spacing:1px;margin-top:2px;}
+.roundCell.locked .rNum{color:#555;}
+.screenTitle{font-size:22px;color:#ff6a00;letter-spacing:4px;text-shadow:0 0 15px #ff6a00;margin-bottom:8px;}
+
+/* ── SHOP ── */
+#shopScreen{background:radial-gradient(ellipse at 50% 60%,#001800,#0a0a0a);overflow-y:auto;padding:16px 0 100px;}
+#shopScreen .screenTitle{margin-top:12px;}
+.shopCoins{color:#ffd700;font-size:15px;letter-spacing:3px;margin-bottom:12px;}
+.shopTabs{display:flex;gap:0;margin-bottom:12px;}
+.shopTab{padding:8px 18px;border:1px solid #333;background:#111;color:#777;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;}
+.shopTab.active{border-color:#ff6a00;color:#ff6a00;background:#1a0800;}
+.shopGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:320px;padding:0 8px;}
+.shopItem{border:2px solid #2a2a2a;border-radius:6px;padding:10px 8px;text-align:center;background:#111;cursor:pointer;transition:all 0.15s;position:relative;}
+.shopItem.owned{border-color:#00aa44;}
+.shopItem.equipped{border-color:#ffd700;background:#1a1400;}
+.shopItem.canBuy{border-color:#444;cursor:pointer;}
+.shopItem.canBuy:active{transform:scale(0.96);}
+.shopItem.cantBuy{opacity:0.5;cursor:not-allowed;}
+.shopItem canvas{display:block;margin:0 auto 6px;}
+.shopItemName{font-size:10px;color:#ccc;letter-spacing:1px;}
+.shopItemPrice{font-size:11px;color:#ffd700;margin-top:3px;}
+.shopItemOwned{font-size:10px;color:#00aa44;margin-top:3px;}
+.shopItemEquipped{font-size:10px;color:#ffd700;margin-top:3px;}
+
+/* ── OVERLAY during game ── */
+#gameOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:25;gap:12px;}
+#gameOverlay h1{font-size:34px;letter-spacing:4px;text-align:center;line-height:1.25;}
+.goBtn{padding:12px 40px;background:transparent;border:2px solid currentColor;font-family:'Courier New',monospace;font-size:15px;letter-spacing:4px;cursor:pointer;margin-top:6px;}
+
+/* ── COMBO ── */
+#combo{position:fixed;top:52px;left:50%;transform:translateX(-50%);color:#ffe000;font-size:13px;letter-spacing:3px;text-shadow:0 0 8px #ffe000;z-index:10;pointer-events:none;opacity:0;transition:opacity 0.3s;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD (during game) -->
+<div id="hud" style="display:none">
+  <div id="hudScore">0</div>
+  <div id="hudLevel">LEVEL 1</div>
+  <div id="hudLives">♥♥♥♥♥</div>
+  <div id="hudCoins">💰0</div>
+</div>
+<div id="combo"></div>
+<div id="flashOverlay"></div>
+
+<!-- Control button -->
+<div id="controlBtn">
+  <div class="half" id="halfL">◀</div>
+  <div class="divider"></div>
+  <div class="half" id="halfR">▶</div>
+</div>
+
+<!-- ══ MAIN MENU ══ -->
+<div class="screen active" id="menuScreen">
+  <div id="menuTitle">ŠKODA<br>VS<br>MOTORKY</div>
+  <div class="menuCoins" id="menuCoins">💰 0</div>
+  <button class="menuBtn orange" onclick="showScreen('roundScreen')">HRÁT</button>
+  <button class="menuBtn gold" onclick="showScreen('shopScreen');renderShop()">OBCHOD</button>
+  <div class="roundBadge" id="menuRoundBadge">KOLO 1 ODEMČENO</div>
+</div>
+
+<!-- ══ ROUND SELECT ══ -->
+<div class="screen" id="roundScreen">
+  <div class="screenTitle">VYBER KOLO</div>
+  <div class="roundGrid" id="roundGrid"></div>
+  <button class="menuBtn gray" style="margin-top:16px;color:#888;border-color:#555;cursor:pointer;opacity:1;" onclick="showScreen('menuScreen')">← ZPĚT</button>
+</div>
+
+<!-- ══ SHOP ══ -->
+<div class="screen" id="shopScreen">
+  <div class="screenTitle">OBCHOD</div>
+  <div class="shopCoins" id="shopCoins">💰 0</div>
+  <div class="shopTabs">
+    <div class="shopTab active" id="tabCar" onclick="switchTab('car')">AUTO</div>
+    <div class="shopTab" id="tabMoto" onclick="switchTab('moto')">MOTORKY</div>
+  </div>
+  <div class="shopGrid" id="shopGrid"></div>
+  <button class="menuBtn gray" style="margin-top:16px;color:#888;border-color:#555;cursor:pointer;opacity:1;position:fixed;bottom:16px;" onclick="showScreen('menuScreen')">← ZPĚT</button>
+</div>
+
+<!-- ══ GAME OVERLAY (win/lose) ══ -->
+<div id="gameOverlay">
+  <h1 id="goTitle" style="color:#ff6a00"></h1>
+  <div id="goScore" style="color:#ff6a00;font-size:26px;letter-spacing:3px;"></div>
+  <div id="goCoins" style="color:#ffd700;font-size:14px;letter-spacing:2px;"></div>
+  <button class="goBtn" id="goRetry" style="color:#ff6a00;border-color:#ff6a00;" onclick="retryRound()">ZNOVU</button>
+  <button class="goBtn" id="goMenu" style="color:#888;border-color:#555;" onclick="goToMenu()">MENU</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════════════════════
+var canvas=document.getElementById('c');
+var ctx=canvas.getContext('2d');
+var W,H;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+
+// ══════════════════════════════════════════════════════════════
+// SAVE DATA (localStorage)
+// ══════════════════════════════════════════════════════════════
+var save={
+  coins:0,
+  unlockedRounds:1,   // 1-based, max 3
+  ownedCarSkins:[0],  // indices
+  ownedMotoSkins:[0],
+  equippedCarSkin:0,
+  equippedMotoSkin:0
+};
+function loadSave(){
+  try{var d=localStorage.getItem('skodaVsMoto');if(d){var p=JSON.parse(d);for(var k in p)save[k]=p[k];}}catch(e){}
+}
+function writeSave(){
+  try{localStorage.setItem('skodaVsMoto',JSON.stringify(save));}catch(e){}
+}
+loadSave();
+
+// ══════════════════════════════════════════════════════════════
+// SKINS DEFINITIONS
+// ══════════════════════════════════════════════════════════════
+var carSkins=[
+  {name:'ORIGINÁL',    price:0,    body:'#e85d00',stripe:'#1a3fa0',centre:'#f0ece0',roof:'#111'},
+  {name:'STŘÍBRNÁ',    price:150,  body:'#aaaaaa',stripe:'#333333',centre:'#eeeeee',roof:'#222'},
+  {name:'ZÁVODNÍ',     price:250,  body:'#cc0000',stripe:'#ffdd00',centre:'#ffffff',roof:'#000'},
+  {name:'MODRÁ RALLY', price:300,  body:'#1a3fa0',stripe:'#ff6a00',centre:'#ffffff',roof:'#0a1a50'},
+  {name:'LESNÍ',       price:350,  body:'#2d6a2d',stripe:'#1a3a1a',centre:'#ccddcc',roof:'#0a1a0a'},
+  {name:'ZLATÁ',       price:500,  body:'#c8900a',stripe:'#7a4400',centre:'#ffe066',roof:'#3a2000'},
+  {name:'FIALOVÁ',     price:400,  body:'#6600cc',stripe:'#330066',centre:'#cc88ff',roof:'#1a0033'},
+  {name:'ČERNÁ GT',    price:450,  body:'#1a1a1a',stripe:'#444444',centre:'#888888',roof:'#000000'},
+];
+var motoSkins=[
+  {name:'ČERVENÁ',     price:0,    frame:'#1a1a2e',tank:'#8b0000',helmet:'#333',eye:'#ff0000'},
+  {name:'MODRÁ',       price:120,  frame:'#0a1a3a',tank:'#003399',helmet:'#112244',eye:'#00aaff'},
+  {name:'ZELENÁ',      price:150,  frame:'#0a1a0a',tank:'#006600',helmet:'#1a2a1a',eye:'#00ff44'},
+  {name:'ZLATÁ',       price:200,  frame:'#2a1a00',tank:'#996600',helmet:'#3a2a00',eye:'#ffdd00'},
+  {name:'FIALOVÁ',     price:220,  frame:'#1a0a2a',tank:'#660099',helmet:'#2a1a3a',eye:'#cc44ff'},
+  {name:'BÍLÁ',        price:280,  frame:'#2a2a2a',tank:'#dddddd',helmet:'#eeeeee',eye:'#ff4444'},
+  {name:'ČERNÝ RITÍŘ', price:350,  frame:'#050505',tank:'#111111',helmet:'#0a0a0a',eye:'#ff0000'},
+  {name:'NEON',        price:400,  frame:'#001a1a',tank:'#004444',helmet:'#002222',eye:'#00ffff'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// ROUNDS CONFIG
+// ══════════════════════════════════════════════════════════════
+var rounds=[
+  {num:1, maxLevel:12, speedMult:1.0,   hpMult:1.0,  coinMult:1,  name:'ZAČÁTEČNÍK'},
+  {num:2, maxLevel:12, speedMult:1.35,  hpMult:1.6,  coinMult:2,  name:'ZÁVODNÍK'},
+  {num:3, maxLevel:12, speedMult:1.8,   hpMult:2.4,  coinMult:3,  name:'ŠAMPIÓN'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+var currentScreen='menuScreen';
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  if(id){document.getElementById(id).classList.add('active'); currentScreen=id;}
+  updateMenuCoins();
+}
+
+function updateMenuCoins(){
+  document.getElementById('menuCoins').textContent='💰 '+save.coins;
+  document.getElementById('menuRoundBadge').textContent=
+    'KOLA ODEMČENÁ: '+save.unlockedRounds+'/'+rounds.length;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ROUND SELECT
+// ══════════════════════════════════════════════════════════════
+function buildRoundGrid(){
+  var g=document.getElementById('roundGrid');
+  g.innerHTML='';
+  for(var i=0;i<rounds.length;i++){
+    var r=rounds[i];
+    var unlocked=(i+1)<=save.unlockedRounds;
+    var cell=document.createElement('div');
+    cell.className='roundCell '+(unlocked?'unlocked':'locked');
+    cell.innerHTML='<div class="rNum">'+(unlocked?'KOLO '+r.num:'🔒')+'</div>'+
+      '<div class="rLvl">'+(unlocked?r.name:'UZAMČENO')+'</div>'+
+      (unlocked?'<div class="rLvl" style="color:#ff6a00;margin-top:2px;">'+r.coinMult+'× MÜNZE</div>':'');
+    if(unlocked){
+      (function(ri){cell.onclick=function(){startRound(ri);};})(i);
+    }
+    g.appendChild(cell);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════════════════════════
+var shopTab='car';
+function switchTab(t){
+  shopTab=t;
+  document.getElementById('tabCar').className='shopTab'+(t==='car'?' active':'');
+  document.getElementById('tabMoto').className='shopTab'+(t==='moto'?' active':'');
+  renderShop();
+}
+
+function renderShop(){
+  document.getElementById('shopCoins').textContent='💰 '+save.coins;
+  var grid=document.getElementById('shopGrid');
+  grid.innerHTML='';
+  var skins=shopTab==='car'?carSkins:motoSkins;
+  var owned=shopTab==='car'?save.ownedCarSkins:save.ownedMotoSkins;
+  var equipped=shopTab==='car'?save.equippedCarSkin:save.equippedMotoSkin;
+
+  for(var i=0;i<skins.length;i++){
+    var sk=skins[i];
+    var isOwned=owned.indexOf(i)>=0;
+    var isEquipped=equipped===i;
+    var canAfford=save.coins>=sk.price;
+
+    var item=document.createElement('div');
+    item.className='shopItem '+(isEquipped?'equipped':isOwned?'owned':(canAfford?'canBuy':'cantBuy'));
+
+    // Mini preview canvas
+    var pc=document.createElement('canvas');
+    pc.width=80; pc.height=70;
+    var pctx=pc.getContext('2d');
+    if(shopTab==='car') drawCarPreview(pctx,40,38,sk);
+    else drawMotoPreview(pctx,40,36,sk);
+
+    var label='';
+    if(isEquipped) label='<div class="shopItemEquipped">✓ NASAZENO</div>';
+    else if(isOwned) label='<div class="shopItemOwned">✓ VLASTNÍŠ</div>';
+    else label='<div class="shopItemPrice">💰 '+sk.price+'</div>';
+
+    item.appendChild(pc);
+    item.innerHTML+=('<div class="shopItemName">'+sk.name+'</div>'+label);
+    item.insertBefore(pc,item.firstChild);
+
+    (function(idx,owned2,equipped2){
+      item.onclick=function(){
+        if(equipped2===idx) return;
+        if(owned2.indexOf(idx)>=0){
+          // Just equip
+          if(shopTab==='car') save.equippedCarSkin=idx;
+          else save.equippedMotoSkin=idx;
+          writeSave(); renderShop(); return;
+        }
+        if(save.coins>=skins[idx].price){
+          save.coins-=skins[idx].price;
+          owned2.push(idx);
+          if(shopTab==='car') save.equippedCarSkin=idx;
+          else save.equippedMotoSkin=idx;
+          writeSave(); renderShop();
+        }
+      };
+    })(i,owned,equipped);
+
+    grid.appendChild(item);
+  }
+}
+
+function drawCarPreview(c,cx,cy,sk){
+  c.save(); c.translate(cx,cy); c.rotate(Math.PI);
+  var w=26,h=44,s=w/20;
+  // body
+  c.fillStyle=sk.body; rrC(c,-w/2,-h/2,w,h,4*s); c.fill();
+  // stripes
+  c.fillStyle=sk.stripe;
+  c.fillRect(-w/2,-h/2+4*s,w*0.14,h-8*s);
+  c.fillRect(w/2-w*0.14,-h/2+4*s,w*0.14,h-8*s);
+  // centre
+  c.fillStyle=sk.centre; c.fillRect(-w*0.12,-h/2+4*s,w*0.24,h-8*s);
+  // roof
+  c.fillStyle=sk.roof; rrC(c,-w*0.3,-h/2+10*s,w*0.6,h*0.3,2*s); c.fill();
+  // headlights
+  c.fillStyle='#ffff99';
+  c.beginPath();c.ellipse(-w*0.24,h/2-3*s,2.2*s,1.6*s,0,0,Math.PI*2);c.fill();
+  c.beginPath();c.ellipse( w*0.24,h/2-3*s,2.2*s,1.6*s,0,0,Math.PI*2);c.fill();
+  c.restore();
+}
+
+function drawMotoPreview(c,cx,cy,sk){
+  c.save(); c.translate(cx,cy);
+  var w=22,h=36,s=w/14;
+  c.fillStyle=sk.frame; rrC(c,-w/2,-h/2,w,h,3*s); c.fill();
+  c.fillStyle=sk.tank; rrC(c,-w*0.38,-h*0.1,w*0.76,h*0.38,2*s); c.fill();
+  c.fillStyle=sk.helmet;
+  c.beginPath();c.ellipse(0,-h*0.3,w*0.24,w*0.24,0,0,Math.PI*2);c.fill();
+  c.fillStyle=sk.eye;
+  c.beginPath();c.ellipse(-w*0.1,-h*0.32,1.8*s,1.8*s,0,0,Math.PI*2);c.fill();
+  c.beginPath();c.ellipse( w*0.1,-h*0.32,1.8*s,1.8*s,0,0,Math.PI*2);c.fill();
+  c.restore();
+}
+
+function rrC(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════════════════
+var gameRunning=false;
+var score=0,lives=5,frameCount=0,level=1;
+var sessionCoins=0;
+var shootPressed=false,shootCooldown=0,prevCarX=0;
+var shieldActive=false,shieldTimer=0;
+var SHIELD_DURATION=15*60;
+var bonuses=[],bonusSpawnLevel=0;
+var pickupTexts=[];
+var combo=1,comboTimer=0;
+var currentRound=0; // index into rounds[]
+
+// ── ENEMY
+var enemyTimer=0,enemyInterval=120;
+var bossActive=false,bossSpawnedAtLevel=0,killCount=0;
+
+// ── ROAD
+var roadOffset=0;
+var RW=0.78;
+
+// ── COLLECTIONS
+var playerBullets=[],enemyBullets=[],enemies=[],explosions=[],particles=[];
+
+// ── CAR
+var car={x:0,y:0,w:36,h:60,targetX:0,tilt:0};
+
+// ══════════════════════════════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════════════════════════════
+var keys={};
+var gyroAvail=false,gyroAttached=false;
+var usingTouch=false;
+var btnLeft=false,btnRight=false;
+
+function setupGyro(){
+  if(gyroAttached)return;gyroAttached=true;
+  window.addEventListener('deviceorientation',function(e){
+    if(e.gamma===null)return;
+    gyroAvail=true;
+    var rw=W*RW,norm=Math.max(-1,Math.min(1,e.gamma/35));
+    car.targetX=W/2+norm*(rw/2-car.w/2-10);
+  });
+}
+function requestGyro(cb){
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted')setupGyro();cb();}).catch(function(){cb();});
+  }else{setupGyro();cb();}
+}
+
+var ctrlBtn=document.getElementById('controlBtn');
+var halfL=document.getElementById('halfL'),halfR=document.getElementById('halfR');
+function handleCtrl(e){
+  e.preventDefault();
+  btnLeft=false;btnRight=false;shootPressed=false;
+  var rect=ctrlBtn.getBoundingClientRect();
+  for(var i=0;i<e.touches.length;i++){
+    if(e.touches[i].clientX-rect.left<rect.width/2)btnLeft=true;else btnRight=true;
+  }
+  shootPressed=e.touches.length>0;
+  halfL.className='half'+(btnLeft?' active':'');
+  halfR.className='half'+(btnRight?' active':'');
+  usingTouch=true;
+}
+function handleCtrlEnd(e){
+  e.preventDefault();btnLeft=false;btnRight=false;shootPressed=false;
+  halfL.className='half';halfR.className='half';
+}
+ctrlBtn.addEventListener('touchstart',handleCtrl,{passive:false});
+ctrlBtn.addEventListener('touchmove',handleCtrl,{passive:false});
+ctrlBtn.addEventListener('touchend',handleCtrlEnd,{passive:false});
+ctrlBtn.addEventListener('touchcancel',handleCtrlEnd,{passive:false});
+ctrlBtn.addEventListener('mousedown',function(e){
+  var rect=ctrlBtn.getBoundingClientRect();
+  if(e.clientX-rect.left<rect.width/2)btnLeft=true;else btnRight=true;
+  shootPressed=true;
+  halfL.className='half'+(btnLeft?' active':'');halfR.className='half'+(btnRight?' active':'');
+});
+window.addEventListener('mouseup',function(){btnLeft=false;btnRight=false;shootPressed=false;halfL.className='half';halfR.className='half';});
+window.addEventListener('keydown',function(e){keys[e.key]=true;if(e.key===' ')shootPressed=true;});
+window.addEventListener('keyup',function(e){keys[e.key]=false;if(e.key===' ')shootPressed=false;});
+
+// ══════════════════════════════════════════════════════════════
+// ROUND START
+// ══════════════════════════════════════════════════════════════
+function startRound(roundIndex){
+  currentRound=roundIndex;
+  requestGyro(function(){
+    showScreen(null);
+    document.getElementById('hud').style.display='flex';
+    ctrlBtn.style.display='flex';
+    score=0;lives=5;frameCount=0;level=1;killCount=0;sessionCoins=0;
+    bossActive=false;bossSpawnedAtLevel=0;
+    shieldActive=false;shieldTimer=0;bonuses=[];bonusSpawnLevel=0;pickupTexts=[];
+    combo=1;comboTimer=0;
+    playerBullets=[];enemyBullets=[];enemies=[];explosions=[];particles=[];
+    roadOffset=0;enemyTimer=0;shootCooldown=0;shootPressed=false;
+    btnLeft=false;btnRight=false;
+    car.x=W/2;car.y=H*0.75;car.targetX=W/2;car.tilt=0;prevCarX=W/2;
+    updateHUD();
+    gameRunning=true;
+    loop();
+  });
+}
+
+function retryRound(){ document.getElementById('gameOverlay').style.display='none'; startRound(currentRound); }
+function goToMenu(){
+  document.getElementById('gameOverlay').style.display='none';
+  document.getElementById('hud').style.display='none';
+  ctrlBtn.style.display='none';
+  gameRunning=false;
+  buildRoundGrid();
+  showScreen('menuScreen');
+}
+
+// ══════════════════════════════════════════════════════════════
+// HUD
+// ══════════════════════════════════════════════════════════════
+function updateHUD(){
+  document.getElementById('hudScore').textContent=Math.floor(score);
+  document.getElementById('hudLevel').textContent='L'+level+' / K'+(currentRound+1);
+  var h='';for(var i=0;i<5;i++)h+=i<lives?'♥':'♡';
+  document.getElementById('hudLives').textContent=h;
+  document.getElementById('hudCoins').textContent='💰'+sessionCoins;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ENEMY FACTORIES
+// ══════════════════════════════════════════════════════════════
+function getRound(){return rounds[currentRound];}
+function spawnEnemy(){
+  var rw=W*RW,rx=(W-rw)/2;
+  var r=getRound();
+  var hp=Math.round((2+Math.floor(level/2))*r.hpMult);
+  enemies.push({
+    x:rx+car.w/2+Math.random()*(rw-car.w),y:-40,w:22,h:38,
+    hp:hp,maxHp:hp,vx:(Math.random()-0.5)*1.5,
+    speed:(1.5+Math.random()*1.2+level*0.3)*r.speedMult,
+    shootTimer:0,shootInterval:Math.max(25,80-level*5),
+    tilt:0,hit:false,hitTimer:0,boss:false
+  });
+}
+function spawnBoss(){
+  if(bossActive)return;
+  bossActive=true;
+  var r=getRound();
+  var hp=Math.round((20+level*5)*r.hpMult);
+  enemies.push({
+    x:W/2,y:-100,w:60,h:100,
+    hp:hp,maxHp:hp,vx:0.8,
+    speed:(1.0+level*0.15)*r.speedMult,
+    shootTimer:0,shootInterval:40,
+    tilt:0,hit:false,hitTimer:0,boss:true
+  });
+  showBossWarning();
+}
+function showBossWarning(){
+  var el=document.createElement('div');
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#ff0000;font-size:26px;font-family:Courier New,monospace;letter-spacing:4px;text-shadow:0 0 20px #ff0000;z-index:30;text-align:center;pointer-events:none;animation:pulse 0.4s ease-in-out infinite;';
+  el.innerHTML='⚠ BOSS ⚠<br><span style="font-size:13px;color:#ff8800;">VELKÁ MOTORKA!</span>';
+  document.body.appendChild(el);
+  setTimeout(function(){el.remove();},2000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function burst(x,y,col,n){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2,sp=1.5+Math.random()*5;
+    particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.022+Math.random()*0.03,r:2+Math.random()*5,col:col});
+  }
+}
+function explode(x,y,big){
+  explosions.push({x:x,y:y,maxR:big?55:28,life:1,decay:0.04+Math.random()*0.02});
+  burst(x,y,'#ff9900',big?18:8);burst(x,y,'#ffdd00',big?8:4);burst(x,y,'#ffffff',big?5:2);
+}
+function flashRed(){var f=document.getElementById('flashOverlay');f.style.opacity='0.45';setTimeout(function(){f.style.opacity='0';},180);}
+function showPickupText(txt,x,y){pickupTexts.push({txt:txt,x:x,y:y,life:1,vy:-1.2});}
+function spawnBonus(){
+  var rw=W*RW,rx=(W-rw)/2;
+  bonuses.push({x:rx+40+Math.random()*(rw-80),y:-30,r:22,vy:1.6+level*0.1,pulse:0});
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW: ROAD
+// ══════════════════════════════════════════════════════════════
+function drawRoad(){
+  var rw=W*RW,rx=(W-rw)/2;
+  ctx.fillStyle='#1a3a0e';ctx.fillRect(0,0,rx,H);ctx.fillRect(rx+rw,0,W-rx-rw,H);
+  var kw=rx,sh=30,off=roadOffset%(sh*2);
+  for(var y=-sh*2+off;y<H+sh;y+=sh*2){
+    ctx.fillStyle='#bb0000';ctx.fillRect(0,y,kw,sh);ctx.fillRect(rx+rw,y,kw,sh);
+    ctx.fillStyle='#eeeeee';ctx.fillRect(0,y+sh,kw,sh);ctx.fillRect(rx+rw,y+sh,kw,sh);
+  }
+  ctx.fillStyle='#2a2a2a';ctx.fillRect(rx,0,rw,H);
+  var dh=36,dg=28,doff=roadOffset%(dh+dg);
+  ctx.strokeStyle='#ffffff33';ctx.lineWidth=2.5;ctx.setLineDash([dh,dg]);ctx.lineDashOffset=-doff;
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle='#ffffff55';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(rx,0);ctx.lineTo(rx,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(rx+rw,0);ctx.lineTo(rx+rw,H);ctx.stroke();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW: CAR
+// ══════════════════════════════════════════════════════════════
+function drawCar(cx,cy,w,h,tilt){
+  var sk=carSkins[save.equippedCarSkin];
+  ctx.save();ctx.translate(cx,cy);ctx.rotate((tilt||0)+Math.PI);
+  var s=w/20;
+  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(1.5*s,2*s,w*0.44,h*0.36,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=sk.body;rrC(ctx,-w/2,-h/2,w,h,5*s);ctx.fill();
+  ctx.fillStyle=sk.stripe;ctx.fillRect(-w/2,-h/2+5*s,w*0.14,h-10*s);ctx.fillRect(w/2-w*0.14,-h/2+5*s,w*0.14,h-10*s);
+  ctx.fillStyle=sk.centre;ctx.fillRect(-w*0.13,-h/2+5*s,w*0.26,h-10*s);
+  ctx.fillStyle=sk.roof;rrC(ctx,-w*0.31,-h/2+13*s,w*0.62,h*0.31,3*s);ctx.fill();
+  ctx.fillStyle='#1c2736';rrC(ctx,-w*0.28,-h/2+h*0.5,w*0.56,h*0.13,2*s);ctx.fill();
+  ctx.fillStyle=sk.stripe;rrC(ctx,-w*0.36,-h/2+s,w*0.72,6.5*s,2*s);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold '+(3.8*s)+'px Courier New';ctx.textAlign='center';ctx.fillText('RALLY TEAM',0,-h/2+5.8*s);
+  ctx.fillStyle=sk.roof;ctx.font='bold '+(6.5*s)+'px Courier New';ctx.fillText('130',0,-h/2+26*s);
+  ctx.fillStyle=sk.centre;rrC(ctx,-w*0.28,h/2-18*s,w*0.56,7.5*s,2*s);ctx.fill();
+  ctx.fillStyle=sk.roof;ctx.font='bold '+(4.5*s)+'px Courier New';ctx.fillText('\u0160KODA',0,h/2-11.5*s);
+  // Lights
+  var gi=0.7+0.3*Math.sin(frameCount*0.18);
+  ctx.shadowColor='#ffffaa';ctx.shadowBlur=11*s*gi;ctx.fillStyle='#ffff99';
+  ctx.beginPath();ctx.ellipse(-w*0.25,h/2-4*s,3.2*s,2.3*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( w*0.25,h/2-4*s,3.2*s,2.3*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // Beam
+  var ba=0.12+0.05*Math.sin(frameCount*0.18);ctx.save();
+  var bg=ctx.createRadialGradient(0,h/2,0,0,h/2+55*s,70*s);
+  bg.addColorStop(0,'rgba(255,255,160,'+ba+')');bg.addColorStop(1,'rgba(255,255,160,0)');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.moveTo(-w*0.28,h/2);ctx.lineTo(-w*0.7,h/2+72*s);ctx.lineTo(w*0.7,h/2+72*s);ctx.lineTo(w*0.28,h/2);ctx.closePath();ctx.fill();ctx.restore();
+  // Rear lights
+  ctx.shadowColor='#ff2200';ctx.shadowBlur=7*s;ctx.fillStyle='#ff3300';
+  ctx.beginPath();ctx.ellipse(-w*0.27,-h/2+4*s,2.3*s,1.8*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( w*0.27,-h/2+4*s,2.3*s,1.8*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // Exhaust
+  ctx.fillStyle='#555';ctx.fillRect(-w*0.18,-h/2-2*s,3*s,5*s);ctx.fillRect(w*0.10,-h/2-2*s,3*s,5*s);
+  // Wheels
+  ctx.fillStyle='#111';var wr=3*s,whl=6.5*s;
+  [[w/2+wr*0.3,h/2-9*s],[-(w/2+wr*0.3),h/2-9*s],[w/2+wr*0.3,-(h/2-9*s)],[-(w/2+wr*0.3),-(h/2-9*s)]].forEach(function(p){ctx.save();ctx.translate(p[0],p[1]);ctx.fillRect(-wr,-whl/2,wr*2,whl);ctx.restore();});
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW: MOTO (normal)
+// ══════════════════════════════════════════════════════════════
+function drawMoto(mx,my,mw,mh,tilt,hitFlash,hpRatio){
+  var sk=motoSkins[save.equippedMotoSkin];
+  ctx.save();ctx.translate(mx,my);ctx.rotate(tilt||0);
+  var s=mw/14;
+  ctx.fillStyle='rgba(0,0,0,0.22)';ctx.beginPath();ctx.ellipse(s,s,mw*0.4,mh*0.3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=hitFlash?'#ffffff':sk.frame;rrC(ctx,-mw/2,-mh/2,mw,mh,3*s);ctx.fill();
+  ctx.fillStyle=hitFlash?'#ffcccc':sk.tank;rrC(ctx,-mw*0.38,-mh*0.1,mw*0.76,mh*0.38,2*s);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.16)';rrC(ctx,-mw*0.25,-mh*0.06,mw*0.3,mh*0.15,s);ctx.fill();
+  ctx.fillStyle=hitFlash?'#eee':sk.frame;rrC(ctx,-mw*0.3,-mh*0.32,mw*0.6,mh*0.28,2*s);ctx.fill();
+  ctx.fillStyle=hitFlash?'#fff':sk.helmet;ctx.beginPath();ctx.ellipse(0,-mh*0.25,mw*0.22,mw*0.22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=sk.eye;ctx.shadowColor=sk.eye;ctx.shadowBlur=6*s;
+  ctx.beginPath();ctx.ellipse(-mw*0.10,-mh*0.27,1.8*s,1.8*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( mw*0.10,-mh*0.27,1.8*s,1.8*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.shadowColor='#ff4400';ctx.shadowBlur=8*s;ctx.fillStyle='#ff6600';
+  ctx.beginPath();ctx.ellipse(-mw*0.1,mh/2+2*s,2*s,3*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( mw*0.1,mh/2+2*s,2*s,3*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#222';ctx.strokeStyle='#555';ctx.lineWidth=s;
+  ctx.beginPath();ctx.ellipse(0,-mh/2+4*s,mw*0.38,mw*0.18,0,0,Math.PI*2);ctx.stroke();ctx.fill();
+  ctx.beginPath();ctx.ellipse(0, mh/2-4*s,mw*0.38,mw*0.18,0,0,Math.PI*2);ctx.stroke();ctx.fill();
+  ctx.fillStyle='#333';ctx.fillRect(-mw/2,-mh/2-5*s,mw,3*s);
+  ctx.fillStyle=hpRatio>0.5?'#00dd44':'#ff4400';ctx.fillRect(-mw/2,-mh/2-5*s,mw*hpRatio,3*s);
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW: BOSS MOTO
+// ══════════════════════════════════════════════════════════════
+function drawBossMoto(mx,my,mw,mh,tilt,hitFlash,hpRatio){
+  var sk=motoSkins[save.equippedMotoSkin];
+  ctx.save();ctx.translate(mx,my);ctx.rotate(tilt||0);
+  var s=mw/14;
+  // Glow
+  var gl=8+6*Math.sin(frameCount*0.12);
+  ctx.shadowColor='#ff0000';ctx.shadowBlur=gl*2;
+  ctx.fillStyle='rgba(255,0,0,0.07)';ctx.beginPath();ctx.ellipse(0,0,mw*0.85,mh*0.65,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(0,0,0,0.38)';ctx.beginPath();ctx.ellipse(2*s,2*s,mw*0.48,mh*0.36,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=hitFlash?'#ffffff':'#0d0d0d';rrC(ctx,-mw/2,-mh/2,mw,mh,4*s);ctx.fill();
+  ctx.strokeStyle=hitFlash?'#ffaaaa':'#666666';ctx.lineWidth=1.5*s;ctx.stroke();
+  // Boss uses darker version of moto skin tank
+  ctx.fillStyle=hitFlash?'#ffcccc':sk.tank;
+  ctx.fillRect(-mw*0.46,-mh/2+8*s,mw*0.18,mh*0.6);ctx.fillRect(mw*0.28,-mh/2+8*s,mw*0.18,mh*0.6);
+  ctx.fillStyle=hitFlash?'#eee':'#1a1a1a';rrC(ctx,-mw*0.32,-mh*0.05,mw*0.64,mh*0.38,2*s);ctx.fill();
+  ctx.fillStyle='#333';for(var fi=0;fi<3;fi++)ctx.fillRect(-mw*0.28+fi*mw*0.18,-mh*0.02,mw*0.12,mh*0.32);
+  ctx.fillStyle='#666';ctx.fillRect(-mw*0.38,mh/2-6*s,mw*0.16,10*s);ctx.fillRect(mw*0.22,mh/2-6*s,mw*0.16,10*s);
+  ctx.shadowColor='#ff4400';ctx.shadowBlur=12*s;ctx.fillStyle='#ff6600';
+  ctx.beginPath();ctx.ellipse(-mw*0.3,mh/2+3*s,3*s,4*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( mw*0.3,mh/2+3*s,3*s,4*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle=hitFlash?'#ddd':'#111';rrC(ctx,-mw*0.36,-mh*0.42,mw*0.72,mh*0.36,3*s);ctx.fill();
+  ctx.fillStyle=hitFlash?'#ccc':sk.tank;
+  ctx.beginPath();ctx.ellipse(-mw*0.32,-mh*0.28,3.5*s,3.5*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( mw*0.32,-mh*0.28,3.5*s,3.5*s,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=hitFlash?'#fff':sk.helmet;ctx.beginPath();ctx.ellipse(0,-mh*0.36,mw*0.28,mw*0.28,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=hitFlash?'#ff8888':'#cc0000';ctx.lineWidth=s;ctx.stroke();
+  ctx.fillStyle=sk.eye;ctx.shadowColor=sk.eye;ctx.shadowBlur=8*s;
+  ctx.beginPath();ctx.ellipse(-mw*0.10,-mh*0.38,2.2*s,2.2*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse( mw*0.10,-mh*0.38,2.2*s,2.2*s,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#111';ctx.strokeStyle='#555';ctx.lineWidth=1.5*s;
+  ctx.beginPath();ctx.ellipse(0,-mh/2+5*s,mw*0.44,mw*0.2,0,0,Math.PI*2);ctx.stroke();ctx.fill();
+  ctx.beginPath();ctx.ellipse(0, mh/2-5*s,mw*0.44,mw*0.2,0,0,Math.PI*2);ctx.stroke();ctx.fill();
+  ctx.strokeStyle='#444';ctx.lineWidth=s*0.8;
+  for(var sp=0;sp<6;sp++){var sa=sp*Math.PI/3+frameCount*0.05;ctx.beginPath();ctx.moveTo(Math.cos(sa)*mw*0.15,-mh/2+5*s+Math.sin(sa)*mw*0.07);ctx.lineTo(Math.cos(sa)*mw*0.42,-mh/2+5*s+Math.sin(sa)*mw*0.19);ctx.stroke();}
+  // Boss HP bar
+  var bw=mw*1.4,bh2=6*s,bx=-bw/2,by2=-mh/2-12*s;
+  ctx.fillStyle='#330000';ctx.fillRect(bx,by2,bw,bh2);
+  var hcol=hpRatio>0.5?'#ff2200':hpRatio>0.25?'#ff6600':'#ffaa00';
+  ctx.fillStyle=hcol;ctx.shadowColor=hcol;ctx.shadowBlur=8;ctx.fillRect(bx,by2,bw*hpRatio,bh2);ctx.shadowBlur=0;
+  ctx.strokeStyle='#660000';ctx.lineWidth=s*0.6;ctx.strokeRect(bx,by2,bw,bh2);
+  ctx.fillStyle='#ff4444';ctx.font='bold '+(4*s)+'px Courier New';ctx.textAlign='center';ctx.fillText('BOSS',0,by2-2*s);
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW: BULLETS, BONUS, SHIELD, PARTICLES, EXPLOSIONS
+// ══════════════════════════════════════════════════════════════
+function drawPlayerBullets(){
+  for(var i=0;i<playerBullets.length;i++){
+    var b=playerBullets[i];
+    ctx.shadowColor='#ff9900';ctx.shadowBlur=12;ctx.fillStyle='#ffcc00';
+    ctx.beginPath();ctx.ellipse(b.x,b.y,4,7,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff6600';ctx.beginPath();ctx.ellipse(b.x,b.y+5,2.5,4,0,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+}
+function drawEnemyBullets(){
+  for(var i=0;i<enemyBullets.length;i++){
+    var b=enemyBullets[i];
+    var r=b.boss?6:3.5,r2=b.boss?9:6;
+    ctx.shadowColor='#ff0044';ctx.shadowBlur=b.boss?16:10;
+    ctx.fillStyle=b.boss?'#ff0000':'#ff0055';
+    ctx.beginPath();ctx.ellipse(b.x,b.y,r,r2,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.ellipse(b.x,b.y-(b.boss?5:3),b.boss?2.5:1.5,b.boss?3.5:2,0,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+}
+function drawBonuses(){
+  for(var i=0;i<bonuses.length;i++){
+    var b=bonuses[i];b.pulse+=0.08;
+    var gw=10+8*Math.sin(b.pulse);
+    ctx.save();ctx.translate(b.x,b.y);
+    ctx.shadowColor='#00ccff';ctx.shadowBlur=gw*2;
+    ctx.strokeStyle='rgba(0,200,255,0.6)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(0,0,b.r+4+4*Math.sin(b.pulse),0,Math.PI*2);ctx.stroke();
+    var gr=ctx.createRadialGradient(0,0,2,0,0,b.r);
+    gr.addColorStop(0,'#aaeeff');gr.addColorStop(0.5,'#0099ff');gr.addColorStop(1,'#003366');
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(0,0,b.r,0,Math.PI*2);ctx.fill();
+    ctx.shadowColor='#ffffff';ctx.shadowBlur=8;ctx.fillStyle='#ffffff';
+    ctx.beginPath();ctx.moveTo(0,-b.r*0.55);ctx.lineTo(b.r*0.42,-b.r*0.2);ctx.lineTo(b.r*0.42,b.r*0.25);ctx.lineTo(0,b.r*0.58);ctx.lineTo(-b.r*0.42,b.r*0.25);ctx.lineTo(-b.r*0.42,-b.r*0.2);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.restore();
+  }
+}
+function drawShield(){
+  if(!shieldActive)return;
+  var secs=Math.ceil(shieldTimer/60),ratio=shieldTimer/SHIELD_DURATION;
+  ctx.save();ctx.translate(car.x,car.y);
+  var sr=(car.w*0.75+car.h*0.4)*(0.92+0.08*Math.sin(frameCount*0.2));
+  ctx.shadowColor='#00ccff';ctx.shadowBlur=20+10*Math.sin(frameCount*0.15);
+  ctx.strokeStyle='rgba(0,200,255,'+(0.5+0.3*Math.sin(frameCount*0.12))+')';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(0,0,sr,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='rgba(0,150,255,0.07)';ctx.beginPath();ctx.arc(0,0,sr,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+  // Timer
+  ctx.save();ctx.translate(car.x,car.y-(car.h/2+28));
+  ctx.strokeStyle='#003355';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#00ccff';ctx.shadowColor='#00ccff';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(0,0,13,-Math.PI/2,-Math.PI/2+Math.PI*2*ratio);ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle='#aaeeff';ctx.font='bold 9px Courier New';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(secs,0,1);ctx.restore();
+}
+function drawExplosions(){
+  for(var i=0;i<explosions.length;i++){
+    var e=explosions[i],prog=1-e.life,r=e.maxR*prog;
+    ctx.globalAlpha=e.life*0.9;ctx.shadowColor='#ff6600';ctx.shadowBlur=20;
+    ctx.fillStyle='hsl('+(30+prog*30)+',100%,'+(60-prog*30)+'%)';
+    ctx.beginPath();ctx.arc(e.x,e.y,r,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=e.life*0.4;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(e.x,e.y,r*0.4,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+  }
+}
+function drawParticles(){
+  for(var i=0;i<particles.length;i++){
+    var p=particles[i];ctx.globalAlpha=p.life;ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fill();
+  }ctx.globalAlpha=1;
+}
+function drawPickupTexts(){
+  for(var i=0;i<pickupTexts.length;i++){
+    var pt=pickupTexts[i];pt.y+=pt.vy;pt.life-=0.018;
+    if(pt.life<=0)continue;
+    ctx.globalAlpha=pt.life;ctx.fillStyle='#00eeff';ctx.shadowColor='#00ccff';ctx.shadowBlur=12;
+    ctx.font='bold 22px Courier New';ctx.textAlign='center';ctx.fillText(pt.txt,pt.x,pt.y);ctx.shadowBlur=0;
+  }
+  pickupTexts=pickupTexts.filter(function(p){return p.life>0;});
+  ctx.globalAlpha=1;
+}
+
+// ══════════════════════════════════════════════════════════════
+// UPDATE
+// ══════════════════════════════════════════════════════════════
+function update(){
+  frameCount++;
+  var r=getRound();
+  roadOffset+=3+level*0.4;
+
+  // Input
+  if(!gyroAvail){
+    var rw2=W*RW,rx2=(W-rw2)/2;
+    if(keys['ArrowLeft']||keys['a']||keys['A']||btnLeft)car.targetX=Math.max(rx2+car.w/2+4,car.targetX-7);
+    if(keys['ArrowRight']||keys['d']||keys['D']||btnRight)car.targetX=Math.min(rx2+rw2-car.w/2-4,car.targetX+7);
+  }
+  prevCarX=car.x;car.x+=(car.targetX-car.x)*0.13;
+  car.tilt+=((car.x-prevCarX)*0.04-car.tilt)*0.2;
+  var rw=W*RW,rx=(W-rw)/2;
+  car.x=Math.max(rx+car.w/2+3,Math.min(rx+rw-car.w/2-3,car.x));
+
+  // Shoot
+  if(shootCooldown>0)shootCooldown--;
+  if(shootPressed&&shootCooldown<=0){
+    shootCooldown=18;
+    playerBullets.push({x:car.x-car.w*0.18,y:car.y-car.h/2-4,vy:-11});
+    playerBullets.push({x:car.x+car.w*0.10,y:car.y-car.h/2-4,vy:-11});
+    burst(car.x,car.y-car.h/2,'#ff9900',4);
+  }
+  for(var i=playerBullets.length-1;i>=0;i--){playerBullets[i].y+=playerBullets[i].vy;if(playerBullets[i].y<-20)playerBullets.splice(i,1);}
+
+  // Spawn
+  enemyTimer++;
+  if(enemyTimer>=Math.max(35,120-level*12)){spawnEnemy();enemyTimer=0;}
+  // Boss každé 3 levely od 3
+  if(level>=3&&!bossActive&&(level-3)%3===0&&bossSpawnedAtLevel!==level){bossSpawnedAtLevel=level;setTimeout(spawnBoss,800);}
+
+  // Enemies update
+  for(var i=enemies.length-1;i>=0;i--){
+    var en=enemies[i];
+    en.y+=en.speed;en.x+=en.vx;
+    var enL=rx+en.w/2,enR=rx+rw-en.w/2;
+    if(en.x<enL){en.x=enL;en.vx=Math.abs(en.vx);}
+    if(en.x>enR){en.x=enR;en.vx=-Math.abs(en.vx);}
+    if(en.boss){en.vx+=(car.x-en.x)*0.003;en.vx=Math.max(-3,Math.min(3,en.vx));if(en.y>H*0.28)en.speed=Math.max(0,en.speed-0.04);}
+    else{en.vx+=(car.x-en.x)*0.002;en.vx=Math.max(-2.5,Math.min(2.5,en.vx));}
+    en.tilt+=((en.vx*0.06)-en.tilt)*0.15;
+    if(en.hitTimer>0){en.hitTimer--;en.hit=en.hitTimer>0;}
+    // Shoot
+    en.shootTimer++;
+    if(en.shootTimer>=Math.max(25,en.shootInterval)){
+      en.shootTimer=0;
+      var dx=car.x-en.x,dy=car.y-en.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
+      var spd=(5+level*0.4)*r.speedMult*0.7;
+      if(en.boss){
+        for(var ba=-2;ba<=2;ba++){var ang=ba*0.22;enemyBullets.push({x:en.x,y:en.y+en.h/2,vx:(dx/dist*Math.cos(ang)-dy/dist*Math.sin(ang))*spd,vy:(dx/dist*Math.sin(ang)+dy/dist*Math.cos(ang))*spd,boss:true});}
+      }else{
+        enemyBullets.push({x:en.x,y:en.y+en.h/2,vx:dx/dist*spd,vy:dy/dist*spd});
+        if(level>=3){for(var baa=-1;baa<=1;baa+=2){var aang=baa*0.3;enemyBullets.push({x:en.x,y:en.y+en.h/2,vx:(dx/dist*Math.cos(aang)-dy/dist*Math.sin(aang))*spd,vy:(dx/dist*Math.sin(aang)+dy/dist*Math.cos(aang))*spd});}}
+      }
+    }
+    if(en.y>H+60){enemies.splice(i,1);continue;}
+    // Bullet vs enemy
+    for(var j=playerBullets.length-1;j>=0;j--){
+      var pb=playerBullets[j];
+      if(Math.abs(pb.x-en.x)<en.w/2+4&&Math.abs(pb.y-en.y)<en.h/2+4){
+        en.hp--;en.hit=true;en.hitTimer=8;playerBullets.splice(j,1);burst(pb.x,pb.y,'#ffcc00',5);
+        if(en.hp<=0){
+          if(en.boss){
+            explode(en.x,en.y,true);explode(en.x-en.w*0.3,en.y-en.h*0.2,true);explode(en.x+en.w*0.3,en.y+en.h*0.2,true);
+            burst(en.x,en.y,'#ff0000',30);
+            var bCoins=50*r.coinMult*(1+Math.floor(level/3));
+            sessionCoins+=bCoins;save.coins+=bCoins;writeSave();
+            showPickupText('+'+bCoins+' 💰',en.x,en.y-40);
+            bossActive=false;score+=500*level;
+            if(level>=12){setTimeout(gameWin,1200);gameRunning=false;}
+          }else{
+            explode(en.x,en.y,false);
+            var nCoins=10*r.coinMult;
+            sessionCoins+=nCoins;save.coins+=nCoins;writeSave();
+            score+=100*level;
+          }
+          killCount++;enemies.splice(i,1);
+          if(killCount%5===0)levelUp();
+          updateHUD();break;
+        }
+      }
+    }
+  }
+
+  // Enemy bullets
+  for(var i=enemyBullets.length-1;i>=0;i--){
+    var eb=enemyBullets[i];eb.x+=eb.vx;eb.y+=eb.vy;
+    if(eb.x<0||eb.x>W||eb.y<-20||eb.y>H+20){enemyBullets.splice(i,1);continue;}
+    if(Math.abs(eb.x-car.x)<car.w/2-4&&Math.abs(eb.y-car.y)<car.h/2-4){
+      enemyBullets.splice(i,1);
+      if(shieldActive){burst(eb.x,eb.y,'#00ccff',8);}
+      else{lives--;flashRed();burst(car.x,car.y,'#ff4400',16);updateHUD();if(lives<=0){setTimeout(gameOver,400);gameRunning=false;}}
+    }
+  }
+
+  // Shield
+  if(shieldActive){shieldTimer--;if(shieldTimer<=0){shieldActive=false;shieldTimer=0;}}
+
+  // Bonus spawn: každé 2 levely
+  if(level>bonusSpawnLevel&&level%2===0&&bonuses.length===0){bonusSpawnLevel=level;spawnBonus();}
+  for(var i=bonuses.length-1;i>=0;i--){
+    var bn=bonuses[i];bn.y+=bn.vy;
+    if(bn.y>H+40){bonuses.splice(i,1);continue;}
+    if(Math.abs(bn.x-car.x)<bn.r+car.w/2-6&&Math.abs(bn.y-car.y)<bn.r+car.h/2-10){
+      bonuses.splice(i,1);shieldActive=true;shieldTimer=SHIELD_DURATION;
+      burst(car.x,car.y,'#00ccff',20);showPickupText('ŠTÍT!',car.x,car.y-60);
+    }
+  }
+
+  // Particles / explosions
+  for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=p.decay;if(p.life<=0)particles.splice(i,1);}
+  for(var i=explosions.length-1;i>=0;i--){explosions[i].life-=explosions[i].decay;if(explosions[i].life<=0)explosions.splice(i,1);}
+
+  // Combo
+  if(comboTimer>0){
+    comboTimer--;
+    var c=document.getElementById('combo');
+    c.style.opacity='1';c.textContent=combo>1?'COMBO x'+combo:'';
+    if(comboTimer===0)c.style.opacity='0';
+  }
+
+  score++;
+  if(frameCount%8===0)updateHUD();
+}
+
+function levelUp(){
+  if(level>=12){return;}
+  level++;
+  updateHUD();
+  if(level===3||level===6||level===9||level===12)showPickupText('BOSS LEVEL!',W/2,H/2-40);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW FRAME
+// ══════════════════════════════════════════════════════════════
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  drawRoad();drawBonuses();drawExplosions();drawParticles();
+  for(var i=0;i<enemies.length;i++){
+    var en=enemies[i];
+    if(en.boss)drawBossMoto(en.x,en.y,en.w,en.h,en.tilt,en.hit,en.hp/en.maxHp);
+    else drawMoto(en.x,en.y,en.w,en.h,en.tilt,en.hit,en.hp/en.maxHp);
+  }
+  drawPlayerBullets();drawEnemyBullets();drawShield();drawCar(car.x,car.y,car.w,car.h,car.tilt);drawPickupTexts();
+}
+
+// ── LOOP
+function loop(){if(!gameRunning)return;update();draw();requestAnimationFrame(loop);}
+
+// ══════════════════════════════════════════════════════════════
+// WIN / LOSE
+// ══════════════════════════════════════════════════════════════
+function gameOver(){
+  gameRunning=false;
+  save.coins+=sessionCoins; // already added per kill, don't double
+  var ov=document.getElementById('gameOverlay');
+  document.getElementById('goTitle').innerHTML='<span style="color:#ff4400">KONEC<br>ZÁVODU</span>';
+  document.getElementById('goScore').textContent='SKÓRE: '+Math.floor(score);
+  document.getElementById('goCoins').textContent='💰 Vydělal jsi: '+sessionCoins+' | Celkem: '+save.coins;
+  ov.style.display='flex';
+}
+function gameWin(){
+  gameRunning=false;
+  // Unlock next round
+  if(save.unlockedRounds<=currentRound+1&&save.unlockedRounds<rounds.length){
+    save.unlockedRounds=currentRound+2;writeSave();
+  }
+  var ov=document.getElementById('gameOverlay');
+  var isLast=currentRound>=rounds.length-1;
+  document.getElementById('goTitle').innerHTML=isLast?
+    '<span style="color:#ffd700">ŠAMPIÓN!<br>★★★</span>':
+    '<span style="color:#00ff88">KOLO '+(currentRound+1)+'<br>DOKONČENO!</span>';
+  document.getElementById('goScore').textContent='SKÓRE: '+Math.floor(score);
+  document.getElementById('goCoins').textContent='💰 Vydělal jsi: '+sessionCoins+' | Celkem: '+save.coins+
+    ((!isLast)?'\n🔓 KOLO '+(currentRound+2)+' ODEMČENO!':'');
+  document.getElementById('goRetry').style.display=isLast?'none':'inline-block';
+  ov.style.display='flex';
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+buildRoundGrid();
+updateMenuCoins();
+if(!(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')){setupGyro();}
+
+// idle bg animation
+function idleDraw(){
+  if(gameRunning)return;
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
+  var rw=W*RW,rx=(W-rw)/2;
+  ctx.fillStyle='#111a0e';ctx.fillRect(0,0,rx,H);ctx.fillRect(rx+rw,0,W-rx-rw,H);
+  ctx.fillStyle='#161616';ctx.fillRect(rx,0,rw,H);
+  requestAnimationFrame(idleDraw);
+}
+idleDraw();
+</script>
+</body>
+</html>
