@@ -220,6 +220,7 @@
     <div class="tile-desc">IQ testy pro různé věkové skupiny a technické kalkulačky.</div>
     <div class="tile-apps">
       <span class="app-badge">IQ Test kompletní</span>
+        <span class="app-badge">Servisní knížka</span>
     </div>
     <div class="tile-arrow">↗</div>
   </a>
@@ -230,7 +231,7 @@
     <div class="tile-title">Kontakt</div>
     <div class="tile-desc">Napište mi nebo zavolejte. Rád odpovím k projektům, spolupráci i čemukoli jinému.</div>
     <div class="tile-apps">
-      <span class="app-badge">ondrejbroz27@gmail.com</span>
+      <span class="app-badge"><span class="__cf_email__" data-cfemail="214e4f4553444b43534e5b131661464c40484d0f424e4c">[email&#160;protected]</span></span>
       <span class="app-badge">775 727 277</span>
     </div>
     <div class="tile-arrow">↗</div>
@@ -287,7 +288,7 @@
     <a href="kontakt.html">Kontakt</a>
   </div>
 </footer>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   let cur='all';
   function setFilter(cat,btn){
     cur=cat;
@@ -299,11 +300,4 @@
     const q=document.getElementById('search').value.toLowerCase().trim();
     document.querySelectorAll('#grid .tile').forEach(tile=>{
       const cat=tile.dataset.category||'';
-      const txt=tile.textContent.toLowerCase();
-      const okCat=cur==='all'||cat===cur;
-      const okQ=!q||txt.includes(q);
-      tile.classList.toggle('hidden',!(okCat&&okQ));
-    });
-  }
-</script>
-</body></html>
+      const 
