@@ -4,33 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AutoLog v2 — Servisní knížka</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════
-   DESIGN TOKENS
+   DESIGN TOKENS — světlé téma (Brooz Studio)
 ══════════════════════════════════════════ */
 :root {
-  --bg:      #0b0c10;
-  --surf1:   #111217;
-  --surf2:   #18191f;
-  --surf3:   #1f2028;
-  --border:  rgba(255,255,255,.07);
-  --border2: rgba(255,255,255,.12);
-  --gold:    #f0a830;
-  --gold2:   #ffd07a;
-  --blue:    #4f8ef7;
-  --green:   #3dd68c;
-  --red:     #f05252;
-  --purple:  #a78bfa;
-  --text:    #e8e8f0;
-  --muted:   #6b6b88;
-  --muted2:  #3a3a52;
-  --nav-h:   64px;           /* desktop top nav height */
-  --mob-nav: 68px;           /* mobile bottom bar height */
-  --r:       12px;
-  --serif:   'Syne', sans-serif;
+  --bg:      #f5f0e8;
+  --surf1:   #ede8df;
+  --surf2:   #ffffff;
+  --surf3:   #faf7f2;
+  --border:  rgba(0,0,0,.08);
+  --border2: rgba(0,0,0,.13);
+  --gold:    #c8692a;
+  --gold2:   #e0874a;
+  --blue:    #3b6fd4;
+  --green:   #2a9d6f;
+  --red:     #c94040;
+  --purple:  #7c5cbf;
+  --text:    #1a1814;
+  --muted:   #7a7060;
+  --muted2:  #c2b9a8;
+  --nav-h:   60px;
+  --mob-nav: 66px;
+  --r:       10px;
+  --serif:   'Lora', Georgia, serif;
   --sans:    'Instrument Sans', sans-serif;
-  --shadow:  0 8px 32px rgba(0,0,0,.5);
+  --shadow:  0 2px 12px rgba(0,0,0,.08);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -43,8 +43,8 @@ body {
 }
 body::before {
   content: '';
-  position: fixed; top: 0; left: 0; right: 0; height: 400px;
-  background: radial-gradient(ellipse 60% 40% at 70% -10%, rgba(240,168,48,.08), transparent);
+  position: fixed; top: 0; left: 0; right: 0; height: 300px;
+  background: radial-gradient(ellipse 70% 50% at 30% -10%, rgba(200,105,42,.06), transparent);
   pointer-events: none; z-index: 0;
 }
 
@@ -60,33 +60,33 @@ body::before {
 ══════════════════════════════════════════ */
 #desktop-nav {
   position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); z-index: 200;
-  background: rgba(11,12,16,.92); backdrop-filter: blur(20px);
+  background: rgba(245,240,232,.95); backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 24px; gap: 6px;
+  display: flex; align-items: center; padding: 0 24px; gap: 4px;
 }
 .logo-mark {
-  font-family: var(--serif); font-size: 20px; font-weight: 800;
-  color: var(--gold); letter-spacing: -1px; margin-right: 20px; white-space: nowrap;
+  font-family: var(--serif); font-size: 19px; font-weight: 700;
+  color: var(--gold); letter-spacing: -0.5px; margin-right: 16px; white-space: nowrap;
 }
-.logo-mark span { color: var(--muted); font-size: 11px; font-weight: 400; display: block; letter-spacing: 2px; text-transform: uppercase; margin-top: -4px; }
+.logo-mark span { color: var(--muted); font-family: var(--sans); font-size: 10px; font-weight: 500; display: block; letter-spacing: 1.5px; text-transform: uppercase; margin-top: -3px; }
 .nav-btn {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
-  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 7px; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
   color: var(--muted); background: transparent; transition: all .18s; white-space: nowrap;
 }
-.nav-btn .ni { font-size: 15px; }
-.nav-btn:hover { color: var(--text); background: var(--surf2); }
-.nav-btn.active { color: var(--gold); background: rgba(240,168,48,.1); }
+.nav-btn .ni { font-size: 14px; }
+.nav-btn:hover { color: var(--text); background: var(--surf1); }
+.nav-btn.active { color: var(--gold); background: rgba(200,105,42,.08); font-weight: 600; }
 .nav-spacer { flex: 1; }
 .nav-sync-btn {
-  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
-  border-radius: 8px; border: 1px solid var(--border2); cursor: pointer;
+  display: flex; align-items: center; gap: 6px; padding: 6px 13px;
+  border-radius: 7px; border: 1px solid var(--border2); cursor: pointer;
   font-family: var(--sans); font-size: 12px; font-weight: 500;
-  color: var(--muted); background: transparent; transition: all .18s;
+  color: var(--muted); background: var(--surf2); transition: all .18s;
 }
 .nav-sync-btn:hover { border-color: var(--blue); color: var(--blue); }
-.nav-sync-btn.synced { border-color: var(--green); color: var(--green); }
+.nav-sync-btn.synced { border-color: var(--green); color: var(--green); background: rgba(42,157,111,.05); }
 
 /* ══════════════════════════════════════════
    MOBILE BOTTOM NAV
@@ -94,7 +94,7 @@ body::before {
 #mobile-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
   height: var(--mob-nav);
-  background: rgba(17,18,23,.96); backdrop-filter: blur(20px);
+  background: rgba(245,240,232,.97); backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);
   display: none; align-items: stretch;
   padding-bottom: env(safe-area-inset-bottom, 0);
@@ -106,8 +106,8 @@ body::before {
   transition: color .18s; padding: 6px 2px;
 }
 .mob-btn .mi { font-size: 20px; line-height: 1; }
-.mob-btn.active { color: var(--gold); }
-.mob-btn.active .mi { filter: drop-shadow(0 0 6px rgba(240,168,48,.6)); }
+.mob-btn.active { color: var(--gold); font-weight: 600; }
+.mob-btn.active .mi { filter: drop-shadow(0 0 4px rgba(200,105,42,.4)); }
 
 /* ══════════════════════════════════════════
    MAIN LAYOUT
@@ -123,21 +123,22 @@ body::before {
   to   { opacity: 1; transform: translateY(0); }
 }
 .page-head { margin-bottom: 28px; }
-.page-head h1 { font-family: var(--serif); font-size: 30px; font-weight: 800; letter-spacing: -1px; }
-.page-head p  { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.page-head h1 { font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+.page-head p  { color: var(--muted); font-size: 13px; margin-top: 5px; }
 
 /* ══════════════════════════════════════════
    CARDS
 ══════════════════════════════════════════ */
 .card {
   background: var(--surf2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 20px; margin-bottom: 16px;
+  border-radius: var(--r); padding: 20px; margin-bottom: 14px;
+  box-shadow: var(--shadow);
 }
 .card-head {
-  font-size: 10px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
 }
-.card-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.card-head .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
 
 /* ══════════════════════════════════════════
    FORMS
@@ -145,13 +146,13 @@ body::before {
 .fg { display: flex; flex-direction: column; gap: 6px; }
 .fg label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 input, select, textarea {
-  background: var(--surf1); border: 1px solid var(--border2);
+  background: var(--surf3); border: 1px solid var(--border2);
   border-radius: 8px; padding: 10px 13px;
   color: var(--text); font-family: var(--sans); font-size: 14px; outline: none;
   transition: border .18s; width: 100%;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--gold); }
-select option { background: var(--surf1); }
+input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,105,42,.1); }
+select option { background: var(--surf2); color: var(--text); }
 textarea { resize: vertical; min-height: 72px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
@@ -162,23 +163,23 @@ textarea { resize: vertical; min-height: 72px; }
 ══════════════════════════════════════════ */
 .btn {
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 10px 20px; border-radius: 9px; border: none; cursor: pointer;
+  padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
   font-family: var(--sans); font-size: 13px; font-weight: 600; transition: all .18s;
   white-space: nowrap;
 }
-.btn-primary   { background: var(--gold); color: #0b0c10; }
-.btn-primary:hover { background: var(--gold2); transform: translateY(-1px); }
-.btn-ghost     { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+.btn-primary   { background: var(--gold); color: #fff; box-shadow: 0 1px 4px rgba(200,105,42,.3); }
+.btn-primary:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(200,105,42,.35); }
+.btn-ghost     { background: var(--surf2); border: 1px solid var(--border2); color: var(--muted); }
 .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
-.btn-blue      { background: rgba(79,142,247,.15); border: 1px solid rgba(79,142,247,.3); color: var(--blue); }
-.btn-blue:hover{ background: rgba(79,142,247,.25); }
-.btn-green     { background: rgba(61,214,140,.12); border: 1px solid rgba(61,214,140,.3); color: var(--green); }
-.btn-green:hover{ background: rgba(61,214,140,.22); }
-.btn-red       { background: transparent; border: 1px solid rgba(240,82,82,.4); color: var(--red); }
-.btn-red:hover { background: rgba(240,82,82,.1); }
-.btn-purple    { background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.3); color: var(--purple); }
-.btn-purple:hover { background: rgba(167,139,250,.22); }
-.btn-sm        { padding: 7px 14px; font-size: 12px; }
+.btn-blue      { background: rgba(59,111,212,.08); border: 1px solid rgba(59,111,212,.25); color: var(--blue); }
+.btn-blue:hover{ background: rgba(59,111,212,.15); }
+.btn-green     { background: rgba(42,157,111,.08); border: 1px solid rgba(42,157,111,.25); color: var(--green); }
+.btn-green:hover{ background: rgba(42,157,111,.15); }
+.btn-red       { background: transparent; border: 1px solid rgba(201,64,64,.3); color: var(--red); }
+.btn-red:hover { background: rgba(201,64,64,.06); }
+.btn-purple    { background: rgba(124,92,191,.08); border: 1px solid rgba(124,92,191,.25); color: var(--purple); }
+.btn-purple:hover { background: rgba(124,92,191,.15); }
+.btn-sm        { padding: 6px 13px; font-size: 12px; }
 .btn-row       { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 
 /* ══════════════════════════════════════════
@@ -188,67 +189,68 @@ textarea { resize: vertical; min-height: 72px; }
 .vcard {
   background: var(--surf2); border: 1px solid var(--border);
   border-radius: var(--r); padding: 18px; cursor: pointer; transition: all .18s;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; box-shadow: var(--shadow);
 }
 .vcard::after {
   content: ''; position: absolute; inset: 0; border-radius: var(--r);
   border: 1px solid transparent; transition: border .18s;
 }
 .vcard:hover::after, .vcard.sel::after { border-color: var(--gold); }
-.vcard.sel { background: var(--surf3); }
-.vcard-stripe { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,var(--gold),var(--blue)); opacity: 0; transition: opacity .18s; }
+.vcard.sel { background: #fff9f4; }
+.vcard-stripe { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg,var(--gold),var(--gold2)); opacity: 0; transition: opacity .18s; }
 .vcard:hover .vcard-stripe, .vcard.sel .vcard-stripe { opacity: 1; }
 .vcard-type { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-.vcard-name { font-family: var(--serif); font-size: 18px; font-weight: 700; margin: 6px 0 3px; }
+.vcard-name { font-family: var(--serif); font-size: 17px; font-weight: 600; margin: 5px 0 3px; color: var(--text); }
 .vcard-spz  { font-size: 12px; color: var(--gold); font-weight: 600; letter-spacing: 1px; }
 .vcard-km   { font-size: 11px; color: var(--muted); margin-top: 8px; }
 .vcard-dot  { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; }
 .vcard-dot.ok   { background: var(--green); }
-.vcard-dot.warn { background: var(--gold); box-shadow: 0 0 8px rgba(240,168,48,.5); }
-.vcard-dot.crit { background: var(--red);  box-shadow: 0 0 8px rgba(240,82,82,.6); animation: pulse 1.5s infinite; }
+.vcard-dot.warn { background: var(--gold); box-shadow: 0 0 6px rgba(200,105,42,.5); }
+.vcard-dot.crit { background: var(--red);  box-shadow: 0 0 6px rgba(201,64,64,.6); animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.4)} }
 .add-vcard {
-  background: var(--surf1); border: 1px dashed var(--border2);
+  background: var(--surf3); border: 1px dashed var(--muted2);
   border-radius: var(--r); padding: 18px; cursor: pointer; transition: all .18s;
   display: flex; align-items: center; justify-content: center; gap: 10px;
   color: var(--muted); font-size: 13px; min-height: 116px;
 }
-.add-vcard:hover { border-color: var(--gold); color: var(--gold); }
+.add-vcard:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,105,42,.03); }
 
 /* ══════════════════════════════════════════
    STATS ROW
 ══════════════════════════════════════════ */
 .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
-.stat { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
-.stat-val { font-family: var(--serif); font-size: 24px; font-weight: 700; }
+.stat { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); }
+.stat-val { font-family: var(--serif); font-size: 22px; font-weight: 600; }
 .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .stat-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
 /* PROGRESS */
 .prog-wrap { margin-top: 8px; }
 .prog-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-.prog-bar { height: 5px; background: var(--surf1); border-radius: 3px; overflow: hidden; }
+.prog-bar { height: 6px; background: var(--surf1); border-radius: 3px; overflow: hidden; }
 .prog-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
-.prog-fill.ok   { background: linear-gradient(90deg,var(--green),#5aecab); }
-.prog-fill.soon { background: linear-gradient(90deg,var(--gold),var(--gold2)); }
-.prog-fill.due  { background: linear-gradient(90deg,var(--red),#ff7a7a); }
+.prog-fill.ok   { background: var(--green); }
+.prog-fill.soon { background: var(--gold); }
+.prog-fill.due  { background: var(--red); }
 
 /* ══════════════════════════════════════════
    SERVICE LOG
 ══════════════════════════════════════════ */
 .sitem {
   background: var(--surf2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px 16px; margin-bottom: 10px;
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px;
   display: flex; align-items: flex-start; gap: 14px; transition: border .18s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
 }
-.sitem:hover { border-color: var(--border2); }
-.sitem-ico  { width: 38px; height: 38px; border-radius: 9px; background: var(--surf1); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sitem:hover { border-color: var(--muted2); }
+.sitem-ico  { width: 36px; height: 36px; border-radius: 8px; background: var(--surf1); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
 .sitem-body { flex: 1; min-width: 0; }
-.sitem-title{ font-size: 14px; font-weight: 600; }
+.sitem-title{ font-size: 14px; font-weight: 600; color: var(--text); }
 .sitem-meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
 .sitem-note { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
 .sitem-cost { font-size: 14px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
-.km-badge   { background: var(--surf1); border: 1px solid var(--border); font-size: 10px; padding: 1px 7px; border-radius: 20px; }
+.km-badge   { background: var(--surf1); border: 1px solid var(--border2); font-size: 10px; padding: 1px 7px; border-radius: 20px; color: var(--muted); }
 
 /* ══════════════════════════════════════════
    COST ANALYTICS
@@ -269,10 +271,11 @@ textarea { resize: vertical; min-height: 72px; }
    UPLOAD ZONE
 ══════════════════════════════════════════ */
 .upload-zone {
-  border: 2px dashed var(--border2); border-radius: var(--r); padding: 28px;
+  border: 2px dashed var(--muted2); border-radius: var(--r); padding: 28px;
   text-align: center; cursor: pointer; transition: all .2s; position: relative;
+  background: var(--surf3);
 }
-.upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: rgba(240,168,48,.03); }
+.upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: rgba(200,105,42,.03); }
 .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .uz-ico  { font-size: 32px; margin-bottom: 8px; }
 .uz-text { color: var(--muted); font-size: 13px; line-height: 1.5; }
@@ -281,93 +284,84 @@ textarea { resize: vertical; min-height: 72px; }
 
 /* AI RESULT */
 .ai-res {
-  background: var(--surf1); border: 1px solid rgba(79,142,247,.3);
+  background: rgba(59,111,212,.04); border: 1px solid rgba(59,111,212,.2);
   border-radius: 10px; padding: 16px; margin-top: 14px; display: none;
 }
 .ai-res-head { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-.ai-badge { background: rgba(79,142,247,.15); color: var(--blue); font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .5px; }
-.ai-text  { font-size: 13px; line-height: 1.7; }
+.ai-badge { background: rgba(59,111,212,.1); color: var(--blue); font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .5px; }
+.ai-text  { font-size: 13px; line-height: 1.7; color: var(--text); }
 .dots     { display: inline-flex; gap: 4px; }
 .dots span{ width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: dot .7s infinite; }
 .dots span:nth-child(2){ animation-delay:.12s }
 .dots span:nth-child(3){ animation-delay:.24s }
 @keyframes dot { 0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1} }
 
-/* INVOICE PREVIEW */
+/* INVOICE */
 .invoice-items { margin-top: 10px; }
 .inv-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .inv-item:last-child { border: none; }
 .inv-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
-.inv-item-desc { flex: 1; }
+.inv-item-desc { flex: 1; color: var(--text); }
 .inv-item-price{ color: var(--gold); font-weight: 600; }
 
-/* ══════════════════════════════════════════
-   REMINDERS
-══════════════════════════════════════════ */
-.rem-item { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; }
+/* REMINDERS */
+.rem-item { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
 .rem-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .rem-dot.ok   { background: var(--green); }
 .rem-dot.soon { background: var(--gold); }
-.rem-dot.due  { background: var(--red); box-shadow: 0 0 8px rgba(240,82,82,.5); }
+.rem-dot.due  { background: var(--red); box-shadow: 0 0 6px rgba(201,64,64,.4); }
 .rem-body { flex: 1; }
-.rem-title{ font-size: 14px; font-weight: 600; }
+.rem-title{ font-size: 14px; font-weight: 600; color: var(--text); }
 .rem-when { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-/* ══════════════════════════════════════════
-   OBD SECTION
-══════════════════════════════════════════ */
+/* OBD */
 .obd-status {
   display: flex; align-items: center; gap: 14px;
   background: var(--surf2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 18px; margin-bottom: 16px;
+  border-radius: var(--r); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
 }
 .obd-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; transition: background .3s; }
 .obd-dot.connecting { background: var(--gold); animation: pulse 1s infinite; }
-.obd-dot.connected  { background: var(--green); box-shadow: 0 0 12px rgba(61,214,140,.5); }
+.obd-dot.connected  { background: var(--green); box-shadow: 0 0 10px rgba(42,157,111,.4); }
 .obd-dot.error      { background: var(--red); }
 .obd-status-text { flex: 1; }
-.obd-name { font-size: 14px; font-weight: 600; }
+.obd-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .obd-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.obd-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 12px; }
-.obd-pid  {
-  background: var(--surf2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px; text-align: center;
-}
-.obd-pid-icon { font-size: 24px; margin-bottom: 6px; }
-.obd-pid-val  { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--text); }
+.obd-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 10px; }
+.obd-pid  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.obd-pid-icon { font-size: 22px; margin-bottom: 6px; }
+.obd-pid-val  { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--text); }
 .obd-pid-unit { font-size: 11px; color: var(--muted); }
 .obd-pid-name { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
 .obd-pid.live .obd-pid-val { color: var(--green); }
-.obd-dtc-item { background: var(--surf2); border: 1px solid rgba(240,82,82,.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.obd-dtc-item { background: var(--surf2); border: 1px solid rgba(201,64,64,.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
 .obd-dtc-code { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
 .obd-dtc-desc { font-size: 12px; color: var(--muted); }
 .protocol-list { margin: 12px 0; }
-.prot-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.prot-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
 .prot-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
-.prot-badge.can { background: rgba(79,142,247,.15); color: var(--blue); }
-.prot-badge.iso { background: rgba(167,139,250,.15); color: var(--purple); }
-.prot-badge.j   { background: rgba(61,214,140,.12); color: var(--green); }
+.prot-badge.can { background: rgba(59,111,212,.1); color: var(--blue); }
+.prot-badge.iso { background: rgba(124,92,191,.1); color: var(--purple); }
+.prot-badge.j   { background: rgba(42,157,111,.1); color: var(--green); }
 
-/* ══════════════════════════════════════════
-   LIGHTS CATALOG
-══════════════════════════════════════════ */
+/* LIGHTS */
 .lights-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 10px; }
-.light-item  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; text-align: center; cursor: pointer; transition: all .18s; }
-.light-item:hover { border-color: var(--blue); transform: translateY(-2px); }
-.light-item.sel   { border-color: var(--blue); background: var(--surf3); }
+.light-item  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; text-align: center; cursor: pointer; transition: all .18s; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.light-item:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.light-item.sel   { border-color: var(--gold); background: rgba(200,105,42,.03); }
 .light-emo  { font-size: 26px; margin-bottom: 5px; }
-.light-name { font-size: 11px; font-weight: 600; }
+.light-name { font-size: 11px; font-weight: 600; color: var(--text); }
 .sev-badge  { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
-.sev-high   { background: rgba(240,82,82,.15); color: var(--red); }
-.sev-med    { background: rgba(240,168,48,.12); color: var(--gold); }
-.sev-low    { background: rgba(61,214,140,.12); color: var(--green); }
-.light-detail { background: var(--surf3); border: 1px solid rgba(79,142,247,.25); border-radius: var(--r); padding: 18px; margin-top: 14px; display: none; }
+.sev-high   { background: rgba(201,64,64,.1); color: var(--red); }
+.sev-med    { background: rgba(200,105,42,.1); color: var(--gold); }
+.sev-low    { background: rgba(42,157,111,.1); color: var(--green); }
+.light-detail { background: var(--surf3); border: 1px solid var(--border2); border-radius: var(--r); padding: 18px; margin-top: 14px; display: none; box-shadow: var(--shadow); }
 .light-detail.open { display: block; animation: fadeUp .2s ease; }
 
-/* iOS BLUEFY BANNER */
+/* iOS BANNER */
 .ios-banner {
-  background: linear-gradient(135deg, rgba(79,142,247,.12), rgba(167,139,250,.08));
-  border: 1px solid rgba(79,142,247,.35);
+  background: rgba(59,111,212,.04);
+  border: 1px solid rgba(59,111,212,.2);
   border-radius: var(--r); padding: 18px 20px; margin-bottom: 16px;
   display: none;
 }
@@ -377,88 +371,84 @@ textarea { resize: vertical; min-height: 72px; }
 .ios-banner-title{ font-size: 15px; font-weight: 700; color: var(--text); }
 .ios-banner-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .ios-steps { margin: 14px 0; }
-.ios-step  { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.ios-step  { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
 .ios-step:last-child { border: none; }
 .ios-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 .ios-step-text { flex: 1; line-height: 1.5; }
 .ios-step-text strong { color: var(--text); }
 .ios-step-text span  { color: var(--muted); font-size: 12px; display: block; margin-top: 2px; }
-.ios-warn { background: rgba(240,168,48,.08); border: 1px solid rgba(240,168,48,.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--gold); margin-top: 10px; line-height: 1.6; }
+.ios-warn { background: rgba(200,105,42,.06); border: 1px solid rgba(200,105,42,.2); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--gold); margin-top: 10px; line-height: 1.6; }
 .ios-compat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
-.ios-compat-item { background: var(--surf1); border-radius: 8px; padding: 10px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.ios-compat-item { background: var(--surf3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--text); }
 
 /* CHIPS */
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-.chip  { background: var(--surf2); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all .18s; }
-.chip:hover, .chip.active { border-color: var(--gold); color: var(--gold); background: rgba(240,168,48,.08); }
+.chip  { background: var(--surf2); border: 1px solid var(--border2); color: var(--muted); font-size: 11px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all .18s; }
+.chip:hover, .chip.active { border-color: var(--gold); color: var(--gold); background: rgba(200,105,42,.06); }
 
-/* ══════════════════════════════════════════
-   SETTINGS
-══════════════════════════════════════════ */
-.setting-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
-.setting-row:last-child { border: none; }
-.setting-ico { font-size: 22px; width: 38px; flex-shrink: 0; text-align: center; }
+/* SETTINGS */
+.setting-row { display: flex; align-items: flex-start; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--border); }
+.setting-row:last-child { border: none; padding-bottom: 0; }
+.setting-ico { font-size: 22px; width: 36px; flex-shrink: 0; text-align: center; margin-top: 2px; }
 .setting-body { flex: 1; }
-.setting-title{ font-size: 14px; font-weight: 600; }
-.setting-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.setting-action { flex-shrink: 0; }
+.setting-title{ font-size: 14px; font-weight: 600; color: var(--text); }
+.setting-sub  { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
 
-/* ══════════════════════════════════════════
-   MODAL
-══════════════════════════════════════════ */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(6px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(26,24,20,.5); backdrop-filter: blur(8px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
 .overlay.open { display: flex; }
 .modal {
-  background: var(--surf2); border: 1px solid var(--border2);
-  border-radius: 18px; width: 100%; max-width: 560px;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 14px; width: 100%; max-width: 560px;
   max-height: 90dvh; overflow-y: auto; padding: 28px; position: relative;
-  animation: modalIn .22s ease;
+  animation: modalIn .22s ease; box-shadow: 0 20px 60px rgba(0,0,0,.15);
 }
-@keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
-.modal-x { position: absolute; top: 16px; right: 16px; background: var(--surf1); border: none; color: var(--muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: color .18s; }
-.modal-x:hover { color: var(--text); }
-.modal-title { font-family: var(--serif); font-size: 22px; font-weight: 700; margin-bottom: 22px; }
+@keyframes modalIn { from{opacity:0;transform:scale(.96)translateY(8px)} to{opacity:1;transform:scale(1)translateY(0)} }
+.modal-x { position: absolute; top: 16px; right: 16px; background: var(--surf1); border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; border-radius: 7px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .18s; }
+.modal-x:hover { color: var(--text); border-color: var(--border2); }
+.modal-title { font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
 
-/* ══════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════ */
+/* TOAST */
 .toast {
   position: fixed; bottom: calc(var(--mob-nav) + 12px); left: 50%;
   transform: translateX(-50%) translateY(60px);
-  background: var(--surf3); border: 1px solid var(--border2);
-  color: var(--text); padding: 11px 20px; border-radius: 10px;
+  background: var(--text); color: var(--bg);
+  padding: 11px 20px; border-radius: 10px;
   font-size: 13px; z-index: 999; transition: transform .3s ease;
   display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
-.toast.ok   { border-color: rgba(61,214,140,.4); color: var(--green); }
-.toast.err  { border-color: rgba(240,82,82,.4); color: var(--red); }
-.toast.info { border-color: rgba(79,142,247,.4); color: var(--blue); }
+.toast.ok   { background: var(--green); color: #fff; }
+.toast.err  { background: var(--red); color: #fff; }
+.toast.info { background: var(--blue); color: #fff; }
 
-/* ══════════════════════════════════════════
-   EMPTY STATE
-══════════════════════════════════════════ */
+/* EMPTY */
 .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
-.empty-ico  { font-size: 44px; margin-bottom: 10px; }
+.empty-ico  { font-size: 40px; margin-bottom: 10px; }
 .empty-text { font-size: 14px; }
 
-/* ══════════════════════════════════════════
-   ODO DISPLAY
-══════════════════════════════════════════ */
-.odo-box { background: linear-gradient(135deg,#07080b,var(--surf1)); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; text-align: center; font-family: 'Courier New',monospace; }
-.odo-num { font-size: 44px; color: var(--green); letter-spacing: 8px; text-shadow: 0 0 24px rgba(61,214,140,.4); }
+/* ODO */
+.odo-box { background: var(--surf1); border: 1px solid var(--border2); border-radius: 10px; padding: 20px; text-align: center; font-family: 'Courier New',monospace; }
+.odo-num { font-size: 44px; color: var(--green); letter-spacing: 8px; }
 .odo-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; }
 
-/* ══════════════════════════════════════════
-   GOOGLE DRIVE STATUS
-══════════════════════════════════════════ */
+/* COST ANALYTICS */
+.cost-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 12px; margin-bottom: 20px; }
+.cost-cat  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); }
+.cost-cat-ico { font-size: 20px; margin-bottom: 6px; }
+.cost-cat-val { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--text); }
+.cost-cat-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+.bar-chart { margin-top: 16px; }
+.bar-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-lbl   { font-size: 12px; color: var(--muted); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 7px; background: var(--surf1); border-radius: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 4px; background: var(--gold); transition: width .6s ease; }
+.bar-val   { font-size: 12px; font-weight: 600; color: var(--gold); width: 80px; text-align: right; flex-shrink: 0; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 .gdrive-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
 .gdrive-dot { width: 7px; height: 7px; border-radius: 50%; }
-
-/* ══════════════════════════════════════════
-   DIVIDER
-══════════════════════════════════════════ */
-hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
 
 /* ══════════════════════════════════════════
    RESPONSIVE — MOBILE
@@ -890,38 +880,67 @@ hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
 <div class="overlay" id="settingsOverlay">
   <div class="modal">
     <button class="modal-x" onclick="closeOverlay('settingsOverlay')">✕</button>
-    <h2 class="modal-title">⚙️ Nastavení</h2>
+    <h2 class="modal-title">Nastavení</h2>
+
     <div class="setting-row">
       <div class="setting-ico">🔑</div>
       <div class="setting-body">
         <div class="setting-title">Anthropic API klíč</div>
-        <div class="setting-sub">Pro AI funkce (čtení TP, tachometru, kontrolek, faktur)</div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <input type="password" id="apiKey" placeholder="sk-ant-..." style="flex:1">
+        <div class="setting-sub">Pro AI funkce — čtení TP, tachometru, kontrolek, faktur</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <input type="password" id="apiKey" placeholder="sk-ant-api03-..." style="flex:1">
           <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Uložit</button>
         </div>
-        <p style="font-size:11px;color:var(--muted);margin-top:5px">Získej klíč na <strong>console.anthropic.com</strong></p>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">Získej na <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold)">console.anthropic.com</a> → API Keys</p>
       </div>
     </div>
+
     <div class="setting-row">
       <div class="setting-ico">☁️</div>
       <div class="setting-body">
         <div class="setting-title">Google Drive synchronizace</div>
         <div class="setting-sub" id="driveStatusText">Nepřipojeno — data se ukládají jen lokálně</div>
-        <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-blue btn-sm" onclick="gdriveAuth()">🔐 Přihlásit Google</button>
-          <button class="btn btn-ghost btn-sm" onclick="gdriveSave()">⬆️ Uložit</button>
-          <button class="btn btn-ghost btn-sm" onclick="gdriveLoad()">⬇️ Načíst</button>
+
+        <div style="margin-top:10px">
+          <div class="fg" style="margin-bottom:10px">
+            <label>Google OAuth Client ID</label>
+            <input type="text" id="gclientId" placeholder="123456789-abc...apps.googleusercontent.com">
+          </div>
+          <div class="btn-row" style="margin-top:0">
+            <button class="btn btn-blue btn-sm" id="gSignInBtn" onclick="gdriveAuth()">
+              <svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Přihlásit Google
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="gdriveSave()">⬆️ Uložit</button>
+            <button class="btn btn-ghost btn-sm" onclick="gdriveLoad()">⬇️ Načíst</button>
+          </div>
         </div>
-        <p style="font-size:11px;color:var(--muted);margin-top:5px">API klíč pro AI se ukládá jen lokálně — nikdy do Drive</p>
+
+        <details style="margin-top:12px">
+          <summary style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none">📋 Jak získat Client ID (klikni pro návod)</summary>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8;background:var(--surf3);padding:12px;border-radius:8px;border:1px solid var(--border)">
+            1. Jdi na <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold)">console.cloud.google.com</a><br>
+            2. Vytvoř projekt (nebo vyber existující)<br>
+            3. <strong style="color:var(--text)">APIs &amp; Services → Credentials → Create Credentials → OAuth 2.0 Client ID</strong><br>
+            4. Typ aplikace: <strong style="color:var(--text)">Web application</strong><br>
+            5. Do <strong style="color:var(--text)">Authorized JavaScript origins</strong> přidej URL kde aplikaci otevíráš<br>
+            &nbsp;&nbsp;&nbsp;• Např. <code style="background:var(--surf1);padding:1px 5px;border-radius:3px">https://tvojejmeno.github.io</code><br>
+            &nbsp;&nbsp;&nbsp;• Nebo <code style="background:var(--surf1);padding:1px 5px;border-radius:3px">http://localhost:8080</code> pro lokální testování<br>
+            6. <strong style="color:var(--red)">Nezadávej Redirect URI</strong> — token client ho nepotřebuje<br>
+            7. Zkopíruj Client ID a vlož ho výše<br>
+            8. V <strong style="color:var(--text)">OAuth consent screen</strong> přidej svůj email jako Test User
+          </div>
+        </details>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">🔒 API klíč pro AI se ukládá jen lokálně — nikdy nesynchronizuje do Drive</p>
       </div>
     </div>
+
     <div class="setting-row">
       <div class="setting-ico">🗑️</div>
       <div class="setting-body">
         <div class="setting-title">Smazat veškerá data</div>
         <div class="setting-sub">Nevratné smazání všech vozidel, záznamů a nastavení</div>
-        <div class="btn-row" style="margin-top:8px">
+        <div class="btn-row" style="margin-top:10px">
           <button class="btn btn-red btn-sm" onclick="clearAllData()">Smazat vše</button>
         </div>
       </div>
@@ -1723,25 +1742,53 @@ function saveObdToVehicle() {
 const GDRIVE_FILE = 'autolog_data.json';
 function toggleGoogleDrive(){document.getElementById('settingsOverlay').classList.add('open');}
 async function gdriveAuth() {
-  // Google Identity Services (GIS) flow
-  const clientId = prompt('Zadej Google OAuth Client ID (z Google Cloud Console — APIs & Services):','');
-  if (!clientId){toast('Client ID nevyplněno','err');return;}
+  const clientId = document.getElementById('gclientId').value.trim();
+  if (!clientId) { toast('Zadej Google OAuth Client ID','err'); return; }
   localStorage.setItem('al2_gcid', clientId);
+
+  // Load GSI script once
+  await new Promise((res,rej) => {
+    if (window.google?.accounts?.oauth2) { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = res; s.onerror = () => rej(new Error('Nepodařilo se načíst Google GSI'));
+    document.head.appendChild(s);
+  });
+
   try {
-    const token = await new Promise((resolve,reject)=>{
-      const script=document.createElement('script'); script.src='https://accounts.google.com/gsi/client';
-      script.onload=()=>{
-        google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/drive.appdata',callback:(r)=>{if(r.error)reject(r.error);else resolve(r.access_token);}}).requestAccessToken();
-      };
-      document.head.appendChild(script);
+    const token = await new Promise((resolve, reject) => {
+      google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.appdata',
+        callback: (resp) => {
+          if (resp.error) reject(new Error(resp.error));
+          else resolve(resp.access_token);
+        },
+        error_callback: (err) => reject(new Error(err.message || 'Auth error'))
+      }).requestAccessToken();
     });
-    localStorage.setItem('al2_gtoken',token);
-    S.gdriveConnected=true;
-    document.getElementById('driveStatusText').textContent='✅ Připojeno k Google Drive';
-    document.getElementById('driveBtn').className='nav-sync-btn synced';
-    document.getElementById('driveBtnLabel').textContent='Drive ✓';
-    toast('Google Drive připojen','ok');
-  } catch(err){toast('Google auth selhal: '+err,'err');}
+    localStorage.setItem('al2_gtoken', token);
+    S.gdriveConnected = true;
+    updateDriveUI(true);
+    toast('Google Drive připojen ✓', 'ok');
+  } catch(err) {
+    toast('Google auth selhal: ' + err.message, 'err');
+  }
+}
+
+function updateDriveUI(connected) {
+  const btn   = document.getElementById('driveBtn');
+  const label = document.getElementById('driveBtnLabel');
+  const txt   = document.getElementById('driveStatusText');
+  if (connected) {
+    if (btn)   { btn.className = 'nav-sync-btn synced'; }
+    if (label) label.textContent = 'Drive ✓';
+    if (txt)   txt.textContent = '✅ Připojeno k Google Drive';
+  } else {
+    if (btn)   btn.className = 'nav-sync-btn';
+    if (label) label.textContent = 'Google Drive';
+    if (txt)   txt.textContent = 'Nepřipojeno — data se ukládají jen lokálně';
+  }
 }
 async function gdriveSave() {
   const token=localStorage.getItem('al2_gtoken'); if(!token){toast('Nejprve se přihlas k Google','err');return;}
@@ -1827,9 +1874,11 @@ function setupDrop(zoneId, fileInputId, handler) {
 // ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
   load();
-  document.getElementById('apiKey').value=localStorage.getItem('al2_key')||'';
-  document.getElementById('remStart').value=new Date().toISOString().split('T')[0];
-  if(!S.selVeh&&S.vehicles.length)S.selVeh=S.vehicles[0].id;
+  document.getElementById('apiKey').value = localStorage.getItem('al2_key') || '';
+  const cidEl = document.getElementById('gclientId');
+  if (cidEl) cidEl.value = localStorage.getItem('al2_gcid') || '';
+  document.getElementById('remStart').value = new Date().toISOString().split('T')[0];
+  if (!S.selVeh && S.vehicles.length) S.selVeh = S.vehicles[0].id;
   renderGarage();
   renderLights();
   detectPlatform();
@@ -1844,8 +1893,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
   });
 
-  // Check Google Drive token
-  if(localStorage.getItem('al2_gtoken')){S.gdriveConnected=true;document.getElementById('driveBtn').className='nav-sync-btn synced';document.getElementById('driveBtnLabel').textContent='Drive ✓';}
+  // Restore Drive connection status
+  if (localStorage.getItem('al2_gtoken')) { S.gdriveConnected = true; updateDriveUI(true); }
 
   // Handle hash navigation
   const h=location.hash.replace('#','');
