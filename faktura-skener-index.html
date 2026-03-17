@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPH Skener Faktur</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d0f;
+  --s1: #141416;
+  --s2: #1a1a1e;
+  --s3: #222228;
+  --b1: #28282f;
+  --b2: #333340;
+  --accent: #5eead4;
+  --accent2: #2dd4bf;
+  --purple: #a78bfa;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --t1: #f0f0f5;
+  --t2: #8888a0;
+  --t3: #44444f;
+  --r: 10px;
+  --rs: 7px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* LAYOUT */
+.layout { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+  width: 220px; min-width: 220px;
+  background: var(--s1);
+  border-right: 1px solid var(--b1);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--b1);
+  padding: 14px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.content { flex: 1; overflow-y: auto; padding: 22px; }
+
+/* SIDEBAR */
+.logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--b1); }
+.logo-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-title span { color: var(--accent); }
+.logo-sub { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+.nav { padding: 10px 8px; flex: 1; }
+.nav-section { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 10px 4px; }
+.nav-btn {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 10px; border-radius: var(--rs);
+  background: none; border: none; cursor: pointer;
+  color: var(--t2); font-size: 13px; font-weight: 500;
+  font-family: inherit; text-align: left; transition: all 0.12s;
+}
+.nav-btn:hover { background: var(--s2); color: var(--t1); }
+.nav-btn.active { background: rgba(94,234,212,0.1); color: var(--accent); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.sidebar-footer { padding: 12px; border-top: 1px solid var(--b1); font-size: 11px; color: var(--t3); text-align: center; }
+
+/* TOPBAR */
+.topbar-left h2 { font-size: 15px; font-weight: 600; }
+.topbar-left p { font-size: 11px; color: var(--t3); margin-top: 1px; }
+.drive-badge {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px; border-radius: var(--rs);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid; transition: opacity 0.15s;
+}
+.drive-badge.ok { background: rgba(94,234,212,0.08); color: var(--accent); border-color: rgba(94,234,212,0.2); }
+.drive-badge.off { background: rgba(248,113,113,0.08); color: var(--red); border-color: rgba(248,113,113,0.2); }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* CARDS */
+.card { background: var(--s1); border: 1px solid var(--b1); border-radius: var(--r); padding: 18px; margin-bottom: 16px; }
+.card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--t3); font-weight: 600; margin-bottom: 12px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: var(--rs);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: none; font-family: inherit; transition: all 0.12s;
+}
+.btn-primary { background: var(--accent); color: #08201a; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--s2); color: var(--t1); border: 1px solid var(--b2); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+.btn-sm { padding: 4px 9px; font-size: 11px; }
+.btn-full { width: 100%; justify-content: center; padding: 11px; }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.stat-card { background: var(--s1); border: 1px solid var(--b1); border-radius: var(--r); padding: 16px 18px; }
+.stat-label { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+.stat-value { font-family: 'Courier New', monospace; font-size: 19px; font-weight: 600; }
+.stat-value.c-green { color: var(--accent); }
+.stat-value.c-purple { color: var(--purple); }
+.stat-value.c-yellow { color: var(--yellow); }
+
+/* QUARTER GRID */
+.q-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.q-card { background: var(--s2); border: 1px solid var(--b1); border-radius: var(--r); padding: 14px; }
+.q-label { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: monospace; margin-bottom: 10px; }
+.q-label.Q1 { background: rgba(94,234,212,0.12); color: var(--accent); }
+.q-label.Q2 { background: rgba(167,139,250,0.12); color: var(--purple); }
+.q-label.Q3 { background: rgba(251,191,36,0.12); color: var(--yellow); }
+.q-label.Q4 { background: rgba(248,113,113,0.12); color: var(--red); }
+.q-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+.q-row span:first-child { color: var(--t2); }
+.q-row span:last-child { font-family: monospace; }
+.q-total { border-top: 1px solid var(--b1); padding-top: 7px; margin-top: 7px; }
+.q-total span:last-child { color: var(--accent); font-weight: 600; }
+.q-count { font-size: 10px; color: var(--t3); margin-top: 6px; }
+.progress { height: 3px; background: var(--b1); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+/* UPLOAD */
+.upload-zone {
+  border: 2px dashed var(--b2); border-radius: var(--r);
+  padding: 44px 24px; text-align: center; cursor: pointer;
+  transition: all 0.18s; background: var(--s1); position: relative;
+  margin-bottom: 20px;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(94,234,212,0.03); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-icon { font-size: 36px; margin-bottom: 10px; }
+.upload-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.upload-sub { color: var(--t2); font-size: 13px; margin-bottom: 12px; }
+.formats { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.fmt-badge { background: var(--s2); border: 1px solid var(--b2); border-radius: 5px; padding: 2px 8px; font-size: 11px; color: var(--t2); font-family: monospace; }
+.warn-box { margin-top: 14px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); border-radius: var(--rs); padding: 9px 14px; font-size: 12px; color: var(--yellow); }
+
+/* QUEUE */
+.queue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.queue-title { font-size: 14px; font-weight: 600; }
+.queue-item { background: var(--s1); border-radius: var(--rs); padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 7px; border: 1px solid var(--b1); transition: border-color 0.2s; }
+.queue-item.processing { border-color: var(--yellow); }
+.queue-item.done { border-color: var(--accent); }
+.queue-item.error { border-color: var(--red); }
+.queue-file-icon { font-size: 22px; flex-shrink: 0; }
+.queue-info { flex: 1; min-width: 0; }
+.queue-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-status { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.waiting { background: var(--t3); }
+.status-dot.processing { background: var(--yellow); animation: blink 1s infinite; }
+.status-dot.done { background: var(--accent); }
+.status-dot.error { background: var(--red); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 9px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--t3); font-weight: 600; border-bottom: 1px solid var(--b1); white-space: nowrap; }
+td { padding: 11px 12px; border-bottom: 1px solid var(--s2); font-size: 13px; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.01); }
+tr { cursor: pointer; }
+.mono { font-family: 'Courier New', monospace; }
+.text-accent { color: var(--accent); }
+.text-muted { color: var(--t2); }
+.text-sm { font-size: 11px; }
+.ellipsis { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Q TAG inline */
+.q-tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: monospace; }
+.q-tag.Q1 { background: rgba(94,234,212,0.12); color: var(--accent); }
+.q-tag.Q2 { background: rgba(167,139,250,0.12); color: var(--purple); }
+.q-tag.Q3 { background: rgba(251,191,36,0.12); color: var(--yellow); }
+.q-tag.Q4 { background: rgba(248,113,113,0.12); color: var(--red); }
+.q-tag.QX { background: rgba(148,163,184,0.12); color: var(--t2); }
+
+/* FILTERS */
+.filter-row { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.filter-count { margin-left: auto; font-size: 12px; color: var(--t2); }
+
+/* INPUTS */
+input[type=text], input[type=password], select, textarea {
+  background: var(--s2); border: 1px solid var(--b2);
+  color: var(--t1); border-radius: var(--rs);
+  padding: 8px 11px; font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color 0.15s;
+}
+input[type=text]:focus, input[type=password]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+select { cursor: pointer; }
+.input-label { font-size: 12px; color: var(--t2); margin-bottom: 5px; display: block; }
+.input-desc { font-size: 11px; color: var(--t3); margin-top: 4px; }
+.input-group { margin-bottom: 14px; }
+.path-preview { background: var(--s2); border: 1px solid var(--b1); border-radius: var(--rs); padding: 9px 12px; font-family: monospace; font-size: 12px; color: var(--t2); margin-top: 8px; }
+.path-seg { color: var(--t1); }
+.path-acc { color: var(--accent); }
+
+/* TOGGLE */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--b1); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info h4 { font-size: 13px; font-weight: 500; }
+.toggle-info p { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.toggle { width: 38px; height: 21px; border-radius: 11px; background: var(--b2); border: none; cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content:''; width:15px; height:15px; border-radius:50%; background:white; position:absolute; top:3px; left:3px; transition:transform 0.2s; }
+.toggle.on::after { transform: translateX(17px); }
+
+/* MODAL */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.modal-bg.open { display: flex; }
+.modal { background: var(--s1); border: 1px solid var(--b2); border-radius: 14px; padding: 24px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: var(--t2); margin-bottom: 18px; }
+.ext-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.ext-field { background: var(--s2); border-radius: var(--rs); padding: 10px 12px; }
+.ext-field.full { grid-column: span 2; }
+.ext-field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--t3); display: block; margin-bottom: 3px; }
+.ext-field span { font-size: 14px; font-weight: 500; }
+.ext-field.hl span { color: var(--accent); font-family: monospace; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* TOAST */
+.toast { display: none; position: fixed; bottom: 22px; right: 22px; z-index: 200; background: var(--s1); border-radius: var(--r); padding: 13px 17px; display: flex; align-items: center; gap: 10px; font-size: 13px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); border: 1px solid var(--b2); animation: slideUp 0.25s ease; }
+.toast.success { border-color: var(--accent); }
+.toast.error { border-color: var(--red); }
+.toast.hidden { display: none !important; }
+@keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+/* EMPTY */
+.empty { text-align: center; padding: 50px 20px; color: var(--t3); }
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+.empty h3 { font-size: 14px; color: var(--t2); margin-bottom: 5px; }
+
+/* SETTINGS GUIDE */
+.guide { background: var(--s2); border: 1px solid var(--b1); border-radius: var(--r); padding: 14px 16px; font-size: 12px; color: var(--t2); line-height: 1.9; margin-top: 12px; }
+.guide strong { color: var(--t1); }
+
+/* DRIVE STATUS */
+.drive-status-block { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .q-grid { grid-template-columns: 1fr 1fr; }
+  .sidebar { width: 180px; min-width: 180px; }
+}
+@media (max-width: 580px) {
+  .sidebar { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .q-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">📋 <span>DPH</span> Skener</div>
+      <div class="logo-sub">Správa daňových dokladů</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showView('upload')"><span class="nav-icon">⬆️</span>Nahrát doklady</button>
+      <button class="nav-btn" onclick="showView('dashboard')"><span class="nav-icon">📊</span>Přehled DPH</button>
+      <button class="nav-btn" onclick="showView('documents')"><span class="nav-icon">🗂️</span>Dokumenty</button>
+      <button class="nav-btn" onclick="showView('settings')"><span class="nav-icon">⚙️</span>Nastavení</button>
+      <div class="nav-section">Google Drive</div>
+      <div id="sidebar-drive-status"></div>
+    </nav>
+    <div class="sidebar-footer" id="sidebar-footer">0 dokladů · 0 Kč DPH</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2 id="topbar-title">Nahrát doklady</h2>
+        <p id="topbar-sub">Skenuj faktury a účtenky pomocí AI</p>
+      </div>
+      <div id="topbar-drive" class="drive-badge off" onclick="connectDrive()">🔴 Drive offline</div>
+    </div>
+    <div class="content">
+
+      <!-- UPLOAD VIEW -->
+      <div class="view active" id="view-upload">
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" multiple accept="image/*,.pdf" id="file-input">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">Přetáhni faktury nebo účtenky</div>
+          <div class="upload-sub">nebo klikni pro výběr souborů</div>
+          <div class="formats">
+            <span class="fmt-badge">PDF</span>
+            <span class="fmt-badge">JPG</span>
+            <span class="fmt-badge">PNG</span>
+            <span class="fmt-badge">WEBP</span>
+            <span class="fmt-badge">HEIC</span>
+          </div>
+          <div class="warn-box" id="no-key-warn">⚠️ Nejprve nastav Anthropic API klíč v Nastavení</div>
+        </div>
+        <div id="queue-container"></div>
+      </div>
+
+      <!-- DASHBOARD VIEW -->
+      <div class="view" id="view-dashboard">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <span style="font-size:20px;font-weight:700;">Rok</span>
+          <select id="year-select-dash" onchange="renderDashboard()"></select>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="q-grid" id="q-grid"></div>
+        <div class="card">
+          <div class="card-title">Posledních 10 dokladů</div>
+          <div class="table-wrap" id="dash-table"></div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS VIEW -->
+      <div class="view" id="view-documents">
+        <div class="filter-row">
+          <select id="year-select-docs" onchange="renderDocuments()"></select>
+          <select id="q-select-docs" onchange="renderDocuments()">
+            <option value="all">Všechny kvartály</option>
+            <option value="Q1">Q1 (Jan–Mar)</option>
+            <option value="Q2">Q2 (Apr–Jun)</option>
+            <option value="Q3">Q3 (Jul–Sep)</option>
+            <option value="Q4">Q4 (Okt–Pro)</option>
+          </select>
+          <span class="filter-count" id="doc-count">0 dokladů</span>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="table-wrap" id="docs-table"></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="view" id="view-settings">
+        <div style="max-width:580px;">
+          <div class="card">
+            <div class="card-title">Anthropic API</div>
+            <div class="input-group">
+              <label class="input-label">API klíč (uložen pouze v prohlížeči)</label>
+              <input type="password" id="cfg-apikey" placeholder="sk-ant-api03-…" style="width:100%">
+              <div class="input-desc">Získej na <strong>console.anthropic.com</strong> · Používá claude-sonnet-4</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Google Drive (volitelné)</div>
+            <div class="input-group">
+              <label class="input-label">Google OAuth Client ID</label>
+              <input type="text" id="cfg-gclientid" placeholder="123456789-abc.apps.googleusercontent.com" style="width:100%">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Název kořenové složky</label>
+              <input type="text" id="cfg-driveroot" placeholder="Faktury" style="width:200px" oninput="updatePathPreview()">
+              <div class="path-preview" id="path-preview">
+                <span class="path-seg">Faktury</span> / <span class="path-seg" id="prev-year">2026</span> / <span class="path-acc">Q1</span> / <span style="color:var(--t2)">20260315_Dodavatel.pdf</span>
+              </div>
+            </div>
+            <div class="drive-status-block">
+              <div id="drive-status-badge"></div>
+              <button class="btn btn-secondary btn-sm" id="drive-connect-btn" onclick="connectDrive()">🔗 Připojit přes OAuth</button>
+              <button class="btn btn-danger btn-sm" id="drive-disconnect-btn" onclick="disconnectDrive()" style="display:none">Odpojit</button>
+            </div>
+            <div class="guide" style="margin-top:14px;">
+              <strong>Jak nastavit Google OAuth:</strong><br>
+              1. <strong>console.cloud.google.com</strong> → nový projekt → Enable <strong>Google Drive API</strong><br>
+              2. OAuth consent screen → External → přidej svůj email jako Test user<br>
+              3. Credentials → OAuth 2.0 Client ID → <strong>Web application</strong><br>
+              4. Authorized redirect URIs: přidej URL této GitHub Pages stránky<br>
+              5. Zkopíruj Client ID sem → Uložit → Připojit Drive
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Uložit nastavení</button>
+
+          <div class="card" style="margin-top:16px;">
+            <div class="card-title">Nebezpečná zóna</div>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ Smazat všechna data</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-bg" id="detail-modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modal-title">Detail dokladu</h3>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="ext-grid" id="modal-grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let docs = [];
+let cfg = { apiKey:'', googleClientId:'', driveRoot:'Faktury' };
+let driveToken = '';
+let queue = [];
+let processing = false;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  // Load saved data
+  try { docs = JSON.parse(localStorage.getItem('dph_docs') || '[]'); } catch {}
+  try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem('dph_cfg') || '{}') }; } catch {}
+  driveToken = localStorage.getItem('dph_drive_token') || '';
+
+  // Handle OAuth redirect
+  const hash = window.location.hash;
+  if (hash.includes('access_token=')) {
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get('access_token');
+    if (token) {
+      driveToken = token;
+      localStorage.setItem('dph_drive_token', token);
+      window.history.replaceState({}, '', window.location.pathname);
+      showToast('Google Drive připojen ✓');
+    }
+  }
+
+  loadSettingsUI();
+  updateDriveUI();
+  updateSidebarFooter();
+  updateYearSelects();
+  renderDashboard();
+  renderDocuments();
+
+  // File input
+  document.getElementById('file-input').addEventListener('change', e => processFiles(e.target.files));
+
+  // Drag & drop
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); processFiles(e.dataTransfer.files); });
+
+  // Show/hide no-key warning
+  updateKeyWarning();
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+const viewTitles = {
+  upload: ['Nahrát doklady', 'Skenuj faktury a účtenky pomocí AI'],
+  dashboard: ['Přehled DPH', 'Kvartální přehled daně z přidané hodnoty'],
+  documents: ['Dokumenty', 'Všechny zpracované doklady'],
+  settings: ['Nastavení', 'Konfigurace API a Google Drive']
+};
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const order = ['upload','dashboard','documents','settings'];
+  btns[order.indexOf(id)]?.classList.add('active');
+  const [title, sub] = viewTitles[id];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'documents') renderDocuments();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function getQuarter(dateStr) {
+  if (!dateStr) return null;
+  const m = new Date(dateStr).getMonth() + 1;
+  if (m <= 3) return 'Q1'; if (m <= 6) return 'Q2';
+  if (m <= 9) return 'Q3'; return 'Q4';
+}
+
+function fmtCZK(n) {
+  if (n == null || isNaN(n)) return '—';
+  return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(n);
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  try { return new Date(s).toLocaleDateString('cs-CZ'); } catch { return s; }
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  t.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+function saveDocs() { localStorage.setItem('dph_docs', JSON.stringify(docs)); updateSidebarFooter(); }
+
+function updateSidebarFooter() {
+  const year = new Date().getFullYear();
+  const yearDocs = docs.filter(d => d.year === year);
+  const totVat = yearDocs.reduce((s, d) => s + (d.castka_dph || 0), 0);
+  document.getElementById('sidebar-footer').textContent = `${docs.length} dokladů · ${fmtCZK(totVat)} DPH ${year}`;
+}
+
+function updateKeyWarning() {
+  document.getElementById('no-key-warn').style.display = cfg.apiKey ? 'none' : 'block';
+}
+
+function updateYearSelects() {
+  const years = [...new Set([new Date().getFullYear(), ...docs.map(d => d.year).filter(Boolean)])].sort().reverse();
+  ['year-select-dash','year-select-docs'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value || new Date().getFullYear();
+    sel.innerHTML = years.map(y => `<option value="${y}" ${y == cur ? 'selected' : ''}>${y}</option>`).join('');
+  });
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function loadSettingsUI() {
+  document.getElementById('cfg-apikey').value = cfg.apiKey || '';
+  document.getElementById('cfg-gclientid').value = cfg.googleClientId || '';
+  document.getElementById('cfg-driveroot').value = cfg.driveRoot || 'Faktury';
+  document.getElementById('prev-year').textContent = new Date().getFullYear();
+  updatePathPreview();
+}
+
+function saveSettings() {
+  cfg.apiKey = document.getElementById('cfg-apikey').value.trim();
+  cfg.googleClientId = document.getElementById('cfg-gclientid').value.trim();
+  cfg.driveRoot = document.getElementById('cfg-driveroot').value.trim() || 'Faktury';
+  localStorage.setItem('dph_cfg', JSON.stringify(cfg));
+  updateKeyWarning();
+  showToast('Nastavení uloženo ✓');
+}
+
+function updatePathPreview() {
+  const root = document.getElementById('cfg-driveroot').value || 'Faktury';
+  const year = new Date().getFullYear();
+  document.getElementById('path-preview').innerHTML =
+    `<span class="path-seg">${root}</span> / <span class="path-seg">${year}</span> / <span class="path-acc">Q1</span> / <span style="color:var(--t2)">20260315_Dodavatel.pdf</span>`;
+}
+
+function clearAllData() {
+  if (!confirm('Smazat všechny doklady? Tato akce je nevratná.')) return;
+  docs = []; saveDocs(); queue = [];
+  document.getElementById('queue-container').innerHTML = '';
+  updateYearSelects(); renderDashboard(); renderDocuments();
+  showToast('Data smazána');
+}
+
+// ── GOOGLE DRIVE ──────────────────────────────────────────────────────────────
+function updateDriveUI() {
+  const ok = !!driveToken;
+  const topbar = document.getElementById('topbar-drive');
+  topbar.className = 'drive-badge ' + (ok ? 'ok' : 'off');
+  topbar.textContent = ok ? '🟢 Drive aktivní' : '🔴 Drive offline';
+  topbar.onclick = ok ? null : connectDrive;
+
+  const sideStatus = document.getElementById('sidebar-drive-status');
+  sideStatus.innerHTML = ok
+    ? `<div class="nav-btn" style="color:var(--accent)"><span class="nav-icon">🟢</span>Připojeno</div>`
+    : `<button class="nav-btn" onclick="connectDrive()"><span class="nav-icon">🔗</span>Připojit Drive</button>`;
+
+  const badge = document.getElementById('drive-status-badge');
+  if (badge) badge.innerHTML = ok
+    ? `<span style="color:var(--accent);font-size:13px;font-weight:500;">🟢 Připojeno</span>`
+    : `<span style="color:var(--red);font-size:13px;">🔴 Odpojeno</span>`;
+
+  const connectBtn = document.getElementById('drive-connect-btn');
+  const disconnectBtn = document.getElementById('drive-disconnect-btn');
+  if (connectBtn) connectBtn.style.display = ok ? 'none' : 'inline-flex';
+  if (disconnectBtn) disconnectBtn.style.display = ok ? 'inline-flex' : 'none';
+}
+
+function connectDrive() {
+  // Save settings first so clientId is up-to-date
+  const clientId = document.getElementById('cfg-gclientid')?.value.trim() || cfg.googleClientId;
+  if (!clientId) { showToast('Nejprve nastav Google Client ID v Nastavení', 'error'); showView('settings'); return; }
+  cfg.googleClientId = clientId;
+  localStorage.setItem('dph_cfg', JSON.stringify(cfg));
+  const redirect = window.location.href.split('?')[0].split('#')[0];
+  const scope = encodeURIComponent('https://www.googleapis.com/auth/drive.file');
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=token&scope=${scope}&include_granted_scopes=true`;
+}
+
+function disconnectDrive() {
+  driveToken = ''; localStorage.removeItem('dph_drive_token');
+  updateDriveUI(); showToast('Drive odpojen');
+}
+
+async function gdriveFolder(token, name, parentId = 'root') {
+  const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, { headers: { Authorization: `Bearer ${token}` } });
+  const d = await r.json();
+  if (d.files?.length) return d.files[0].id;
+  const cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+  });
+  return (await cr.json()).id;
+}
+
+async function uploadToDrive(file, extracted) {
+  const year = extracted.datumDph ? new Date(extracted.datumDph).getFullYear() : new Date().getFullYear();
+  const quarter = getQuarter(extracted.datumDph) || 'Q_neznamo';
+  const root = cfg.driveRoot || 'Faktury';
+  const rootId = await gdriveFolder(driveToken, root);
+  const yearId = await gdriveFolder(driveToken, String(year), rootId);
+  const qId = await gdriveFolder(driveToken, quarter, yearId);
+  const ext = file.name.split('.').pop();
+  const dp = (extracted.datumDph || '').replace(/-/g, '') || 'neznamo';
+  const sup = (extracted.dodavatel || 'neznamy').replace(/[^\w\u00C0-\u024F]/g, '_').slice(0, 18);
+  const num = (extracted.cislo_dokladu || '').replace(/\W/g, '').slice(0, 10);
+  const newName = `${dp}_${sup}${num ? '_' + num : ''}.${ext}`;
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify({ name: newName, parents: [qId] })], { type: 'application/json' }));
+  form.append('file', file);
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'POST', headers: { Authorization: `Bearer ${driveToken}` }, body: form
+  });
+  const d = await res.json();
+  return { link: d.webViewLink || `https://drive.google.com/file/d/${d.id}/view`, name: newName };
+}
+
+// ── AI EXTRACTION ─────────────────────────────────────────────────────────────
+async function extractWithClaude(file) {
+  const base64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Chyba čtení souboru'));
+    r.readAsDataURL(file);
+  });
+
+  const isPdf = file.type === 'application/pdf';
+  const isImg = file.type.startsWith('image/');
+  if (!isPdf && !isImg) throw new Error('Nepodporovaný formát — použij PDF nebo obrázek');
+
+  const contentPart = isPdf
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+    : { type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } };
+
+  const prompt = `Přečti tento daňový doklad (faktura nebo účtenka) a extrahuj daňová data.
+Vrať POUZE platný JSON (bez backtick, bez komentářů, bez textu před nebo za):
+{
+  "dodavatel": "název firmy/prodejce",
+  "ico": "IČO nebo null",
+  "dic": "DIČ nebo null",
+  "cislo_dokladu": "číslo faktury nebo null",
+  "datumDph": "YYYY-MM-DD",
+  "datum_vystaveni": "YYYY-MM-DD nebo null",
+  "zaklad_dane": číslo nebo null,
+  "sazba_dph": 21 nebo 12 nebo 0 nebo null,
+  "castka_dph": číslo nebo null,
+  "celkem": číslo nebo null,
+  "popis": "stručný popis zboží nebo služby, max 80 znaků",
+  "kategorie": "IT" nebo "kancelář" nebo "doprava" nebo "PHM" nebo "stravování" nebo "materiál" nebo "služby" nebo "ostatní",
+  "typ": "faktura" nebo "uctenka" nebo "danovy_doklad"
+}
+Datum DUZP (datumDph) = datum uskutečnění zdanitelného plnění. Pokud není uvedeno, použij datum vystavení.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': cfg.apiKey, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: [contentPart, { type: 'text', text: prompt }] }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API chyba ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+  return JSON.parse(raw);
+}
+
+// ── PROCESSING ────────────────────────────────────────────────────────────────
+async function processFiles(files) {
+  if (!cfg.apiKey) { showToast('Nastav API klíč v Nastavení', 'error'); showView('settings'); return; }
+  if (!files?.length) return;
+
+  const items = Array.from(files).map(f => ({ id: Math.random().toString(36).slice(2), file: f, name: f.name, status: 'waiting', statusText: 'Čeká…' }));
+  queue = [...queue, ...items];
+  renderQueue();
+  if (processing) return;
+  processing = true;
+
+  for (const item of items) {
+    updateQueueItem(item.id, { status: 'processing', statusText: 'AI čte dokument…' });
+    try {
+      const extracted = await extractWithClaude(item.file);
+      updateQueueItem(item.id, { statusText: 'Ukládám na Drive…' });
+
+      let driveLink = null, driveName = null;
+      if (driveToken) {
+        try { const r = await uploadToDrive(item.file, extracted); driveLink = r.link; driveName = r.name; }
+        catch (e) { console.warn('Drive upload:', e.message); }
+      }
+
+      const doc = {
+        ...extracted,
+        id: Date.now() + Math.random(),
+        originalName: item.name,
+        driveLink, driveName,
+        addedAt: new Date().toISOString(),
+        quarter: getQuarter(extracted.datumDph),
+        year: extracted.datumDph ? new Date(extracted.datumDph).getFullYear() : null
+      };
+
+      docs.unshift(doc);
+      saveDocs();
+      updateYearSelects();
+      updateQueueItem(item.id, { status: 'done', statusText: driveLink ? 'Uloženo na Drive ✓' : 'Zpracováno ✓' });
+    } catch (e) {
+      updateQueueItem(item.id, { status: 'error', statusText: 'Chyba: ' + e.message });
+    }
+  }
+
+  processing = false;
+  showToast('Zpracování dokončeno');
+  // Reset file input
+  document.getElementById('file-input').value = '';
+}
+
+function updateQueueItem(id, data) {
+  const idx = queue.findIndex(q => q.id === id);
+  if (idx >= 0) { queue[idx] = { ...queue[idx], ...data }; renderQueue(); }
+}
+
+function renderQueue() {
+  const el = document.getElementById('queue-container');
+  if (!queue.length) { el.innerHTML = ''; return; }
+  const done = queue.filter(q => q.status === 'done').length;
+  el.innerHTML = `
+    <div class="queue-header">
+      <div class="queue-title">Fronta zpracování</div>
+      <span class="fmt-badge" style="color:var(--t2)">${done}/${queue.length} dokončeno</span>
+    </div>
+    ${queue.map(item => `
+      <div class="queue-item ${item.status}">
+        <div class="queue-file-icon">📄</div>
+        <div class="queue-info">
+          <div class="queue-name">${item.name}</div>
+          <div class="queue-status">${item.statusText}</div>
+          ${item.status === 'processing' ? '<div class="progress"><div class="progress-fill" style="width:65%"></div></div>' : ''}
+        </div>
+        <div class="status-dot ${item.status}"></div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const year = parseInt(document.getElementById('year-select-dash')?.value) || new Date().getFullYear();
+  const yd = docs.filter(d => d.year === year);
+  const qs = ['Q1','Q2','Q3','Q4'];
+  const vatQ = {}, baseQ = {};
+  qs.forEach(q => { vatQ[q] = 0; baseQ[q] = 0; });
+  let totVat = 0, totBase = 0;
+  yd.forEach(d => {
+    const q = d.quarter; if (!q) return;
+    vatQ[q] += (d.castka_dph || 0); baseQ[q] += (d.zaklad_dane || 0);
+    totVat += (d.castka_dph || 0); totBase += (d.zaklad_dane || 0);
+  });
+  const maxV = Math.max(...qs.map(q => vatQ[q]), 1);
+
+  // Stats
+  document.getElementById('stats-grid').innerHTML = [
+    ['Dokladů', yd.length, ''],
+    ['Základ daně', fmtCZK(totBase), 'c-green'],
+    ['DPH celkem', fmtCZK(totVat), 'c-purple'],
+    ['Celkem s DPH', fmtCZK(totBase + totVat), 'c-yellow']
+  ].map(([l,v,c]) => `
+    <div class="stat-card">
+      <div class="stat-label">${l}</div>
+      <div class="stat-value ${c}">${v}</div>
+    </div>
+  `).join('');
+
+  // Quarter grid
+  document.getElementById('q-grid').innerHTML = qs.map(q => `
+    <div class="q-card">
+      <span class="q-label ${q}">${q}</span>
+      <div class="q-row"><span>Základ</span><span>${fmtCZK(baseQ[q])}</span></div>
+      <div class="q-row"><span>DPH</span><span>${fmtCZK(vatQ[q])}</span></div>
+      <div class="q-row q-total"><span>K odpočtu</span><span>${fmtCZK(vatQ[q])}</span></div>
+      <div class="progress"><div class="progress-fill" style="width:${(vatQ[q]/maxV*100).toFixed(1)}%"></div></div>
+      <div class="q-count">${yd.filter(d=>d.quarter===q).length} dokladů</div>
+    </div>
+  `).join('');
+
+  // Table
+  const rows = yd.slice(0, 10);
+  document.getElementById('dash-table').innerHTML = rows.length ? `
+    <table>
+      <thead><tr><th>Dodavatel</th><th>Datum DUZP</th><th>Popis</th><th>Základ</th><th>DPH</th><th>Q</th></tr></thead>
+      <tbody>${rows.map(d => `
+        <tr onclick="openModal('${d.id}')">
+          <td style="font-weight:500">${d.dodavatel || '—'}</td>
+          <td class="mono text-sm">${fmtDate(d.datumDph)}</td>
+          <td class="ellipsis text-muted">${d.popis || '—'}</td>
+          <td class="mono">${fmtCZK(d.zaklad_dane)}</td>
+          <td class="mono text-accent">${fmtCZK(d.castka_dph)}</td>
+          <td><span class="q-tag ${d.quarter || 'QX'}">${d.quarter || '?'}</span></td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  ` : '<div class="empty"><div class="empty-icon">📭</div><h3>Žádné doklady za ' + year + '</h3></div>';
+}
+
+// ── DOCUMENTS ─────────────────────────────────────────────────────────────────
+function renderDocuments() {
+  const year = parseInt(document.getElementById('year-select-docs')?.value) || new Date().getFullYear();
+  const qf = document.getElementById('q-select-docs')?.value || 'all';
+  const filtered = docs.filter(d => {
+    if (d.year && d.year !== year) return false;
+    if (qf !== 'all' && d.quarter !== qf) return false;
+    return true;
+  });
+  document.getElementById('doc-count').textContent = filtered.length + ' dokladů';
+  document.getElementById('docs-table').innerHTML = filtered.length ? `
+    <table>
+      <thead><tr><th style="padding-left:18px">Dodavatel</th><th>Číslo</th><th>Datum DUZP</th><th>Popis</th><th>Základ</th><th>DPH</th><th>Q</th><th>Drive</th><th></th></tr></thead>
+      <tbody>${filtered.map(d => `
+        <tr onclick="openModal('${d.id}')">
+          <td style="padding-left:18px;font-weight:500">${d.dodavatel || '—'}</td>
+          <td class="mono text-muted text-sm">${d.cislo_dokladu || '—'}</td>
+          <td class="mono text-sm">${fmtDate(d.datumDph)}</td>
+          <td class="ellipsis text-muted">${d.popis || '—'}</td>
+          <td class="mono">${fmtCZK(d.zaklad_dane)}</td>
+          <td class="mono text-accent" style="font-weight:600">${fmtCZK(d.castka_dph)}</td>
+          <td><span class="q-tag ${d.quarter || 'QX'}">${d.quarter || '?'}</span></td>
+          <td>${d.driveLink ? `<a href="${d.driveLink}" target="_blank" onclick="event.stopPropagation()" style="color:var(--purple);font-size:12px;text-decoration:none">🔗</a>` : '<span style="color:var(--t3)">—</span>'}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteDoc('${d.id}')">✕</button></td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  ` : '<div class="empty" style="padding:40px"><div class="empty-icon">🗂️</div><h3>Žádné doklady</h3><p>Přejdi na Nahrát doklady</p></div>';
+}
+
+function deleteDoc(id) {
+  docs = docs.filter(d => String(d.id) !== String(id));
+  saveDocs(); updateYearSelects(); renderDocuments(); renderDashboard();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  const d = docs.find(doc => String(doc.id) === String(id));
+  if (!d) return;
+  document.getElementById('modal-title').textContent = d.dodavatel || 'Detail dokladu';
+  document.getElementById('modal-sub').textContent = d.originalName || '';
+  document.getElementById('modal-grid').innerHTML = [
+    ['Dodavatel', d.dodavatel, true, false],
+    ['Typ', d.typ, false, false],
+    ['Datum DUZP', fmtDate(d.datumDph), false, true],
+    ['Číslo dokladu', d.cislo_dokladu, false, true],
+    ['Základ daně', fmtCZK(d.zaklad_dane), false, true],
+    ['DPH (' + (d.sazba_dph || '?') + '%)', fmtCZK(d.castka_dph), false, true],
+    ['Celkem s DPH', fmtCZK(d.celkem), false, false],
+    ['Kvartal', d.quarter, false, false],
+    ['Popis', d.popis, true, false],
+    ['Kategorie', d.kategorie, false, false],
+    d.driveLink ? ['Google Drive', `<a href="${d.driveLink}" target="_blank" style="color:var(--purple)">🔗 Otevřít na Drive</a>`, true, false] : null
+  ].filter(Boolean).map(([l, v, full, hl]) => `
+    <div class="ext-field ${full ? 'full' : ''} ${hl ? 'hl' : ''}">
+      <label>${l}</label>
+      <span>${v || '—'}</span>
+    </div>
+  `).join('');
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('detail-modal').classList.remove('open'); }
+
+// ── START ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
