@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AutoLog v2 — Servisní knížka</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════ */
+:root {
+  --bg:      #0b0c10;
+  --surf1:   #111217;
+  --surf2:   #18191f;
+  --surf3:   #1f2028;
+  --border:  rgba(255,255,255,.07);
+  --border2: rgba(255,255,255,.12);
+  --gold:    #f0a830;
+  --gold2:   #ffd07a;
+  --blue:    #4f8ef7;
+  --green:   #3dd68c;
+  --red:     #f05252;
+  --purple:  #a78bfa;
+  --text:    #e8e8f0;
+  --muted:   #6b6b88;
+  --muted2:  #3a3a52;
+  --nav-h:   64px;           /* desktop top nav height */
+  --mob-nav: 68px;           /* mobile bottom bar height */
+  --r:       12px;
+  --serif:   'Syne', sans-serif;
+  --sans:    'Instrument Sans', sans-serif;
+  --shadow:  0 8px 32px rgba(0,0,0,.5);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; height: 400px;
+  background: radial-gradient(ellipse 60% 40% at 70% -10%, rgba(240,168,48,.08), transparent);
+  pointer-events: none; z-index: 0;
+}
+
+/* ══════════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 3px; }
+
+/* ══════════════════════════════════════════
+   DESKTOP NAV (top bar)
+══════════════════════════════════════════ */
+#desktop-nav {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); z-index: 200;
+  background: rgba(11,12,16,.92); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 24px; gap: 6px;
+}
+.logo-mark {
+  font-family: var(--serif); font-size: 20px; font-weight: 800;
+  color: var(--gold); letter-spacing: -1px; margin-right: 20px; white-space: nowrap;
+}
+.logo-mark span { color: var(--muted); font-size: 11px; font-weight: 400; display: block; letter-spacing: 2px; text-transform: uppercase; margin-top: -4px; }
+.nav-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  color: var(--muted); background: transparent; transition: all .18s; white-space: nowrap;
+}
+.nav-btn .ni { font-size: 15px; }
+.nav-btn:hover { color: var(--text); background: var(--surf2); }
+.nav-btn.active { color: var(--gold); background: rgba(240,168,48,.1); }
+.nav-spacer { flex: 1; }
+.nav-sync-btn {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  border-radius: 8px; border: 1px solid var(--border2); cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  color: var(--muted); background: transparent; transition: all .18s;
+}
+.nav-sync-btn:hover { border-color: var(--blue); color: var(--blue); }
+.nav-sync-btn.synced { border-color: var(--green); color: var(--green); }
+
+/* ══════════════════════════════════════════
+   MOBILE BOTTOM NAV
+══════════════════════════════════════════ */
+#mobile-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  height: var(--mob-nav);
+  background: rgba(17,18,23,.96); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: none; align-items: stretch;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.mob-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; border: none; background: transparent; cursor: pointer;
+  color: var(--muted); font-family: var(--sans); font-size: 10px; font-weight: 500;
+  transition: color .18s; padding: 6px 2px;
+}
+.mob-btn .mi { font-size: 20px; line-height: 1; }
+.mob-btn.active { color: var(--gold); }
+.mob-btn.active .mi { filter: drop-shadow(0 0 6px rgba(240,168,48,.6)); }
+
+/* ══════════════════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════════════════ */
+#app {
+  max-width: 960px; margin: 0 auto;
+  padding: calc(var(--nav-h) + 24px) 20px 40px;
+}
+.section { display: none; animation: fadeUp .28s ease; }
+.section.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-head { margin-bottom: 28px; }
+.page-head h1 { font-family: var(--serif); font-size: 30px; font-weight: 800; letter-spacing: -1px; }
+.page-head p  { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+/* ══════════════════════════════════════════
+   CARDS
+══════════════════════════════════════════ */
+.card {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px; margin-bottom: 16px;
+}
+.card-head {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.card-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+/* ══════════════════════════════════════════
+   FORMS
+══════════════════════════════════════════ */
+.fg { display: flex; flex-direction: column; gap: 6px; }
+.fg label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+input, select, textarea {
+  background: var(--surf1); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 10px 13px;
+  color: var(--text); font-family: var(--sans); font-size: 14px; outline: none;
+  transition: border .18s; width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+select option { background: var(--surf1); }
+textarea { resize: vertical; min-height: 72px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.full  { grid-column: 1/-1; }
+
+/* ══════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 20px; border-radius: 9px; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: 13px; font-weight: 600; transition: all .18s;
+  white-space: nowrap;
+}
+.btn-primary   { background: var(--gold); color: #0b0c10; }
+.btn-primary:hover { background: var(--gold2); transform: translateY(-1px); }
+.btn-ghost     { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.btn-blue      { background: rgba(79,142,247,.15); border: 1px solid rgba(79,142,247,.3); color: var(--blue); }
+.btn-blue:hover{ background: rgba(79,142,247,.25); }
+.btn-green     { background: rgba(61,214,140,.12); border: 1px solid rgba(61,214,140,.3); color: var(--green); }
+.btn-green:hover{ background: rgba(61,214,140,.22); }
+.btn-red       { background: transparent; border: 1px solid rgba(240,82,82,.4); color: var(--red); }
+.btn-red:hover { background: rgba(240,82,82,.1); }
+.btn-purple    { background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.3); color: var(--purple); }
+.btn-purple:hover { background: rgba(167,139,250,.22); }
+.btn-sm        { padding: 7px 14px; font-size: 12px; }
+.btn-row       { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+/* ══════════════════════════════════════════
+   VEHICLE GRID
+══════════════════════════════════════════ */
+.vgrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 14px; margin-bottom: 24px; }
+.vcard {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; cursor: pointer; transition: all .18s;
+  position: relative; overflow: hidden;
+}
+.vcard::after {
+  content: ''; position: absolute; inset: 0; border-radius: var(--r);
+  border: 1px solid transparent; transition: border .18s;
+}
+.vcard:hover::after, .vcard.sel::after { border-color: var(--gold); }
+.vcard.sel { background: var(--surf3); }
+.vcard-stripe { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,var(--gold),var(--blue)); opacity: 0; transition: opacity .18s; }
+.vcard:hover .vcard-stripe, .vcard.sel .vcard-stripe { opacity: 1; }
+.vcard-type { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.vcard-name { font-family: var(--serif); font-size: 18px; font-weight: 700; margin: 6px 0 3px; }
+.vcard-spz  { font-size: 12px; color: var(--gold); font-weight: 600; letter-spacing: 1px; }
+.vcard-km   { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.vcard-dot  { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; }
+.vcard-dot.ok   { background: var(--green); }
+.vcard-dot.warn { background: var(--gold); box-shadow: 0 0 8px rgba(240,168,48,.5); }
+.vcard-dot.crit { background: var(--red);  box-shadow: 0 0 8px rgba(240,82,82,.6); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.4)} }
+.add-vcard {
+  background: var(--surf1); border: 1px dashed var(--border2);
+  border-radius: var(--r); padding: 18px; cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  color: var(--muted); font-size: 13px; min-height: 116px;
+}
+.add-vcard:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ══════════════════════════════════════════
+   STATS ROW
+══════════════════════════════════════════ */
+.stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+.stat { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
+.stat-val { font-family: var(--serif); font-size: 24px; font-weight: 700; }
+.stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.stat-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* PROGRESS */
+.prog-wrap { margin-top: 8px; }
+.prog-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.prog-bar { height: 5px; background: var(--surf1); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+.prog-fill.ok   { background: linear-gradient(90deg,var(--green),#5aecab); }
+.prog-fill.soon { background: linear-gradient(90deg,var(--gold),var(--gold2)); }
+.prog-fill.due  { background: linear-gradient(90deg,var(--red),#ff7a7a); }
+
+/* ══════════════════════════════════════════
+   SERVICE LOG
+══════════════════════════════════════════ */
+.sitem {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 14px; transition: border .18s;
+}
+.sitem:hover { border-color: var(--border2); }
+.sitem-ico  { width: 38px; height: 38px; border-radius: 9px; background: var(--surf1); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sitem-body { flex: 1; min-width: 0; }
+.sitem-title{ font-size: 14px; font-weight: 600; }
+.sitem-meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+.sitem-note { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
+.sitem-cost { font-size: 14px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+.km-badge   { background: var(--surf1); border: 1px solid var(--border); font-size: 10px; padding: 1px 7px; border-radius: 20px; }
+
+/* ══════════════════════════════════════════
+   COST ANALYTICS
+══════════════════════════════════════════ */
+.cost-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 12px; margin-bottom: 20px; }
+.cost-cat  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; }
+.cost-cat-ico { font-size: 22px; margin-bottom: 6px; }
+.cost-cat-val { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.cost-cat-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+.bar-chart { margin-top: 16px; }
+.bar-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-lbl   { font-size: 12px; color: var(--muted); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--surf1); border-radius: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 4px; background: linear-gradient(90deg,var(--gold),var(--gold2)); transition: width .6s ease; }
+.bar-val   { font-size: 12px; font-weight: 600; color: var(--gold); width: 80px; text-align: right; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════
+   UPLOAD ZONE
+══════════════════════════════════════════ */
+.upload-zone {
+  border: 2px dashed var(--border2); border-radius: var(--r); padding: 28px;
+  text-align: center; cursor: pointer; transition: all .2s; position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: rgba(240,168,48,.03); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.uz-ico  { font-size: 32px; margin-bottom: 8px; }
+.uz-text { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.uz-text strong { color: var(--gold); }
+.preview-img { max-width: 100%; border-radius: 8px; margin-top: 12px; display: none; max-height: 300px; object-fit: contain; }
+
+/* AI RESULT */
+.ai-res {
+  background: var(--surf1); border: 1px solid rgba(79,142,247,.3);
+  border-radius: 10px; padding: 16px; margin-top: 14px; display: none;
+}
+.ai-res-head { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.ai-badge { background: rgba(79,142,247,.15); color: var(--blue); font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .5px; }
+.ai-text  { font-size: 13px; line-height: 1.7; }
+.dots     { display: inline-flex; gap: 4px; }
+.dots span{ width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: dot .7s infinite; }
+.dots span:nth-child(2){ animation-delay:.12s }
+.dots span:nth-child(3){ animation-delay:.24s }
+@keyframes dot { 0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1} }
+
+/* INVOICE PREVIEW */
+.invoice-items { margin-top: 10px; }
+.inv-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.inv-item:last-child { border: none; }
+.inv-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
+.inv-item-desc { flex: 1; }
+.inv-item-price{ color: var(--gold); font-weight: 600; }
+
+/* ══════════════════════════════════════════
+   REMINDERS
+══════════════════════════════════════════ */
+.rem-item { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; }
+.rem-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rem-dot.ok   { background: var(--green); }
+.rem-dot.soon { background: var(--gold); }
+.rem-dot.due  { background: var(--red); box-shadow: 0 0 8px rgba(240,82,82,.5); }
+.rem-body { flex: 1; }
+.rem-title{ font-size: 14px; font-weight: 600; }
+.rem-when { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ══════════════════════════════════════════
+   OBD SECTION
+══════════════════════════════════════════ */
+.obd-status {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 16px;
+}
+.obd-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; transition: background .3s; }
+.obd-dot.connecting { background: var(--gold); animation: pulse 1s infinite; }
+.obd-dot.connected  { background: var(--green); box-shadow: 0 0 12px rgba(61,214,140,.5); }
+.obd-dot.error      { background: var(--red); }
+.obd-status-text { flex: 1; }
+.obd-name { font-size: 14px; font-weight: 600; }
+.obd-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.obd-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 12px; }
+.obd-pid  {
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px; text-align: center;
+}
+.obd-pid-icon { font-size: 24px; margin-bottom: 6px; }
+.obd-pid-val  { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--text); }
+.obd-pid-unit { font-size: 11px; color: var(--muted); }
+.obd-pid-name { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+.obd-pid.live .obd-pid-val { color: var(--green); }
+.obd-dtc-item { background: var(--surf2); border: 1px solid rgba(240,82,82,.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.obd-dtc-code { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.obd-dtc-desc { font-size: 12px; color: var(--muted); }
+.protocol-list { margin: 12px 0; }
+.prot-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.prot-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.prot-badge.can { background: rgba(79,142,247,.15); color: var(--blue); }
+.prot-badge.iso { background: rgba(167,139,250,.15); color: var(--purple); }
+.prot-badge.j   { background: rgba(61,214,140,.12); color: var(--green); }
+
+/* ══════════════════════════════════════════
+   LIGHTS CATALOG
+══════════════════════════════════════════ */
+.lights-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 10px; }
+.light-item  { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; text-align: center; cursor: pointer; transition: all .18s; }
+.light-item:hover { border-color: var(--blue); transform: translateY(-2px); }
+.light-item.sel   { border-color: var(--blue); background: var(--surf3); }
+.light-emo  { font-size: 26px; margin-bottom: 5px; }
+.light-name { font-size: 11px; font-weight: 600; }
+.sev-badge  { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+.sev-high   { background: rgba(240,82,82,.15); color: var(--red); }
+.sev-med    { background: rgba(240,168,48,.12); color: var(--gold); }
+.sev-low    { background: rgba(61,214,140,.12); color: var(--green); }
+.light-detail { background: var(--surf3); border: 1px solid rgba(79,142,247,.25); border-radius: var(--r); padding: 18px; margin-top: 14px; display: none; }
+.light-detail.open { display: block; animation: fadeUp .2s ease; }
+
+/* iOS BLUEFY BANNER */
+.ios-banner {
+  background: linear-gradient(135deg, rgba(79,142,247,.12), rgba(167,139,250,.08));
+  border: 1px solid rgba(79,142,247,.35);
+  border-radius: var(--r); padding: 18px 20px; margin-bottom: 16px;
+  display: none;
+}
+.ios-banner.show { display: block; animation: fadeUp .3s ease; }
+.ios-banner-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ios-banner-ico  { font-size: 28px; }
+.ios-banner-title{ font-size: 15px; font-weight: 700; color: var(--text); }
+.ios-banner-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ios-steps { margin: 14px 0; }
+.ios-step  { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.ios-step:last-child { border: none; }
+.ios-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.ios-step-text { flex: 1; line-height: 1.5; }
+.ios-step-text strong { color: var(--text); }
+.ios-step-text span  { color: var(--muted); font-size: 12px; display: block; margin-top: 2px; }
+.ios-warn { background: rgba(240,168,48,.08); border: 1px solid rgba(240,168,48,.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--gold); margin-top: 10px; line-height: 1.6; }
+.ios-compat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.ios-compat-item { background: var(--surf1); border-radius: 8px; padding: 10px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* CHIPS */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.chip  { background: var(--surf2); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all .18s; }
+.chip:hover, .chip.active { border-color: var(--gold); color: var(--gold); background: rgba(240,168,48,.08); }
+
+/* ══════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════ */
+.setting-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.setting-row:last-child { border: none; }
+.setting-ico { font-size: 22px; width: 38px; flex-shrink: 0; text-align: center; }
+.setting-body { flex: 1; }
+.setting-title{ font-size: 14px; font-weight: 600; }
+.setting-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.setting-action { flex-shrink: 0; }
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(6px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+.overlay.open { display: flex; }
+.modal {
+  background: var(--surf2); border: 1px solid var(--border2);
+  border-radius: 18px; width: 100%; max-width: 560px;
+  max-height: 90dvh; overflow-y: auto; padding: 28px; position: relative;
+  animation: modalIn .22s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+.modal-x { position: absolute; top: 16px; right: 16px; background: var(--surf1); border: none; color: var(--muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: color .18s; }
+.modal-x:hover { color: var(--text); }
+.modal-title { font-family: var(--serif); font-size: 22px; font-weight: 700; margin-bottom: 22px; }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: calc(var(--mob-nav) + 12px); left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--surf3); border: 1px solid var(--border2);
+  color: var(--text); padding: 11px 20px; border-radius: 10px;
+  font-size: 13px; z-index: 999; transition: transform .3s ease;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 90vw;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok   { border-color: rgba(61,214,140,.4); color: var(--green); }
+.toast.err  { border-color: rgba(240,82,82,.4); color: var(--red); }
+.toast.info { border-color: rgba(79,142,247,.4); color: var(--blue); }
+
+/* ══════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════ */
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty-ico  { font-size: 44px; margin-bottom: 10px; }
+.empty-text { font-size: 14px; }
+
+/* ══════════════════════════════════════════
+   ODO DISPLAY
+══════════════════════════════════════════ */
+.odo-box { background: linear-gradient(135deg,#07080b,var(--surf1)); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; text-align: center; font-family: 'Courier New',monospace; }
+.odo-num { font-size: 44px; color: var(--green); letter-spacing: 8px; text-shadow: 0 0 24px rgba(61,214,140,.4); }
+.odo-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; }
+
+/* ══════════════════════════════════════════
+   GOOGLE DRIVE STATUS
+══════════════════════════════════════════ */
+.gdrive-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.gdrive-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ══════════════════════════════════════════
+   DIVIDER
+══════════════════════════════════════════ */
+hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — MOBILE
+══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  :root { --nav-h: 0px; }
+  #desktop-nav { display: none; }
+  #mobile-nav  { display: flex; }
+  #app         { padding: 16px 14px calc(var(--mob-nav) + 20px); }
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+  .stats-row   { grid-template-columns: 1fr 1fr; }
+  .vgrid       { grid-template-columns: 1fr; }
+  .obd-grid    { grid-template-columns: repeat(2,1fr); }
+  .cost-grid   { grid-template-columns: repeat(2,1fr); }
+  .lights-grid { grid-template-columns: repeat(3,1fr); }
+  .page-head h1{ font-size: 24px; }
+  .toast       { bottom: calc(var(--mob-nav) + 10px); }
+  .modal       { padding: 20px; }
+  .bar-lbl     { width: 100px; }
+  .btn-row     { gap: 8px; }
+  .btn         { padding: 9px 14px; }
+}
+@media (min-width: 701px) {
+  #desktop-nav { display: flex; }
+  #mobile-nav  { display: none; }
+  .toast { bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ DESKTOP NAV ══ -->
+<nav id="desktop-nav">
+  <div class="logo-mark">AutoLog<span>Servisní knížka v2</span></div>
+  <button class="nav-btn active" data-sec="garage"  onclick="nav(this)"><span class="ni">🚗</span> Garáž</button>
+  <button class="nav-btn"        data-sec="service" onclick="nav(this)"><span class="ni">🔧</span> Servis</button>
+  <button class="nav-btn"        data-sec="invoice" onclick="nav(this)"><span class="ni">🧾</span> Faktury</button>
+  <button class="nav-btn"        data-sec="costs"   onclick="nav(this)"><span class="ni">📊</span> Náklady</button>
+  <button class="nav-btn"        data-sec="remind"  onclick="nav(this)"><span class="ni">📅</span> Připomínky</button>
+  <button class="nav-btn"        data-sec="obd"     onclick="nav(this)"><span class="ni">🔌</span> OBD Diagnostika</button>
+  <button class="nav-btn"        data-sec="ai"      onclick="nav(this)"><span class="ni">🤖</span> AI Asistent</button>
+  <button class="nav-btn"        data-sec="lights"  onclick="nav(this)"><span class="ni">💡</span> Kontrolky</button>
+  <div class="nav-spacer"></div>
+  <button class="nav-sync-btn" id="driveBtn" onclick="toggleGoogleDrive()">
+    <span>☁️</span> <span id="driveBtnLabel">Google Drive</span>
+  </button>
+  <button class="nav-sync-btn" onclick="nav_settings()" style="margin-left:6px"><span>⚙️</span></button>
+</nav>
+
+<!-- ══ MOBILE NAV ══ -->
+<nav id="mobile-nav">
+  <button class="mob-btn active" data-sec="garage"  onclick="nav(this)"><span class="mi">🚗</span>Garáž</button>
+  <button class="mob-btn"        data-sec="service" onclick="nav(this)"><span class="mi">🔧</span>Servis</button>
+  <button class="mob-btn"        data-sec="invoice" onclick="nav(this)"><span class="mi">🧾</span>Faktura</button>
+  <button class="mob-btn"        data-sec="costs"   onclick="nav(this)"><span class="mi">📊</span>Náklady</button>
+  <button class="mob-btn"        data-sec="remind"  onclick="nav(this)"><span class="mi">📅</span>Plán</button>
+  <button class="mob-btn"        data-sec="obd"     onclick="nav(this)"><span class="mi">🔌</span>OBD</button>
+  <button class="mob-btn"        data-sec="ai"      onclick="nav(this)"><span class="mi">🤖</span>AI</button>
+  <button class="mob-btn"        data-sec="lights"  onclick="nav(this)"><span class="mi">💡</span>Světla</button>
+</nav>
+
+<main id="app">
+
+<!-- ═══════════════════ GARÁŽ ═══════════════════ -->
+<section class="section active" id="sec-garage">
+  <div class="page-head">
+    <h1>Moje garáž</h1>
+    <p>Přehled vozidel a jejich stav</p>
+  </div>
+  <div class="vgrid" id="vGrid"></div>
+  <div id="vDetail" style="display:none">
+    <div class="stats-row" id="vStats"></div>
+    <div class="card">
+      <div class="card-head"><div class="dot"></div> Průběh oleje</div>
+      <div id="oilProg"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="dot"></div> Technické údaje</div>
+      <div id="vInfo"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="openSvcModal()">+ Servisní záznam</button>
+      <button class="btn btn-blue" onclick="nav2('invoice')">🧾 Skenovat fakturu</button>
+      <button class="btn btn-ghost" onclick="editVehicle()">✏️ Upravit</button>
+      <button class="btn btn-red btn-sm" onclick="deleteVehicle()">Smazat</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ SERVIS ═══════════════════ -->
+<section class="section" id="sec-service">
+  <div class="page-head"><h1>Servisní záznamy</h1><p>Historie všech oprav a údržby</p></div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <select id="sfCar" style="flex:1;min-width:140px" onchange="renderSvc()"></select>
+    <select id="sfType" style="flex:1;min-width:130px" onchange="renderSvc()">
+      <option value="">Vše</option>
+      <option value="oil">Výměna oleje</option>
+      <option value="tires">Pneumatiky</option>
+      <option value="brakes">Brzdy</option>
+      <option value="filters">Filtry</option>
+      <option value="inspection">STK/Emise</option>
+      <option value="timing">Rozv. řemen</option>
+      <option value="other">Ostatní</option>
+    </select>
+    <button class="btn btn-primary" onclick="openSvcModal()">+ Nový záznam</button>
+  </div>
+  <div id="svcLog"></div>
+</section>
+
+<!-- ═══════════════════ FAKTURY ═══════════════════ -->
+<section class="section" id="sec-invoice">
+  <div class="page-head"><h1>Skenování faktur</h1><p>AI přečte fakturu a vytvoří servisní záznam</p></div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Nahrát fakturu / foto dokladu</div>
+    <div class="upload-zone" id="invZone">
+      <input type="file" accept="image/*,application/pdf" capture="camera" onchange="handleInvoice(event)" id="invFile">
+      <div class="uz-ico">🧾</div>
+      <div class="uz-text">Vyfoť nebo nahraj foto faktury / paragon<br><strong>Klikni · Vyfoť · Přetáhni</strong></div>
+      <img class="preview-img" id="invPreview">
+    </div>
+    <div class="ai-res" id="invResult">
+      <div class="ai-res-head">🤖 Výsledek OCR <span class="ai-badge">Claude Vision</span></div>
+      <div class="ai-text" id="invText"></div>
+    </div>
+  </div>
+
+  <div class="card" id="invAssign" style="display:none">
+    <div class="card-head"><div class="dot"></div> Přiřadit k vozidlu & uložit</div>
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="fg">
+        <label>Vozidlo</label>
+        <select id="invCar"></select>
+      </div>
+      <div class="fg">
+        <label>Datum (z faktury)</label>
+        <input type="date" id="invDate">
+      </div>
+      <div class="fg">
+        <label>Celková cena (Kč)</label>
+        <input type="number" id="invTotal" placeholder="0">
+      </div>
+      <div class="fg">
+        <label>Autoservis</label>
+        <input type="text" id="invShop" placeholder="Název servisu">
+      </div>
+    </div>
+    <div class="card-head" style="margin-bottom:8px"><div class="dot"></div> Rozpoznané položky (vyber co uložit)</div>
+    <div class="invoice-items" id="invItems"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveInvoiceRecord()">✅ Uložit jako servisní záznam</button>
+      <button class="btn btn-ghost" onclick="clearInvoice()">Zrušit</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ NÁKLADY ═══════════════════ -->
+<section class="section" id="sec-costs">
+  <div class="page-head"><h1>Náklady na provoz</h1><p>Přehled výdajů dle vozidla a kategorie</p></div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <select id="costCar" style="flex:1;min-width:140px" onchange="renderCosts()"></select>
+    <select id="costYear" style="flex:1;min-width:100px" onchange="renderCosts()"></select>
+  </div>
+  <div class="stats-row" id="costStats"></div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Náklady dle kategorie</div>
+    <div class="cost-grid" id="costCats"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Největší výdaje</div>
+    <div class="bar-chart" id="costBars"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PŘIPOMÍNKY ═══════════════════ -->
+<section class="section" id="sec-remind">
+  <div class="page-head"><h1>Připomínky & Kalendář</h1><p>Plánování servisních termínů</p></div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Export do kalendáře</div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-primary" onclick="exportICS()">🍎 Apple Kalendář (.ics)</button>
+      <button class="btn btn-blue" onclick="exportGoogle()">📅 Google Kalendář</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Přidat připomínku</div>
+    <div class="grid2">
+      <div class="fg"><label>Vozidlo</label><select id="remCar"></select></div>
+      <div class="fg"><label>Typ</label>
+        <select id="remType">
+          <option value="oil">🔧 Výměna oleje</option>
+          <option value="tires">🚗 Přezutí</option>
+          <option value="stk">📋 STK</option>
+          <option value="odo">📍 Zapsat tachometr</option>
+          <option value="insurance">🛡️ Pojistka</option>
+          <option value="dalkove">🛣️ Dálniční známka</option>
+          <option value="custom">⚙️ Vlastní</option>
+        </select>
+      </div>
+      <div class="fg"><label>Interval</label>
+        <select id="remInterval">
+          <option value="1m">Měsíčně</option>
+          <option value="2m">Každé 2 měsíce</option>
+          <option value="3m">Čtvrtletně</option>
+          <option value="6m">Každých 6 měsíců</option>
+          <option value="1y" selected>Ročně</option>
+          <option value="2y">Každé 2 roky</option>
+        </select>
+      </div>
+      <div class="fg"><label>Od data</label><input type="date" id="remStart"></div>
+      <div class="fg full"><label>Poznámka</label><input type="text" id="remNote" placeholder="Volitelná poznámka"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addReminder()">Přidat</button></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Nadcházející události</div>
+    <div id="remList"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ OBD DIAGNOSTIKA ═══════════════════ -->
+<section class="section" id="sec-obd">
+  <div class="page-head"><h1>OBD Diagnostika</h1><p>Bluetooth připojení k vozidlu přes ELM327 adaptér</p></div>
+
+  <!-- iOS BLUEFY BANNER — zobrazí se automaticky na iOS -->
+  <div class="ios-banner" id="iosBanner">
+    <div class="ios-banner-head">
+      <div class="ios-banner-ico">📱</div>
+      <div>
+        <div class="ios-banner-title">Jsi na iPhone / iPad</div>
+        <div class="ios-banner-sub">Safari a Chrome na iOS nepodporují Web Bluetooth — ale existuje řešení</div>
+      </div>
+    </div>
+
+    <div class="ios-compat-grid">
+      <div class="ios-compat-item"><span>❌</span><span><strong>Safari</strong> — nepodporuje</span></div>
+      <div class="ios-compat-item"><span>❌</span><span><strong>Chrome iOS</strong> — nepodporuje<br><span style="color:var(--muted);font-size:10px">používá stejné jádro jako Safari</span></span></div>
+      <div class="ios-compat-item"><span>✅</span><span><strong>Bluefy</strong> — funguje!</span></div>
+      <div class="ios-compat-item"><span>⚠️</span><span><strong>BLE adaptér</strong> nutný<br><span style="color:var(--muted);font-size:10px">klasický BT na iOS nefunguje</span></span></div>
+    </div>
+
+    <div class="card-head" style="margin:14px 0 8px"><div class="dot"></div> Jak zprovoznit OBD na iPhone — návod</div>
+    <div class="ios-steps">
+      <div class="ios-step">
+        <div class="ios-step-num">1</div>
+        <div class="ios-step-text">
+          <strong>Stáhni správný OBD adaptér</strong>
+          <span>Musí být <strong>BLE 4.0</strong> (Bluetooth Low Energy) — ne klasický BT!<br>
+          ✅ Veepeak OBDCheck BLE+ · Vgate iCar Pro BLE 4.0 · OBDLink MX+<br>
+          ❌ Levné "mini" adaptéry bez označení BLE — na iOS nefungují</span>
+        </div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">2</div>
+        <div class="ios-step-text">
+          <strong>Stáhni Bluefy z App Store</strong>
+          <span>Speciální prohlížeč s Web Bluetooth podporou pro iOS — zdarma, aktivně vyvíjený (verze 3.9.2, srpen 2025, hodnocení 4.8/5)</span>
+        </div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">3</div>
+        <div class="ios-step-text">
+          <strong>Zasuň OBD adaptér do vozu, nastav zapalování</strong>
+          <span>Adaptér se zapne — blikající LED = čeká na připojení</span>
+        </div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">4</div>
+        <div class="ios-step-text">
+          <strong>Otevři tuto aplikaci v Bluefy</strong>
+          <span>V Bluefy zadej URL této stránky → přejdi na záložku OBD → klikni Připojit</span>
+        </div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">5</div>
+        <div class="ios-step-text">
+          <strong>Povol Bluetooth v Bluefy a vyber adaptér</strong>
+          <span>iOS zobrazí systémový dialog — vyber svůj ELM327 adaptér ze seznamu</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ios-warn">
+      ⚠️ <strong>Důležité:</strong> Bluefy funguje prokazatelně s Web Bluetooth pro BLE zařízení. Přímé testy s OBD2 adaptéry nejsou masově zdokumentovány — existuje malá šance na nekompatibilitu konkrétního adaptéru. Pokud Bluefy nefunguje, alternativou je WiFi OBD adaptér (komunikuje přes TCP/IP, funguje v Safari i Chrome).
+    </div>
+
+    <div class="btn-row" style="margin-top:14px">
+      <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" class="btn btn-blue">📲 Stáhnout Bluefy (App Store)</a>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('iosBanner').classList.remove('show')">Skrýt</button>
+    </div>
+  </div>
+
+  <div class="obd-status">
+    <div class="obd-dot" id="obdDot"></div>
+    <div class="obd-status-text">
+      <div class="obd-name" id="obdName">Nepřipojeno</div>
+      <div class="obd-sub"  id="obdSub">ELM327 Bluetooth OBD-II adaptér</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-green btn-sm" id="obdConnBtn" onclick="obdConnect()">🔌 Připojit</button>
+      <button class="btn btn-ghost btn-sm" id="obdDiscBtn" onclick="obdDisconnect()" style="display:none">Odpojit</button>
+    </div>
+  </div>
+
+  <!-- ASSIGN TO VEHICLE -->
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Přiřadit diagnostiku k vozidlu</div>
+    <div class="grid2">
+      <div class="fg"><label>Vozidlo</label><select id="obdCar"></select></div>
+      <div class="fg"><label>Aktuální km (přepis)</label><input type="number" id="obdKm" placeholder="zadej nebo načti přes OBD"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="saveObdToVehicle()">Uložit km do vozidla</button></div>
+  </div>
+
+  <!-- LIVE DATA -->
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Živá data z vozu (Mode 01)</div>
+    <div class="obd-grid" id="obdPIDs">
+      <div class="obd-pid" id="pid-rpm"><div class="obd-pid-icon">⚙️</div><div class="obd-pid-val" id="pval-rpm">—</div><div class="obd-pid-unit">RPM</div><div class="obd-pid-name">Otáčky motoru</div></div>
+      <div class="obd-pid" id="pid-speed"><div class="obd-pid-icon">🏎️</div><div class="obd-pid-val" id="pval-speed">—</div><div class="obd-pid-unit">km/h</div><div class="obd-pid-name">Rychlost</div></div>
+      <div class="obd-pid" id="pid-temp"><div class="obd-pid-icon">🌡️</div><div class="obd-pid-val" id="pval-temp">—</div><div class="obd-pid-unit">°C</div><div class="obd-pid-name">Teplota motoru</div></div>
+      <div class="obd-pid" id="pid-load"><div class="obd-pid-icon">⚡</div><div class="obd-pid-val" id="pval-load">—</div><div class="obd-pid-unit">%</div><div class="obd-pid-name">Zátěž motoru</div></div>
+      <div class="obd-pid" id="pid-throttle"><div class="obd-pid-icon">🦶</div><div class="obd-pid-val" id="pval-throttle">—</div><div class="obd-pid-unit">%</div><div class="obd-pid-name">Poloha škrtič.</div></div>
+      <div class="obd-pid" id="pid-fuel"><div class="obd-pid-icon">⛽</div><div class="obd-pid-val" id="pval-fuel">—</div><div class="obd-pid-unit">%</div><div class="obd-pid-name">Hladina paliva</div></div>
+      <div class="obd-pid" id="pid-voltage"><div class="obd-pid-icon">🔋</div><div class="obd-pid-val" id="pval-voltage">—</div><div class="obd-pid-unit">V</div><div class="obd-pid-name">Napětí baterie</div></div>
+      <div class="obd-pid" id="pid-odo"><div class="obd-pid-icon">📍</div><div class="obd-pid-val" id="pval-odo">—</div><div class="obd-pid-unit">km</div><div class="obd-pid-name">Tachometr</div></div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-green btn-sm" id="obdLiveBtn" onclick="startLive()" style="display:none">▶ Start Live Data</button>
+      <button class="btn btn-ghost btn-sm" id="obdStopBtn" onclick="stopLive()" style="display:none">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- DTC CODES -->
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Chybové kódy (DTC — Mode 03)</div>
+    <div class="btn-row" style="margin-top:0;margin-bottom:14px">
+      <button class="btn btn-blue btn-sm" id="dtcReadBtn" onclick="readDTCs()" style="display:none">🔍 Číst kódy</button>
+      <button class="btn btn-red btn-sm" id="dtcClearBtn" onclick="clearDTCs()" style="display:none">🗑️ Vymazat kódy</button>
+    </div>
+    <div id="dtcList"><div class="empty"><div class="empty-ico">✅</div><div class="empty-text">Připoj OBD adaptér pro čtení kódů</div></div></div>
+  </div>
+
+  <!-- PROTOKOLY INFO -->
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Podporované OBD protokoly</div>
+    <div class="protocol-list">
+      <div class="prot-item"><span class="prot-badge can">CAN</span><span>ISO 15765-4 CAN (11bit 500kbps) — moderní auta 2008+</span></div>
+      <div class="prot-item"><span class="prot-badge can">CAN</span><span>ISO 15765-4 CAN (29bit 500kbps) — alternativní CAN</span></div>
+      <div class="prot-item"><span class="prot-badge iso">ISO</span><span>ISO 14230-4 KWP (Fast Init) — auta 2000–2008</span></div>
+      <div class="prot-item"><span class="prot-badge iso">ISO</span><span>ISO 9141-2 — starší evropská vozidla</span></div>
+      <div class="prot-item"><span class="prot-badge j">J1850</span><span>SAE J1850 PWM — Ford starší modely</span></div>
+      <div class="prot-item"><span class="prot-badge j">J1850</span><span>SAE J1850 VPW — GM/Chrysler starší modely</span></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">💡 <strong>Doporučené BLE adaptéry pro iOS i Android:</strong> Veepeak OBDCheck BLE+, Vgate iCar Pro BLE 4.0, OBDLink MX+ — cca 600–2000 Kč. Vyhni se levným "mini" čínským adaptérům bez označení BLE.</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px" id="obdPlatformNote"></p>
+  </div>
+</section>
+
+<!-- ═══════════════════ AI ASISTENT ═══════════════════ -->
+<section class="section" id="sec-ai">
+  <div class="page-head"><h1>AI Asistent</h1><p>Čtení technického průkazu, tachometru a diagnostika</p></div>
+
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> 📄 Technický průkaz → Auto­matické vyplnění</div>
+    <div class="upload-zone" id="tpZone">
+      <input type="file" accept="image/*" capture="camera" onchange="handleTP(event)" id="tpFile">
+      <div class="uz-ico">📑</div>
+      <div class="uz-text">Vyfoť nebo nahraj foto technického průkazu<br><strong>AI přečte VIN, SPZ, motor, rok…</strong></div>
+      <img class="preview-img" id="tpPreview">
+    </div>
+    <div class="ai-res" id="tpResult">
+      <div class="ai-res-head">🤖 Claude Vision <span class="ai-badge">OCR</span></div>
+      <div class="ai-text" id="tpText"></div>
+      <div class="btn-row" id="tpBtns" style="display:none">
+        <button class="btn btn-primary btn-sm" onclick="applyTP()">✅ Použít data — přidat vozidlo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> 🔢 Tachometr z fotky</div>
+    <div class="upload-zone" id="odoZone">
+      <input type="file" accept="image/*" capture="camera" onchange="handleOdo(event)" id="odoFile">
+      <div class="uz-ico">🔢</div>
+      <div class="uz-text">Vyfoť display tachometru<br><strong>AI přečte aktuální km</strong></div>
+      <img class="preview-img" id="odoPreview">
+    </div>
+    <div id="odoBox" style="display:none"></div>
+    <div class="ai-res" id="odoResult">
+      <div class="ai-res-head">🤖 Tachometr <span class="ai-badge">AI</span></div>
+      <div class="ai-text" id="odoText"></div>
+      <div class="btn-row" id="odoBtns" style="display:none">
+        <button class="btn btn-primary btn-sm" onclick="applyOdo()">✅ Zaznamenat km</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ KONTROLKY ═══════════════════ -->
+<section class="section" id="sec-lights">
+  <div class="page-head"><h1>Kontrolní světla</h1><p>Identifikace a vysvětlení kontrolek palubovky</p></div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> 📷 Vyfotit kontrolku — AI diagnostika</div>
+    <div class="upload-zone" id="lightZone">
+      <input type="file" accept="image/*" capture="camera" onchange="handleLight(event)">
+      <div class="uz-ico">🚨</div>
+      <div class="uz-text">Vyfoť palubovku se svítícími kontrolkami<br><strong>AI identifikuje a vysvětlí problém</strong></div>
+      <img class="preview-img" id="lightPreview">
+    </div>
+    <div class="ai-res" id="lightResult">
+      <div class="ai-res-head">🤖 Diagnostika <span class="ai-badge">Claude Vision</span></div>
+      <div class="ai-text" id="lightText"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div> Katalog kontrolek</div>
+    <div class="chips" id="lightChips">
+      <span class="chip active" onclick="filterLights('all',this)">Vše</span>
+      <span class="chip" onclick="filterLights('high',this)">🔴 Kritické</span>
+      <span class="chip" onclick="filterLights('med',this)">🟡 Varování</span>
+      <span class="chip" onclick="filterLights('low',this)">🟢 Info</span>
+    </div>
+    <div class="lights-grid" id="lightsGrid"></div>
+  </div>
+  <div class="light-detail" id="lightDetail"></div>
+</section>
+
+<!-- ═══════════════════ SETTINGS (modal) ═══════════════════ -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <button class="modal-x" onclick="closeOverlay('settingsOverlay')">✕</button>
+    <h2 class="modal-title">⚙️ Nastavení</h2>
+    <div class="setting-row">
+      <div class="setting-ico">🔑</div>
+      <div class="setting-body">
+        <div class="setting-title">Anthropic API klíč</div>
+        <div class="setting-sub">Pro AI funkce (čtení TP, tachometru, kontrolek, faktur)</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <input type="password" id="apiKey" placeholder="sk-ant-..." style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Uložit</button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:5px">Získej klíč na <strong>console.anthropic.com</strong></p>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-ico">☁️</div>
+      <div class="setting-body">
+        <div class="setting-title">Google Drive synchronizace</div>
+        <div class="setting-sub" id="driveStatusText">Nepřipojeno — data se ukládají jen lokálně</div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-blue btn-sm" onclick="gdriveAuth()">🔐 Přihlásit Google</button>
+          <button class="btn btn-ghost btn-sm" onclick="gdriveSave()">⬆️ Uložit</button>
+          <button class="btn btn-ghost btn-sm" onclick="gdriveLoad()">⬇️ Načíst</button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:5px">API klíč pro AI se ukládá jen lokálně — nikdy do Drive</p>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-ico">🗑️</div>
+      <div class="setting-body">
+        <div class="setting-title">Smazat veškerá data</div>
+        <div class="setting-sub">Nevratné smazání všech vozidel, záznamů a nastavení</div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-red btn-sm" onclick="clearAllData()">Smazat vše</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VEHICLE MODAL ═══════════════════ -->
+<div class="overlay" id="vehicleOverlay">
+  <div class="modal">
+    <button class="modal-x" onclick="closeOverlay('vehicleOverlay')">✕</button>
+    <h2 class="modal-title" id="vModalTitle">Nové vozidlo</h2>
+    <div class="grid2">
+      <div class="fg"><label>Typ</label>
+        <select id="vType">
+          <option value="car">🚗 Osobní auto</option>
+          <option value="moto">🏍️ Motorka</option>
+          <option value="van">🚐 Dodávka</option>
+          <option value="truck">🚛 Nákladní</option>
+        </select>
+      </div>
+      <div class="fg"><label>SPZ</label><input id="vSpz" type="text" placeholder="2PL 4892"></div>
+      <div class="fg"><label>Výrobce</label><input id="vMake" type="text" placeholder="Škoda, BMW…"></div>
+      <div class="fg"><label>Model</label><input id="vModel" type="text" placeholder="Octavia, Golf…"></div>
+      <div class="fg"><label>Rok výroby</label><input id="vYear" type="number" min="1960" max="2030" placeholder="2021"></div>
+      <div class="fg"><label>VIN</label><input id="vVin" type="text" placeholder="WVW…" maxlength="17"></div>
+      <div class="fg"><label>Motor / objem</label><input id="vEngine" type="text" placeholder="2.0 TDI 150k"></div>
+      <div class="fg"><label>Palivo</label>
+        <select id="vFuel">
+          <option value="diesel">Nafta</option>
+          <option value="petrol">Benzín</option>
+          <option value="ev">Elektro</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="lpg">LPG</option>
+        </select>
+      </div>
+      <div class="fg"><label>Aktuální km</label><input id="vKm" type="number" placeholder="85000"></div>
+      <div class="fg"><label>Interval oleje (km)</label><input id="vOilKm" type="number" placeholder="10000" value="10000"></div>
+      <div class="fg"><label>Interval oleje (měsíce)</label><input id="vOilMonths" type="number" placeholder="12" value="12"></div>
+      <div class="fg"><label>Datum posledního oleje</label><input id="vLastOil" type="date"></div>
+      <div class="fg"><label>Km při posledním oleji</label><input id="vLastOilKm" type="number" placeholder="75000"></div>
+      <div class="fg"><label>STK platí do</label><input id="vStk" type="date"></div>
+      <div class="fg"><label>Pojistka platí do</label><input id="vInsurance" type="date"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveVehicle()">Uložit vozidlo</button>
+      <button class="btn btn-ghost" onclick="closeOverlay('vehicleOverlay')">Zrušit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SERVICE MODAL ═══════════════════ -->
+<div class="overlay" id="svcOverlay">
+  <div class="modal">
+    <button class="modal-x" onclick="closeOverlay('svcOverlay')">✕</button>
+    <h2 class="modal-title">Servisní záznam</h2>
+    <div class="grid2">
+      <div class="fg"><label>Vozidlo</label><select id="sVeh"></select></div>
+      <div class="fg"><label>Typ servisu</label>
+        <select id="sType">
+          <option value="oil">🔧 Výměna oleje</option>
+          <option value="tires">🚗 Pneumatiky</option>
+          <option value="brakes">🛑 Brzdy</option>
+          <option value="filters">💨 Filtry</option>
+          <option value="inspection">📋 STK/Emise</option>
+          <option value="battery">🔋 Baterie</option>
+          <option value="timing">⚙️ Rozv. řemen</option>
+          <option value="ac">❄️ Klima</option>
+          <option value="other">🔩 Ostatní</option>
+        </select>
+      </div>
+      <div class="fg"><label>Datum</label><input id="sDate" type="date"></div>
+      <div class="fg"><label>Km při servisu</label><input id="sKm" type="number" placeholder="85000"></div>
+      <div class="fg"><label>Celková cena (Kč)</label><input id="sCost" type="number" placeholder="2500"></div>
+      <div class="fg"><label>Autoservis</label><input id="sShop" type="text" placeholder="Autoservis Novák"></div>
+      <div class="fg full"><label>Popis / Poznámky</label><textarea id="sNote" placeholder="Olej 5W-30, filtr Mann…"></textarea></div>
+      <div class="fg"><label>Příští servis za (km)</label><input id="sNextKm" type="number" placeholder="10000"></div>
+      <div class="fg"><label>Příští servis za (měsíce)</label><input id="sNextM" type="number" placeholder="12"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveSvc()">Uložit záznam</button>
+      <button class="btn btn-ghost" onclick="closeOverlay('svcOverlay')">Zrušit</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE & PERSISTENCE
+// ══════════════════════════════════════════
+let S = { vehicles:[], services:[], reminders:[], selVeh:null, editVehId:null, pendingTP:null, pendingOdo:null, pendingInv:null, gdriveConnected:false };
+
+function save() { try { localStorage.setItem('al2',JSON.stringify({vehicles:S.vehicles,services:S.services,reminders:S.reminders,selVeh:S.selVeh})); } catch(e){} }
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('al2')||'{}');
+    S.vehicles  = d.vehicles  || [];
+    S.services  = d.services  || [];
+    S.reminders = d.reminders || [];
+    S.selVeh    = d.selVeh    || null;
+  } catch(e){}
+  if (!S.vehicles.length) loadDemo();
+}
+function getApiKey() { return document.getElementById('apiKey').value || localStorage.getItem('al2_key') || ''; }
+function saveApiKey() { localStorage.setItem('al2_key', document.getElementById('apiKey').value); toast('API klíč uložen','ok'); }
+
+function loadDemo() {
+  S.vehicles = [
+    { id:'v1', type:'car',  make:'Škoda', model:'Octavia', year:2021, spz:'2PL 4892', vin:'TMBCH7NE4M0123456', engine:'2.0 TDI 150k', fuel:'diesel', km:92400, oilKm:15000, oilMonths:12, lastOil:'2024-07-15', lastOilKm:82000, stk:'2026-05-10', insurance:'2025-12-31' },
+    { id:'v2', type:'moto', make:'Yamaha', model:'MT-07', year:2020, spz:'2PL 3311', vin:'VG5RH07BXLA000001', engine:'689cc Twin', fuel:'petrol', km:24800, oilKm:6000, oilMonths:6, lastOil:'2024-04-20', lastOilKm:21000, stk:'2025-08-20', insurance:'2025-03-31' }
+  ];
+  S.services = [
+    { id:'s1', vId:'v1', type:'oil', date:'2024-07-15', km:82000, cost:3200, shop:'Škoda Plzeň', note:'Olej 5W-30 Longlife, filtr Mann', nKm:15000, nM:12 },
+    { id:'s2', vId:'v1', type:'tires', date:'2024-04-01', km:78000, cost:2800, shop:'Pneuservis Plasy', note:'Letní Michelin 205/55 R16', nKm:0, nM:6 },
+    { id:'s3', vId:'v1', type:'inspection', date:'2024-05-10', km:80000, cost:800, shop:'STK Plzeň', note:'STK + emise prošly', nKm:0, nM:24 },
+    { id:'s4', vId:'v2', type:'oil', date:'2024-04-20', km:21000, cost:1200, shop:'Motoservis Plzeň', note:'Motul 10W-40, filtr', nKm:6000, nM:6 },
+    { id:'s5', vId:'v1', type:'brakes', date:'2023-11-05', km:71000, cost:4200, shop:'Autoservis Novák', note:'Přední destičky Brembo, přední kotouče', nKm:0, nM:24 }
+  ];
+  S.selVeh = 'v1';
+  save();
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function nav(btn) {
+  const sec = btn.getAttribute('data-sec');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + sec).classList.add('active');
+  document.querySelectorAll('.nav-btn,.mob-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`[data-sec="${sec}"]`).forEach(b => b.classList.add('active'));
+  // render
+  if (sec==='garage')  renderGarage();
+  if (sec==='service') renderSvc();
+  if (sec==='costs')   renderCosts();
+  if (sec==='remind')  renderReminders();
+  if (sec==='lights')  renderLights();
+  if (sec==='obd')     renderObd();
+}
+function nav2(sec) {
+  const btn = document.querySelector(`[data-sec="${sec}"]`);
+  if (btn) nav(btn);
+}
+function nav_settings() { document.getElementById('settingsOverlay').classList.add('open'); }
+
+// ══════════════════════════════════════════
+//  VEHICLE STATUS
+// ══════════════════════════════════════════
+function vStatus(v) {
+  const now = new Date();
+  const checks = [];
+  if (v.stk) { const d = new Date(v.stk); const days=(d-now)/86400000; checks.push(days < 0 ? 'crit' : days < 60 ? 'warn' : 'ok'); }
+  if (v.insurance) { const d = new Date(v.insurance); const days=(d-now)/86400000; checks.push(days < 0 ? 'crit' : days < 30 ? 'warn' : 'ok'); }
+  if (v.lastOil && v.oilMonths) { const d = new Date(v.lastOil); d.setMonth(d.getMonth()+parseInt(v.oilMonths)); const days=(d-now)/86400000; checks.push(days < 0 ? 'crit' : days < 30 ? 'warn' : 'ok'); }
+  if (checks.includes('crit')) return 'crit';
+  if (checks.includes('warn')) return 'warn';
+  return 'ok';
+}
+
+// ══════════════════════════════════════════
+//  GARAGE
+// ══════════════════════════════════════════
+function renderGarage() {
+  const g = document.getElementById('vGrid');
+  g.innerHTML = S.vehicles.map(v => {
+    const s = vStatus(v);
+    const ico = {car:'🚗',moto:'🏍️',van:'🚐',truck:'🚛'}[v.type]||'🚗';
+    return `<div class="vcard ${S.selVeh===v.id?'sel':''}" onclick="selVeh('${v.id}')">
+      <div class="vcard-stripe"></div>
+      <div class="vcard-type">${ico} ${v.type==='moto'?'Motorka':v.type==='van'?'Dodávka':'Auto'}</div>
+      <div class="vcard-name">${v.make} ${v.model}</div>
+      <div class="vcard-spz">${v.spz||'—'}</div>
+      <div class="vcard-km">${v.km?v.km.toLocaleString('cs-CZ')+' km':'—'} · ${v.year||''}</div>
+      <div class="vcard-dot ${s}"></div>
+    </div>`;
+  }).join('') + `<div class="add-vcard" onclick="openVehModal()"><span style="font-size:22px">+</span> Přidat vozidlo</div>`;
+  const v = S.vehicles.find(x=>x.id===S.selVeh);
+  if (v) { document.getElementById('vDetail').style.display='block'; showVDetail(v); }
+  else   { document.getElementById('vDetail').style.display='none'; }
+  // sync dropdowns
+  syncCarDropdowns();
+}
+function selVeh(id) { S.selVeh=id; save(); renderGarage(); }
+
+function showVDetail(v) {
+  const now = new Date();
+  // Oil progress
+  let oilPct=0,oilSt='ok',oilLbl='—';
+  if (v.lastOilKm && v.oilKm && v.km) {
+    const done = v.km - v.lastOilKm;
+    oilPct = Math.min(100,Math.round(done/v.oilKm*100));
+    oilSt = oilPct>90?'due':oilPct>70?'soon':'ok';
+    oilLbl = `${done.toLocaleString('cs-CZ')} / ${v.oilKm.toLocaleString('cs-CZ')} km`;
+  }
+  let nextOilDate='—';
+  if (v.lastOil && v.oilMonths) { const d=new Date(v.lastOil); d.setMonth(d.getMonth()+parseInt(v.oilMonths)); nextOilDate=d.toLocaleDateString('cs-CZ'); }
+  let stkInfo='—', stkColor='var(--text)';
+  if (v.stk) { const d=new Date(v.stk); const days=Math.ceil((d-now)/86400000); stkInfo=(days<0?`⚠️ Propadlá ${Math.abs(days)}d`:`Za ${days} dní`); stkColor=days<0?'var(--red)':days<60?'var(--gold)':'var(--green)'; }
+  let insInfo='—', insColor='var(--text)';
+  if (v.insurance) { const d=new Date(v.insurance); const days=Math.ceil((d-now)/86400000); insInfo=(days<0?`⚠️ Propadlá`:`Za ${days} dní`); insColor=days<0?'var(--red)':days<30?'var(--gold)':'var(--green)'; }
+  
+  document.getElementById('vStats').innerHTML = `
+    <div class="stat"><div class="stat-val">${(v.km||0).toLocaleString('cs-CZ')}</div><div class="stat-lbl">km celkem</div></div>
+    <div class="stat"><div class="stat-val" style="font-size:18px">${nextOilDate}</div><div class="stat-lbl">Příští olej</div><div class="stat-sub">${v.oilKm?'každých '+v.oilKm.toLocaleString('cs-CZ')+' km':''}</div></div>
+    <div class="stat"><div class="stat-val" style="font-size:16px;color:${stkColor}">${stkInfo}</div><div class="stat-lbl">STK</div><div class="stat-sub">${v.stk?new Date(v.stk).toLocaleDateString('cs-CZ'):''}</div></div>
+  `;
+  document.getElementById('oilProg').innerHTML = `
+    <div class="prog-wrap"><div class="prog-labels"><span>Nájezd na oleji</span><span>${oilLbl}</span></div>
+    <div class="prog-bar"><div class="prog-fill ${oilSt}" style="width:${oilPct}%"></div></div></div>`;
+  
+  const fuelLabels = {diesel:'Nafta',petrol:'Benzín',ev:'Elektro',hybrid:'Hybrid',lpg:'LPG'};
+  document.getElementById('vInfo').innerHTML = `<table style="font-size:13px;width:100%;border-collapse:collapse">
+    ${[['VIN',v.vin||'—'],['Motor',v.engine||'—'],['Palivo',fuelLabels[v.fuel]||'—'],['Pojistka',`<span style="color:${insColor}">${v.insurance?new Date(v.insurance).toLocaleDateString('cs-CZ'):'—'} ${insInfo!=='—'?'('+insInfo+')':''}</span>`]].map(([k,val])=>`<tr><td style="color:var(--muted);padding:5px 0;width:120px">${k}</td><td>${val}</td></tr>`).join('')}
+  </table>`;
+}
+
+// ══════════════════════════════════════════
+//  VEHICLE MODAL
+// ══════════════════════════════════════════
+function openVehModal() {
+  S.editVehId = null;
+  document.getElementById('vModalTitle').textContent = 'Nové vozidlo';
+  ['vSpz','vMake','vModel','vYear','vVin','vEngine','vKm','vLastOil','vLastOilKm','vStk','vInsurance'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vOilKm').value='10000'; document.getElementById('vOilMonths').value='12';
+  document.getElementById('vehicleOverlay').classList.add('open');
+}
+function editVehicle() {
+  const v = S.vehicles.find(x=>x.id===S.selVeh); if (!v) return;
+  S.editVehId = v.id;
+  document.getElementById('vModalTitle').textContent='Upravit vozidlo';
+  document.getElementById('vType').value=v.type||'car';
+  document.getElementById('vSpz').value=v.spz||'';
+  document.getElementById('vMake').value=v.make||'';
+  document.getElementById('vModel').value=v.model||'';
+  document.getElementById('vYear').value=v.year||'';
+  document.getElementById('vVin').value=v.vin||'';
+  document.getElementById('vEngine').value=v.engine||'';
+  document.getElementById('vFuel').value=v.fuel||'diesel';
+  document.getElementById('vKm').value=v.km||'';
+  document.getElementById('vOilKm').value=v.oilKm||'10000';
+  document.getElementById('vOilMonths').value=v.oilMonths||'12';
+  document.getElementById('vLastOil').value=v.lastOil||'';
+  document.getElementById('vLastOilKm').value=v.lastOilKm||'';
+  document.getElementById('vStk').value=v.stk||'';
+  document.getElementById('vInsurance').value=v.insurance||'';
+  document.getElementById('vehicleOverlay').classList.add('open');
+}
+function saveVehicle() {
+  const v = {
+    id: S.editVehId || 'v'+Date.now(),
+    type:document.getElementById('vType').value,
+    spz:document.getElementById('vSpz').value.toUpperCase(),
+    make:document.getElementById('vMake').value,
+    model:document.getElementById('vModel').value,
+    year:parseInt(document.getElementById('vYear').value)||null,
+    vin:document.getElementById('vVin').value.toUpperCase(),
+    engine:document.getElementById('vEngine').value,
+    fuel:document.getElementById('vFuel').value,
+    km:parseInt(document.getElementById('vKm').value)||0,
+    oilKm:parseInt(document.getElementById('vOilKm').value)||10000,
+    oilMonths:parseInt(document.getElementById('vOilMonths').value)||12,
+    lastOil:document.getElementById('vLastOil').value,
+    lastOilKm:parseInt(document.getElementById('vLastOilKm').value)||null,
+    stk:document.getElementById('vStk').value,
+    insurance:document.getElementById('vInsurance').value
+  };
+  if (!v.make||!v.model){toast('Vyplň výrobce a model','err');return;}
+  if (S.editVehId) S.vehicles[S.vehicles.findIndex(x=>x.id===S.editVehId)]=v;
+  else { S.vehicles.push(v); S.selVeh=v.id; }
+  save(); closeOverlay('vehicleOverlay'); renderGarage(); toast('Vozidlo uloženo','ok');
+}
+function deleteVehicle() {
+  if (!confirm('Smazat vozidlo a všechny záznamy?')) return;
+  S.vehicles = S.vehicles.filter(v=>v.id!==S.selVeh);
+  S.services = S.services.filter(s=>s.vId!==S.selVeh);
+  S.selVeh   = S.vehicles[0]?.id||null;
+  save(); renderGarage(); toast('Vozidlo smazáno');
+}
+
+// ══════════════════════════════════════════
+//  SERVICE LOG
+// ══════════════════════════════════════════
+const SVC_ICO  = {oil:'🔧',tires:'🚗',brakes:'🛑',filters:'💨',inspection:'📋',battery:'🔋',timing:'⚙️',ac:'❄️',other:'🔩'};
+const SVC_LBL  = {oil:'Výměna oleje',tires:'Pneumatiky',brakes:'Brzdy',filters:'Filtry',inspection:'STK/Emise',battery:'Baterie',timing:'Rozv. řemen',ac:'Klima',other:'Ostatní'};
+
+function openSvcModal() {
+  document.getElementById('sVeh').innerHTML = S.vehicles.map(v=>`<option value="${v.id}" ${v.id===S.selVeh?'selected':''}>${v.make} ${v.model} (${v.spz})</option>`).join('');
+  document.getElementById('sDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('svcOverlay').classList.add('open');
+}
+function saveSvc() {
+  const s = {
+    id:'s'+Date.now(), vId:document.getElementById('sVeh').value,
+    type:document.getElementById('sType').value,
+    date:document.getElementById('sDate').value,
+    km:parseInt(document.getElementById('sKm').value)||null,
+    cost:parseInt(document.getElementById('sCost').value)||0,
+    shop:document.getElementById('sShop').value,
+    note:document.getElementById('sNote').value,
+    nKm:parseInt(document.getElementById('sNextKm').value)||0,
+    nM:parseInt(document.getElementById('sNextM').value)||0
+  };
+  if (s.type==='oil'&&s.km) { const v=S.vehicles.find(x=>x.id===s.vId); if(v){v.lastOil=s.date;v.lastOilKm=s.km;if(s.km>v.km)v.km=s.km;} }
+  S.services.push(s); save(); closeOverlay('svcOverlay'); renderSvc();
+  const v=S.vehicles.find(x=>x.id===S.selVeh); if(v)showVDetail(v);
+  toast('Záznam uložen','ok');
+}
+function renderSvc() {
+  const fc = document.getElementById('sfCar'); if(!fc)return;
+  fc.innerHTML = '<option value="">Všechna vozidla</option>'+S.vehicles.map(v=>`<option value="${v.id}">${v.make} ${v.model}</option>`).join('');
+  const fCar  = fc.value;
+  const fType = document.getElementById('sfType').value;
+  let items = [...S.services].sort((a,b)=>b.date.localeCompare(a.date));
+  if (fCar)  items=items.filter(s=>s.vId===fCar);
+  if (fType) items=items.filter(s=>s.type===fType);
+  const log = document.getElementById('svcLog');
+  if (!items.length){log.innerHTML='<div class="empty"><div class="empty-ico">🔧</div><div class="empty-text">Žádné záznamy</div></div>';return;}
+  const tot = items.reduce((a,s)=>a+(s.cost||0),0);
+  log.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${items.length} záznamů · Celkem <strong style="color:var(--gold)">${tot.toLocaleString('cs-CZ')} Kč</strong></div>`+
+    items.map(s=>{
+      const v=S.vehicles.find(x=>x.id===s.vId);
+      return `<div class="sitem">
+        <div class="sitem-ico">${SVC_ICO[s.type]||'🔩'}</div>
+        <div class="sitem-body">
+          <div class="sitem-title">${SVC_LBL[s.type]||'Servis'} ${s.km?`<span class="km-badge">${s.km.toLocaleString('cs-CZ')} km</span>`:''}</div>
+          <div class="sitem-meta"><span>${new Date(s.date).toLocaleDateString('cs-CZ')}</span>${v?`<span style="color:var(--blue)">${v.make} ${v.model}</span>`:''} ${s.shop?`<span>${s.shop}</span>`:''}</div>
+          ${s.note?`<div class="sitem-note">${s.note}</div>`:''}
+        </div>
+        <div class="sitem-cost">${s.cost?s.cost.toLocaleString('cs-CZ')+' Kč':''}</div>
+      </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════
+//  INVOICE SCANNER (AI)
+// ══════════════════════════════════════════
+let invB64 = null;
+function handleInvoice(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    invB64 = reader.result.split(',')[1];
+    const prev = document.getElementById('invPreview');
+    prev.src = reader.result; prev.style.display = 'block';
+    scanInvoice();
+  };
+  reader.readAsDataURL(f);
+}
+async function scanInvoice() {
+  const key = getApiKey(); if (!key){toast('Nastav API klíč v Nastavení','err');return;}
+  showAI('invResult','invText',null);
+  try {
+    const res = await callAI(key, invB64, `Toto je foto faktury nebo paragonu z autoservisu. Extrahuj všechny důležité informace:
+1. Datum dokladu
+2. Název servisu / dodavatele
+3. Celková cena vč. DPH
+4. Seznam všech položek (název práce/dílu + cena)
+
+Odpověz POUZE jako JSON v tomto formátu (žádný text navíc):
+{"date":"YYYY-MM-DD","shop":"název servisu","total":1234,"items":[{"desc":"Výměna oleje","price":800},{"desc":"Olejový filtr Mann","price":250}]}`);
+    const txt = res.content?.[0]?.text||'';
+    try {
+      const clean = txt.replace(/```json|```/g,'').trim();
+      S.pendingInv = JSON.parse(clean);
+      showAI('invResult','invText', `Rozpoznáno: <strong>${S.pendingInv.items?.length||0} položek</strong> · Celkem: <strong style="color:var(--gold)">${(S.pendingInv.total||0).toLocaleString('cs-CZ')} Kč</strong>`);
+      // Show assign card
+      document.getElementById('invAssign').style.display='block';
+      document.getElementById('invDate').value = S.pendingInv.date||new Date().toISOString().split('T')[0];
+      document.getElementById('invTotal').value = S.pendingInv.total||'';
+      document.getElementById('invShop').value = S.pendingInv.shop||'';
+      document.getElementById('invCar').innerHTML = S.vehicles.map(v=>`<option value="${v.id}" ${v.id===S.selVeh?'selected':''}>${v.make} ${v.model} (${v.spz})</option>`).join('');
+      // Render items
+      document.getElementById('invItems').innerHTML = (S.pendingInv.items||[]).map((it,i)=>`
+        <div class="inv-item">
+          <input type="checkbox" id="inv${i}" checked>
+          <label class="inv-item-desc" for="inv${i}">${it.desc}</label>
+          <div class="inv-item-price">${it.price?it.price.toLocaleString('cs-CZ')+' Kč':''}</div>
+        </div>`).join('');
+    } catch { showAI('invResult','invText',txt.replace(/\n/g,'<br>')); }
+  } catch(err) { showAI('invResult','invText','❌ Chyba: '+err.message); }
+}
+function saveInvoiceRecord() {
+  const vId = document.getElementById('invCar').value;
+  const sel = S.pendingInv?.items?.filter((_,i)=>document.getElementById('inv'+i)?.checked) || [];
+  const note = sel.map(it=>it.desc+(it.price?' ('+it.price.toLocaleString('cs-CZ')+' Kč)':'')).join(', ');
+  const s = {
+    id:'s'+Date.now(), vId, type:'other',
+    date:document.getElementById('invDate').value||new Date().toISOString().split('T')[0],
+    km:null,
+    cost:parseInt(document.getElementById('invTotal').value)||0,
+    shop:document.getElementById('invShop').value,
+    note: note||'(z faktury)', nKm:0, nM:0
+  };
+  S.services.push(s); save();
+  clearInvoice();
+  toast('Záznam z faktury uložen','ok');
+  nav2('service');
+}
+function clearInvoice() {
+  document.getElementById('invAssign').style.display='none';
+  document.getElementById('invResult').style.display='none';
+  document.getElementById('invPreview').style.display='none';
+  document.getElementById('invFile').value='';
+  invB64=null; S.pendingInv=null;
+}
+
+// ══════════════════════════════════════════
+//  COST ANALYTICS
+// ══════════════════════════════════════════
+function renderCosts() {
+  const cc = document.getElementById('costCar'); if(!cc)return;
+  cc.innerHTML='<option value="">Všechna vozidla</option>'+S.vehicles.map(v=>`<option value="${v.id}">${v.make} ${v.model}</option>`).join('');
+  const cy = document.getElementById('costYear');
+  const years = [...new Set(S.services.map(s=>s.date?.split('-')[0]).filter(Boolean))].sort().reverse();
+  cy.innerHTML='<option value="">Všechny roky</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  const fCar  = cc.value;
+  const fYear = cy.value;
+  let items = S.services;
+  if (fCar)  items=items.filter(s=>s.vId===fCar);
+  if (fYear) items=items.filter(s=>s.date?.startsWith(fYear));
+  const total  = items.reduce((a,s)=>a+(s.cost||0),0);
+  const avgYear= total / (years.length||1);
+  const maxCost= items.reduce((a,s)=>Math.max(a,s.cost||0),0);
+  document.getElementById('costStats').innerHTML=`
+    <div class="stat"><div class="stat-val">${total.toLocaleString('cs-CZ')} Kč</div><div class="stat-lbl">Celkové náklady</div></div>
+    <div class="stat"><div class="stat-val">${Math.round(avgYear).toLocaleString('cs-CZ')} Kč</div><div class="stat-lbl">Průměr / rok</div></div>
+    <div class="stat"><div class="stat-val">${items.length}</div><div class="stat-lbl">Záznamů</div></div>
+  `;
+  const cats = {};
+  items.forEach(s=>{if(s.cost){cats[s.type]=(cats[s.type]||0)+s.cost;}});
+  const catMeta = {oil:['🔧','Olej'],tires:['🚗','Pneumatiky'],brakes:['🛑','Brzdy'],filters:['💨','Filtry'],inspection:['📋','STK'],battery:['🔋','Baterie'],timing:['⚙️','Rozv. řemen'],ac:['❄️','Klima'],other:['🔩','Ostatní']};
+  document.getElementById('costCats').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div class="cost-cat">
+      <div class="cost-cat-ico">${catMeta[k]?.[0]||'🔩'}</div>
+      <div class="cost-cat-val">${v.toLocaleString('cs-CZ')} Kč</div>
+      <div class="cost-cat-lbl">${catMeta[k]?.[1]||k}</div>
+    </div>`).join('');
+  const sorted = [...items].sort((a,b)=>(b.cost||0)-(a.cost||0)).slice(0,8);
+  const maxB = sorted[0]?.cost||1;
+  document.getElementById('costBars').innerHTML=sorted.map(s=>{
+    const v=S.vehicles.find(x=>x.id===s.vId);
+    const lbl=`${SVC_LBL[s.type]||'Servis'} — ${v?v.make+' '+v.model:''}`;
+    return `<div class="bar-row">
+      <div class="bar-lbl" title="${lbl}">${lbl}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((s.cost||0)/maxB*100)}%"></div></div>
+      <div class="bar-val">${(s.cost||0).toLocaleString('cs-CZ')} Kč</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  REMINDERS
+// ══════════════════════════════════════════
+function addReminder() {
+  const r={id:'r'+Date.now(),vId:document.getElementById('remCar').value,type:document.getElementById('remType').value,interval:document.getElementById('remInterval').value,start:document.getElementById('remStart').value,note:document.getElementById('remNote').value};
+  S.reminders.push(r); save(); renderReminders(); toast('Připomínka přidána','ok');
+}
+function renderReminders() {
+  document.getElementById('remCar').innerHTML=S.vehicles.map(v=>`<option value="${v.id}">${v.make} ${v.model} (${v.spz})</option>`).join('');
+  const now=new Date(); const events=[];
+  S.vehicles.forEach(v=>{
+    if(v.lastOil&&v.oilMonths){const d=new Date(v.lastOil);d.setMonth(d.getMonth()+parseInt(v.oilMonths));const days=Math.ceil((d-now)/86400000);events.push({t:`🔧 Výměna oleje — ${v.make} ${v.model}`,d,days,s:days<0?'due':days<30?'soon':'ok'});}
+    if(v.stk){const d=new Date(v.stk);const days=Math.ceil((d-now)/86400000);events.push({t:`📋 STK — ${v.make} ${v.model}`,d,days,s:days<0?'due':days<60?'soon':'ok'});}
+    if(v.insurance){const d=new Date(v.insurance);const days=Math.ceil((d-now)/86400000);events.push({t:`🛡️ Pojistka — ${v.make} ${v.model}`,d,days,s:days<0?'due':days<30?'soon':'ok'});}
+    // Odo every 2m
+    const base=new Date(v.lastOil||now);base.setMonth(base.getMonth()+2);const od=Math.ceil((base-now)/86400000);
+    if(Math.abs(od)<90)events.push({t:`📍 Zapsat tachometr — ${v.make} ${v.model}`,d:base,days:od,s:od<0?'due':od<14?'soon':'ok'});
+  });
+  events.sort((a,b)=>a.days-b.days);
+  const el=document.getElementById('remList');
+  el.innerHTML=events.length?events.map(e=>`<div class="rem-item"><div class="rem-dot ${e.s}"></div><div class="rem-body"><div class="rem-title">${e.t}</div><div class="rem-when">${e.s==='due'?'⚠️ Propadlé '+Math.abs(e.days)+' dní':'Za '+e.days+' dní'} · ${e.d.toLocaleDateString('cs-CZ')}</div></div></div>`).join(''):'<div class="empty"><div class="empty-ico">📅</div><div class="empty-text">Žádná vozidla</div></div>';
+}
+
+// ══════════════════════════════════════════
+//  CALENDAR EXPORT
+// ══════════════════════════════════════════
+function buildEvents() {
+  const ev=[]; const now=new Date();
+  S.vehicles.forEach(v=>{
+    if(v.lastOil&&v.oilMonths){const d=new Date(v.lastOil);d.setMonth(d.getMonth()+parseInt(v.oilMonths));ev.push({t:`🔧 Výměna oleje — ${v.make} ${v.model} (${v.spz})`,d,note:`Interval ${v.oilKm||'?'} km nebo ${v.oilMonths} měsíců`});}
+    if(v.stk)ev.push({t:`📋 STK — ${v.make} ${v.model}`,d:new Date(v.stk)});
+    if(v.insurance)ev.push({t:`🛡️ Pojistka — ${v.make} ${v.model}`,d:new Date(v.insurance)});
+  });
+  return ev;
+}
+function exportICS() {
+  const ev=buildEvents(); if(!ev.length){toast('Žádné události','err');return;}
+  let ics='BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AutoLog v2//CS\n';
+  ev.forEach(e=>{const dt=e.d.toISOString().replace(/[-:]/g,'').split('.')[0];ics+=`BEGIN:VEVENT\nUID:${Date.now()}@al2\nSUMMARY:${e.t}\nDTSTART;VALUE=DATE:${dt.slice(0,8)}\nDESCRIPTION:${e.note||''}\nEND:VEVENT\n`;});
+  ics+='END:VCALENDAR';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='autolog.ics';a.click();
+  toast('ICS stažen — otevři v Kalendáři','ok');
+}
+function exportGoogle() {
+  const ev=buildEvents(); if(!ev.length){toast('Žádné události','err');return;}
+  ev.forEach((e,i)=>setTimeout(()=>{
+    const dt=e.d.toISOString().replace(/[-:T]/g,'').slice(0,8);
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.t)}&dates=${dt}/${dt}&details=${encodeURIComponent(e.note||'AutoLog')}`, '_blank');
+  },i*800));
+  toast(`Otevírám ${ev.length} událostí v Google Kalendáři`,'info');
+}
+
+// ══════════════════════════════════════════
+//  AI — TECHNICKÝ PRŮKAZ
+// ══════════════════════════════════════════
+let tpB64=null, odoB64=null, lightB64=null;
+function handleTP(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{tpB64=r.result.split(',')[1];const p=document.getElementById('tpPreview');p.src=r.result;p.style.display='block';analyzeTP();};r.readAsDataURL(f);}
+async function analyzeTP() {
+  const key=getApiKey();if(!key){toast('Nastav API klíč','err');return;}
+  showAI('tpResult','tpText',null);
+  try {
+    const res=await callAI(key,tpB64,'Toto je foto technického průkazu vozidla. Extrahuj: výrobce, model, rok výroby, VIN, SPZ, objem motoru (ccm), výkon (kW), palivo, barva. Odpověz POUZE JSON: {"make":"","model":"","year":2020,"vin":"","spz":"","engine_cc":"","power_kw":"","fuel":"","color":""}. null pro neznámé.');
+    const txt=res.content?.[0]?.text||'';
+    try { const clean=txt.replace(/```json|```/g,'').trim(); S.pendingTP=JSON.parse(clean); showAI('tpResult','tpText',formatTP(S.pendingTP)); document.getElementById('tpBtns').style.display='flex'; }
+    catch { showAI('tpResult','tpText',txt); }
+  } catch(err){showAI('tpResult','tpText','❌ '+err.message);}
+}
+function formatTP(d){return Object.entries(d).filter(([,v])=>v).map(([k,v])=>`<strong>${{make:'Výrobce',model:'Model',year:'Rok',vin:'VIN',spz:'SPZ',engine_cc:'Objem',power_kw:'Výkon kW',fuel:'Palivo',color:'Barva'}[k]||k}:</strong> ${v}`).join('<br>');}
+function applyTP() {
+  if(!S.pendingTP)return; const d=S.pendingTP;
+  openVehModal();
+  if(d.make)document.getElementById('vMake').value=d.make;
+  if(d.model)document.getElementById('vModel').value=d.model;
+  if(d.year)document.getElementById('vYear').value=d.year;
+  if(d.vin)document.getElementById('vVin').value=d.vin;
+  if(d.spz)document.getElementById('vSpz').value=d.spz;
+  if(d.engine_cc)document.getElementById('vEngine').value=d.engine_cc+'cc';
+  if(d.fuel){const m={benzin:'petrol',benzín:'petrol',nafta:'diesel',diesel:'diesel',elektro:'ev',hybrid:'hybrid'};const k=Object.keys(m).find(k=>d.fuel.toLowerCase().includes(k));if(k)document.getElementById('vFuel').value=m[k];}
+  toast('Data z TP načtena','ok');
+}
+
+// AI — ODO
+function handleOdo(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{odoB64=r.result.split(',')[1];const p=document.getElementById('odoPreview');p.src=r.result;p.style.display='block';analyzeOdo();};r.readAsDataURL(f);}
+async function analyzeOdo() {
+  const key=getApiKey();if(!key){toast('Nastav API klíč','err');return;}
+  showAI('odoResult','odoText',null);
+  try {
+    const res=await callAI(key,odoB64,'Přečti stav tachometru (celkový nájezd km) z tohoto foto palubovky. Odpověz POUZE číslem bez mezer, např: 92400. Pokud nelze přečíst, odpověz: 0');
+    const raw=res.content?.[0]?.text?.trim()||'0';
+    const km=parseInt(raw.replace(/\D/g,''));
+    if(km>0){S.pendingOdo=km;showAI('odoResult','odoText',`Přečteno: <strong>${km.toLocaleString('cs-CZ')} km</strong>`);document.getElementById('odoBtns').style.display='flex';document.getElementById('odoBox').style.display='block';document.getElementById('odoBox').innerHTML=`<div class="odo-box" style="margin:12px 0"><div class="odo-num">${String(km).padStart(6,'0')}</div><div class="odo-lbl">kilometrů</div></div>`;}
+    else{showAI('odoResult','odoText','❌ Nelze přečíst — zkus jasnější foto');}
+  } catch(err){showAI('odoResult','odoText','❌ '+err.message);}
+}
+function applyOdo() {
+  if(!S.pendingOdo||!S.selVeh){toast('Nejprve vyber vozidlo v Garáži','err');return;}
+  const v=S.vehicles.find(x=>x.id===S.selVeh);if(v){v.km=S.pendingOdo;save();toast(`Tachometr: ${S.pendingOdo.toLocaleString('cs-CZ')} km uložen`,'ok');renderGarage();}
+}
+
+// AI — LIGHT PHOTO
+function handleLight(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{lightB64=r.result.split(',')[1];const p=document.getElementById('lightPreview');p.src=r.result;p.style.display='block';analyzeLight();};r.readAsDataURL(f);}
+async function analyzeLight() {
+  const key=getApiKey();if(!key){toast('Nastav API klíč','err');return;}
+  showAI('lightResult','lightText',null);
+  try {
+    const res=await callAI(key,lightB64,'Na tomto foto jsou kontrolní světla na palubovce. Identifikuj všechna svítící kontrolní světla/symboly. Pro každé uveď: 1) Název kontrolky 2) Co znamená 3) Naléhavost (KRITICKÉ/VAROVÁNÍ/INFORMACE) 4) Co okamžitě dělat. Odpověz česky s emoji.');
+    showAI('lightResult','lightText',(res.content?.[0]?.text||'Nelze identifikovat').replace(/\n/g,'<br>'));
+  } catch(err){showAI('lightResult','lightText','❌ '+err.message);}
+}
+
+// ══════════════════════════════════════════
+//  LIGHTS CATALOG
+// ══════════════════════════════════════════
+const LIGHTS=[
+  {e:'🔴',n:'Motor / Check Engine',s:'high',d:'Závada ve výfuku, senzorech, zapalování nebo palivové soustavě.',a:'Navštivte servis pro OBD diagnostiku — může být vážné.'},
+  {e:'🔋',n:'Nabíjení baterie',s:'high',d:'Baterie se nenabíjí — alternátor pravděpodobně nefunguje.',a:'Ihned navštivte servis, hrozí úplné vybití a zastavení.'},
+  {e:'🛢️',n:'Tlak oleje',s:'high',d:'Kriticky nízký tlak oleje — hrozí poškození motoru.',a:'IHNED zastavte motor! Zavolejte odtahovou službu.'},
+  {e:'🌡️',n:'Teplota motoru',s:'high',d:'Motor je přehřátý, nedostatek chladicí kapaliny nebo závada chladič.',a:'Zastavte vozidlo, nechte vychladnout, zkontrolujte kapalinu.'},
+  {e:'💨',n:'Airbag / SRS',s:'high',d:'Závada bezpečnostního systému — airbagy nemusí fungovat.',a:'Servis co nejdříve — bezpečnostní systém je narušen.'},
+  {e:'🛑',n:'Brzdy',s:'high',d:'Závada brzdného systému nebo opotřebené destičky.',a:'Ihned servis — brzdění může být omezeno.'},
+  {e:'⚡',n:'ESP / Stabilizace',s:'med',d:'Závada systému ESP nebo aktivní korekce stability.',a:'Navštivte servis, při deaktivaci jezděte opatrněji.'},
+  {e:'🏁',n:'TPMS — tlak pneu',s:'med',d:'Nízký tlak vzduchu v jedné nebo více pneumatikách.',a:'Zkontroluj a dofukuj pneumatiky na doporučený tlak.'},
+  {e:'🔌',n:'AdBlue / SCR',s:'med',d:'Nízká hladina AdBlue (diesel SCR katalyzátor).',a:'Doplňte AdBlue co nejdříve, jinak auto nepůjde nastartovat.'},
+  {e:'⛽',n:'Rezerva paliva',s:'low',d:'Nízká hladina paliva — zůstalo přibližně 5–10 litrů.',a:'Doplňte palivo co nejdříve.'},
+  {e:'🅿️',n:'Ruční brzda',s:'low',d:'Ruční/parkovací brzda je zatažena nebo závada systému.',a:'Zkontroluj, zda není zatažena ruční brzda.'},
+  {e:'🔆',n:'Servisní interval',s:'low',d:'Vypršel servisní interval — čas na výměnu oleje nebo servis.',a:'Objednej se na servis do 2 týdnů.'},
+  {e:'🔵',n:'Studený motor',s:'low',d:'Motor není zahřátý na provozní teplotu — normální jev.',a:'Jezdi opatrně dokud se motor nezahřeje (~5 min).'},
+  {e:'🔓',n:'Dveře / kufr',s:'low',d:'Dveře nebo kufr nejsou řádně zavřeny.',a:'Zkontroluj a důkladně zavři všechny dveře a kufr.'},
+];
+let lightFilter='all';
+function filterLights(f,el){lightFilter=f;document.querySelectorAll('#lightChips .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderLights();}
+function renderLights(){
+  const sev={high:'Kritické',med:'Varování',low:'Informace'};
+  const items=lightFilter==='all'?LIGHTS:LIGHTS.filter(l=>l.s===lightFilter);
+  document.getElementById('lightsGrid').innerHTML=items.map((l,i)=>`
+    <div class="light-item" onclick="showLightDetail(${LIGHTS.indexOf(l)})">
+      <div class="light-emo">${l.e}</div>
+      <div class="light-name">${l.n}</div>
+      <div class="sev-badge sev-${l.s}">${sev[l.s]}</div>
+    </div>`).join('');
+}
+function showLightDetail(i){
+  const l=LIGHTS[i];const d=document.getElementById('lightDetail');
+  d.innerHTML=`<div style="font-size:22px;margin-bottom:8px">${l.e} <strong>${l.n}</strong> <span class="sev-badge sev-${l.s}" style="font-size:10px">${{high:'Kritické',med:'Varování',low:'Informace'}[l.s]}</span></div><p style="font-size:13px;color:var(--muted);margin-bottom:10px">${l.d}</p><div style="background:var(--surf1);border-radius:8px;padding:12px;font-size:13px"><strong>Co dělat:</strong> ${l.a}</div>`;
+  d.classList.add('open'); d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══════════════════════════════════════════
+//  OBD BLUETOOTH
+// ══════════════════════════════════════════
+let obdDevice=null, obdChar=null, obdLiveInterval=null, obdRxBuffer='', obdCmdQueue=[], obdBusy=false;
+
+// ELM327 PIDs (Mode 01)
+const PIDS = [
+  {pid:'010C',name:'rpm',     parse:d=>Math.round(((d[2]*256)+d[3])/4)},
+  {pid:'010D',name:'speed',   parse:d=>d[2]},
+  {pid:'0105',name:'temp',    parse:d=>d[2]-40},
+  {pid:'0104',name:'load',    parse:d=>Math.round(d[2]*100/255)},
+  {pid:'0111',name:'throttle',parse:d=>Math.round(d[2]*100/255)},
+  {pid:'012F',name:'fuel',    parse:d=>Math.round(d[2]*100/255)},
+];
+
+// ══════════════════════════════════════════
+//  iOS / PLATFORM DETECTION
+// ══════════════════════════════════════════
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const IS_ANDROID = /Android/.test(navigator.userAgent);
+const HAS_BT = !!navigator.bluetooth;
+
+function detectPlatform() {
+  const banner  = document.getElementById('iosBanner');
+  const noteEl  = document.getElementById('obdPlatformNote');
+  const connBtn = document.getElementById('obdConnBtn');
+
+  if (IS_IOS) {
+    // Show Bluefy banner
+    banner?.classList.add('show');
+    if (HAS_BT) {
+      // Running inside Bluefy or future iOS BT support!
+      banner.querySelector('.ios-banner-title').textContent = '✅ Bluefy detekován — Web Bluetooth aktivní';
+      banner.querySelector('.ios-banner-sub').textContent   = 'Můžeš se připojit k OBD adaptéru přímo.';
+      if (noteEl) noteEl.innerHTML = '✅ Běžíš v Bluefy — Web Bluetooth je dostupný.';
+    } else {
+      if (connBtn) {
+        connBtn.textContent = '📲 Otevřít v Bluefy';
+        connBtn.onclick = () => window.open('https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055','_blank');
+        connBtn.className = 'btn btn-blue btn-sm';
+      }
+      if (noteEl) noteEl.innerHTML = '📱 iOS: Web Bluetooth není podporován v Safari ani Chrome. Použij <strong>Bluefy</strong> (viz návod výše) nebo WiFi OBD adaptér.';
+    }
+  } else if (!HAS_BT) {
+    if (noteEl) noteEl.innerHTML = '⚠️ Tento prohlížeč nepodporuje Web Bluetooth. Použij <strong>Chrome nebo Edge</strong> na Androidu nebo Desktopu.';
+    if (connBtn) { connBtn.disabled = true; connBtn.title = 'Web Bluetooth není podporováno v tomto prohlížeči'; }
+  } else {
+    if (noteEl) noteEl.innerHTML = IS_ANDROID
+      ? '✅ Android + Chrome — Web Bluetooth je plně podporováno.'
+      : '✅ Desktop Chrome/Edge — Web Bluetooth je podporováno.';
+  }
+}
+
+function renderObd() {
+  document.getElementById('obdCar').innerHTML=S.vehicles.map(v=>`<option value="${v.id}" ${v.id===S.selVeh?'selected':''}>${v.make} ${v.model} (${v.spz})</option>`).join('');
+  detectPlatform();
+}
+async function obdConnect() {
+  if (!navigator.bluetooth) {
+    if (IS_IOS) {
+      window.open('https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055','_blank');
+      toast('Otevírám App Store — stáhni Bluefy a otevři v něm tuto stránku','info');
+    } else {
+      toast('Web Bluetooth není podporováno — použij Chrome nebo Edge','err');
+    }
+    return;
+  }
+  try {
+    obdDotSet('connecting','Připojuji…','Hledám ELM327 BLE adaptér');
+    obdDevice = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [
+        '0000fff0-0000-1000-8000-00805f9b34fb', // Common OBD BLE service
+        '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (many ELM327 BLE)
+        '00001101-0000-1000-8000-00805f9b34fb', // SPP fallback
+      ]
+    });
+    obdDevice.addEventListener('gattserverdisconnected', obdOnDisconnect);
+    const server = await obdDevice.gatt.connect();
+    // Try common service UUIDs
+    let service, txChar;
+    const serviceUUIDs = [
+      '0000fff0-0000-1000-8000-00805f9b34fb',
+      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+    ];
+    for (const uuid of serviceUUIDs) {
+      try { service = await server.getPrimaryService(uuid); break; } catch(e){}
+    }
+    if (!service) { const svcs = await server.getPrimaryServices(); service = svcs[0]; }
+    const chars = await service.getCharacteristics();
+    // Find TX (notify) and RX (write) characteristics
+    for (const c of chars) {
+      if (c.properties.notify || c.properties.indicate) obdChar = c;
+      if (c.properties.writeWithoutResponse || c.properties.write) txChar = txChar || c;
+    }
+    if (obdChar) { await obdChar.startNotifications(); obdChar.addEventListener('characteristicvaluechanged', obdOnData); }
+    obdDotSet('connected', obdDevice.name||'ELM327 adaptér', 'Připojeno · BLE');
+    document.getElementById('obdConnBtn').style.display='none';
+    document.getElementById('obdDiscBtn').style.display='inline-flex';
+    document.getElementById('obdLiveBtn').style.display='inline-flex';
+    document.getElementById('dtcReadBtn').style.display='inline-flex';
+    document.getElementById('dtcClearBtn').style.display='inline-flex';
+    // Initialize ELM327
+    await sleep(500);
+    await obdSend('ATZ\r');   // Reset
+    await sleep(1000);
+    await obdSend('ATE0\r');  // Echo off
+    await obdSend('ATL0\r');  // Linefeeds off
+    await obdSend('ATSP0\r'); // Auto protocol
+    await obdSend('ATAT1\r'); // Adaptive timing
+    toast('OBD adaptér připojen ✓','ok');
+    // Read voltage
+    await sleep(200);
+    const vResp = await obdQuery('ATRV\r');
+    if (vResp) { const mv = parseFloat(vResp.replace(/[^0-9.]/g,'')); if (mv>0) { document.getElementById('pval-voltage').textContent=mv.toFixed(1); document.getElementById('pid-voltage').classList.add('live'); } }
+  } catch(err) {
+    if (err.name==='NotFoundError'||err.name==='NotSupportedError') obdDotSet('','Nepřipojeno','Uživatel zrušil výběr nebo zařízení nenalezeno');
+    else { obdDotSet('error','Chyba připojení',err.message); toast('OBD chyba: '+err.message,'err'); }
+  }
+}
+function obdOnDisconnect() { obdDotSet('','Odpojeno','Bluetooth spojení přerušeno'); stopLive(); document.getElementById('obdConnBtn').style.display='inline-flex'; document.getElementById('obdDiscBtn').style.display='none'; document.getElementById('obdLiveBtn').style.display='none'; document.getElementById('obdStopBtn').style.display='none'; }
+async function obdDisconnect() { if(obdDevice?.gatt?.connected)obdDevice.gatt.disconnect(); obdOnDisconnect(); }
+function obdDotSet(cls,name,sub) { const d=document.getElementById('obdDot'); d.className='obd-dot'+(cls?' '+cls:''); document.getElementById('obdName').textContent=name; document.getElementById('obdSub').textContent=sub; }
+
+let obdTxChar=null;
+async function obdSend(cmd) {
+  if (!obdTxChar) { try { const s=await obdDevice?.gatt?.getPrimaryServices(); if(s?.[0]){const cs=await s[0].getCharacteristics();for(const c of cs)if(c.properties.writeWithoutResponse||c.properties.write){obdTxChar=c;break;}}} catch(e){} }
+  if (!obdTxChar) return;
+  try { await obdTxChar.writeValue(new TextEncoder().encode(cmd)); } catch(e){}
+}
+function obdOnData(ev) {
+  const val = new TextDecoder().decode(ev.target.value);
+  obdRxBuffer += val;
+  if (obdRxBuffer.includes('>')) { const resp=obdRxBuffer; obdRxBuffer=''; if(obdCmdQueue.length){obdCmdQueue[0]?.resolve(resp.replace('>','').trim()); obdCmdQueue.shift();} }
+}
+function obdQuery(cmd) {
+  return new Promise((resolve,reject)=>{
+    obdCmdQueue.push({resolve,reject});
+    obdSend(cmd);
+    setTimeout(()=>{if(obdCmdQueue.length){obdCmdQueue.shift();resolve(null);}},2000);
+  });
+}
+
+async function startLive() {
+  document.getElementById('obdLiveBtn').style.display='none';
+  document.getElementById('obdStopBtn').style.display='inline-flex';
+  obdLiveInterval = setInterval(async()=>{
+    for (const pid of PIDS) {
+      const resp = await obdQuery(pid.pid+'\r');
+      if (resp) {
+        try {
+          const bytes = resp.split(' ').filter(b=>/^[0-9A-F]{2}$/i.test(b)).map(b=>parseInt(b,16));
+          if (bytes.length>=3) {
+            const val = pid.parse(bytes);
+            const el = document.getElementById('pval-'+pid.name);
+            if (el) { el.textContent=val; document.getElementById('pid-'+pid.name)?.classList.add('live'); }
+            // Odo special
+            if (pid.name==='speed') {
+              const v=S.vehicles.find(x=>x.id===document.getElementById('obdCar').value);
+              if (v) document.getElementById('obdKm').placeholder=`Načteno z OBD (aktuální: ${v.km} km)`;
+            }
+          }
+        } catch(e){}
+      }
+    }
+  }, 1000);
+}
+function stopLive() {
+  clearInterval(obdLiveInterval);
+  document.getElementById('obdLiveBtn').style.display='inline-flex';
+  document.getElementById('obdStopBtn').style.display='none';
+}
+async function readDTCs() {
+  const resp = await obdQuery('03\r'); // Mode 03 = Request DTC
+  if (!resp || resp.includes('NO DATA') || resp.includes('?')) { document.getElementById('dtcList').innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-text">Žádné chybové kódy nalezeny</div></div>'; return; }
+  const dtcMap = {P0001:'Regulátor objemu paliva - závada obvodu',P0003:'Regulátor objemu paliva - závada obvodu',P0100:'Snímač průtoku vzduchu - závada obvodu',P0110:'Snímač teploty nasávaného vzduchu',P0115:'Snímač teploty chladicí kapaliny',P0120:'Snímač polohy škrtící klapky',P0130:'Snímač kyslíku - závada obvodu',P0171:'Palivová soustava příliš chudá',P0172:'Palivová soustava příliš bohatá',P0300:'Náhodné/více vynechání zapalování',P0400:'Závada systému recirkulace výfukových plynů',P0420:'Katalyzátor - nízká účinnost',P0440:'Závada systému odpařování',P0500:'Snímač rychlosti vozidla',P0600:'Sériová komunikace - závada'};
+  const codes = resp.match(/[P|C|B|U][0-9A-F]{4}/gi)||[];
+  if (!codes.length){document.getElementById('dtcList').innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-text">Žádné kódy</div></div>';return;}
+  document.getElementById('dtcList').innerHTML=codes.map(c=>`<div class="obd-dtc-item"><div class="obd-dtc-code">${c}</div><div class="obd-dtc-desc">${dtcMap[c]||'Neznámý kód — vyhledej v databázi'}</div></div>`).join('');
+}
+async function clearDTCs() {
+  if (!confirm('Vymazat všechny chybové kódy?')) return;
+  await obdSend('04\r'); // Mode 04 = Clear DTC
+  await sleep(500);
+  document.getElementById('dtcList').innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-text">Kódy vymazány</div></div>';
+  toast('Chybové kódy vymazány','ok');
+}
+function saveObdToVehicle() {
+  const km=parseInt(document.getElementById('obdKm').value);
+  const vId=document.getElementById('obdCar').value;
+  const v=S.vehicles.find(x=>x.id===vId);
+  if (!v||!km){toast('Zadej km a vyber vozidlo','err');return;}
+  v.km=km; save(); renderGarage(); toast(`Km ${km.toLocaleString('cs-CZ')} uloženo do ${v.make} ${v.model}`,'ok');
+}
+
+// ══════════════════════════════════════════
+//  GOOGLE DRIVE (GAPI)
+// ══════════════════════════════════════════
+const GDRIVE_FILE = 'autolog_data.json';
+function toggleGoogleDrive(){document.getElementById('settingsOverlay').classList.add('open');}
+async function gdriveAuth() {
+  // Google Identity Services (GIS) flow
+  const clientId = prompt('Zadej Google OAuth Client ID (z Google Cloud Console — APIs & Services):','');
+  if (!clientId){toast('Client ID nevyplněno','err');return;}
+  localStorage.setItem('al2_gcid', clientId);
+  try {
+    const token = await new Promise((resolve,reject)=>{
+      const script=document.createElement('script'); script.src='https://accounts.google.com/gsi/client';
+      script.onload=()=>{
+        google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/drive.appdata',callback:(r)=>{if(r.error)reject(r.error);else resolve(r.access_token);}}).requestAccessToken();
+      };
+      document.head.appendChild(script);
+    });
+    localStorage.setItem('al2_gtoken',token);
+    S.gdriveConnected=true;
+    document.getElementById('driveStatusText').textContent='✅ Připojeno k Google Drive';
+    document.getElementById('driveBtn').className='nav-sync-btn synced';
+    document.getElementById('driveBtnLabel').textContent='Drive ✓';
+    toast('Google Drive připojen','ok');
+  } catch(err){toast('Google auth selhal: '+err,'err');}
+}
+async function gdriveSave() {
+  const token=localStorage.getItem('al2_gtoken'); if(!token){toast('Nejprve se přihlas k Google','err');return;}
+  const data=JSON.stringify({vehicles:S.vehicles,services:S.services,reminders:S.reminders});
+  // Find or create file in appDataFolder
+  try {
+    const listRes=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27autolog_data.json%27',{headers:{Authorization:'Bearer '+token}});
+    const list=await listRes.json();
+    const fileId=list.files?.[0]?.id;
+    let url,method;
+    if (fileId){url=`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;method='PATCH';}
+    else {
+      const meta=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({name:GDRIVE_FILE,parents:['appDataFolder']})});
+      const mj=await meta.json(); url=`https://www.googleapis.com/upload/drive/v3/files/${mj.id}?uploadType=media`;method='PATCH';
+    }
+    await fetch(url,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:data});
+    toast('Data uložena do Google Drive ☁️','ok');
+  } catch(err){toast('Drive chyba: '+err.message,'err');}
+}
+async function gdriveLoad() {
+  const token=localStorage.getItem('al2_gtoken'); if(!token){toast('Nejprve se přihlas k Google','err');return;}
+  try {
+    const listRes=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27autolog_data.json%27',{headers:{Authorization:'Bearer '+token}});
+    const list=await listRes.json(); const fileId=list.files?.[0]?.id;
+    if (!fileId){toast('Žádná uložená data v Drive','info');return;}
+    const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:'Bearer '+token}});
+    const d=await res.json();
+    S.vehicles=d.vehicles||[]; S.services=d.services||[]; S.reminders=d.reminders||[];
+    save(); renderGarage(); toast('Data načtena z Google Drive ✓','ok');
+  } catch(err){toast('Drive chyba: '+err.message,'err');}
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function syncCarDropdowns() {
+  const opts='<option value="">Všechna vozidla</option>'+S.vehicles.map(v=>`<option value="${v.id}">${v.make} ${v.model} (${v.spz})</option>`).join('');
+  ['sfCar','costCar'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  const remOpts=S.vehicles.map(v=>`<option value="${v.id}">${v.make} ${v.model} (${v.spz})</option>`).join('');
+  ['remCar','obdCar','invCar'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=remOpts;});
+}
+async function callAI(key, b64, prompt) {
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})
+  });
+  if (!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error '+res.status);}
+  return res.json();
+}
+function showAI(resId,txtId,html){
+  const r=document.getElementById(resId),t=document.getElementById(txtId);
+  r.style.display='block';
+  t.innerHTML=html===null?'<div class="dots"><span></span><span></span><span></span></div> Analyzuji…':html;
+}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function clearAllData(){if(!confirm('Opravdu smazat VŠE?'))return;localStorage.removeItem('al2');location.reload();}
+let toastTimer=null;
+function toast(msg,type=''){
+  clearTimeout(toastTimer);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(type||'');
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ══════════════════════════════════════════
+//  DRAG & DROP upload zones
+// ══════════════════════════════════════════
+function setupDrop(zoneId, fileInputId, handler) {
+  const z=document.getElementById(zoneId); if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{
+    e.preventDefault();z.classList.remove('drag');
+    const fi=document.getElementById(fileInputId);
+    if(e.dataTransfer.files[0]){const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);fi.files=dt.files;fi.dispatchEvent(new Event('change'));}
+  });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  load();
+  document.getElementById('apiKey').value=localStorage.getItem('al2_key')||'';
+  document.getElementById('remStart').value=new Date().toISOString().split('T')[0];
+  if(!S.selVeh&&S.vehicles.length)S.selVeh=S.vehicles[0].id;
+  renderGarage();
+  renderLights();
+  detectPlatform();
+
+  // Setup drag-drop
+  setupDrop('invZone','invFile',handleInvoice);
+  setupDrop('tpZone','tpFile',handleTP);
+  setupDrop('odoZone','odoFile',handleOdo);
+
+  // Close modals on overlay click
+  document.querySelectorAll('.overlay').forEach(o=>{
+    o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+  });
+
+  // Check Google Drive token
+  if(localStorage.getItem('al2_gtoken')){S.gdriveConnected=true;document.getElementById('driveBtn').className='nav-sync-btn synced';document.getElementById('driveBtnLabel').textContent='Drive ✓';}
+
+  // Handle hash navigation
+  const h=location.hash.replace('#','');
+  if(h){const b=document.querySelector(`[data-sec="${h}"]`);if(b)nav(b);}
+});
+</script>
+</body>
+</html>
