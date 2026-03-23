@@ -177,7 +177,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:20px 0}
       <button class="nb" data-p="bu" onclick="nav('bu',this)">📋 Rozpočet</button>
       <button class="nb" data-p="re" onclick="nav('re',this)">🔨 Rekonstrukce</button>
       <button class="nb" data-p="rp" onclick="nav('rp',this)">🔧 Opravy</button>
-      <button class="nb adm" data-p="us" onclick="nav('us',this)">👥 Uživatelé</button>
+      <button class="nb" id="nav-us" data-p="us" onclick="nav('us',this)" style="display:none;">👥 Uživatelé</button>
     </div>
     <div class="tbr">
       <div class="uc"><div class="av" id="tav"></div><span id="tnm"></span><span id="tbg"></span></div>
@@ -533,7 +533,7 @@ async function login(){
 }
 async function logout(){await sb.auth.signOut();}
 function show2(s){g('loading').style.display='none';g('ls').style.display=s==='login'?'flex':'none';g('app').style.display=s==='app'?'block':'none';}
-function updateTop(){const n=CP.full_name||CU.email;g('tav').textContent=n.charAt(0).toUpperCase();g('tnm').textContent=n.split(' ')[0];g('tbg').innerHTML=`<span class="badge b-${CP.role}" style="margin-left:4px">${rl(CP.role)}</span>`;document.querySelectorAll('.adm').forEach(x=>x.style.display=isA()?'':'none');}
+function updateTop(){const n=CP.full_name||CU.email;g('tav').textContent=n.charAt(0).toUpperCase();g('tnm').textContent=n.split(' ')[0];g('tbg').innerHTML=`<span class="badge b-${CP.role}" style="margin-left:4px">${rl(CP.role)}</span>`;const uBtn=g('nav-us');if(uBtn)uBtn.style.display=isA()?'':'none';}
 function nav(p,btn){document.querySelectorAll('.pg').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));g('pg-'+p).classList.add('active');if(btn)btn.classList.add('active');if(p==='ov')renderOV();if(p==='ex'){renderExSt();renderEx();}if(p==='bu')renderBU();if(p==='re')renderRE();if(p==='rp'){renderRpSt();renderRp();}if(p==='us')renderUS();}
 
 // ── OVERVIEW ──
