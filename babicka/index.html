@@ -486,8 +486,8 @@ hr.div{border:none;border-top:1px solid var(--border);margin:20px 0}
 // ═══════════════════════════════════════════════════════
 // !! VYPLŇ tyto dvě hodnoty po vytvoření Supabase projektu
 // ═══════════════════════════════════════════════════════
-const SB_URL = 'https://vcukxonyjjifzplwrsic.supabase.co';
-const SB_KEY = 'sb_publishable_2gqIKYBujPrSz0BEgsHktA_SoNLoSO5';
+const SB_URL = 'https://TVUJ-PROJEKT.supabase.co';
+const SB_KEY = 'tvuj-anon-key';
 
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
@@ -517,6 +517,11 @@ async function loadAll(){
   ]);
   profs=a.data||[];exps=b.data||[];reps=c.data||[];renos=d.data||[];riList=e.data||[];
   CP=profs.find(p=>p.id===CU.id)||{role:'viewer',full_name:CU.email};
+  // Pokud profil nebyl načten ale uživatel existuje, zkus načíst přímo
+  if(!profs.find(p=>p.id===CU.id)){
+    const{data:myProf}=await sb.from('profiles').select('*').eq('id',CU.id).maybeSingle();
+    if(myProf){CP=myProf;if(!profs.find(p=>p.id===myProf.id))profs.push(myProf);}
+  }
   await loadBud();
 }
 async function loadBud(){const y=buM.getFullYear(),m=buM.getMonth()+1;const{data}=await sb.from('budget').select('*').eq('year',y).eq('month',m).maybeSingle();bud=data||{};}
