@@ -194,12 +194,64 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
 
 /* ── MOBILE ── */
 @media(max-width:768px){
-  .tb{height:auto;flex-wrap:nowrap;padding:8px 12px;gap:4px;}
-  .tbrand span{display:none;}
-  .tbl{gap:0;}
-  .nb{font-size:11px;padding:5px 7px;}
+  /* Horní lišta skryta na mobilu */
+  .tb{ display:none; }
+
+  /* Spodní navigační lišta - pevná, statická */
+  .mob-nav{
+    display:flex;
+    position:fixed;
+    bottom:0; left:0; right:0;
+    height:60px;
+    background:var(--card);
+    border-top:1px solid var(--border);
+    box-shadow:0 -2px 10px rgba(44,36,22,.08);
+    z-index:200;
+    align-items:stretch;
+    justify-content:space-around;
+  }
+  .mob-nb{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    color:var(--text3);
+    font-family:'Instrument Sans',sans-serif;
+    font-size:9px;
+    font-weight:500;
+    padding:4px 2px;
+    -webkit-tap-highlight-color:transparent;
+    transition:color .15s;
+  }
+  .mob-nb.active{ color:var(--accent); }
+  .mob-nb .mob-icon{ font-size:20px; line-height:1; }
+
+  /* Obsah posunut nahoru aby nebyl zakryt spodní lištou */
+  #app{ padding-bottom:60px; }
   .mn{padding:14px 12px;}
-  .ph{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:14px;}
+
+  /* Uživatel info - malý chip nahoře vpravo jako floating */
+  .mob-user{
+    position:fixed;
+    top:8px; right:8px;
+    z-index:150;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:4px 10px 4px 4px;
+    font-size:11px;
+    box-shadow:var(--sh);
+  }
+
+  .ph{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:14px;margin-top:10px;}
   .pa{width:100%;}
   .sg{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
   .sc{padding:12px 14px;}
@@ -208,7 +260,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
   .fi{font-size:12px;padding:6px 9px;}
   .bg3{grid-template-columns:1fr;}
   .col2,.col3{grid-template-columns:1fr!important;}
-  .md{border-radius:10px;max-height:95vh;overflow-y:auto;}
+  .md{border-radius:10px;max-height:92vh;overflow-y:auto;}
   .mb2{padding:14px 16px;}
   .mh{padding:12px 16px;}
   .mf{padding:10px 16px;}
@@ -220,11 +272,14 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
   .cbm{width:100%;text-align:left;}
   table{min-width:500px;}
   .pt{font-size:18px;}
-  .uc .tnm{display:none;}
 }
 @media(max-width:480px){
   .sg{grid-template-columns:1fr;}
-  .tbrand{font-size:13px;}
+}
+/* Na desktopu skryj mobilní prvky */
+@media(min-width:769px){
+  .mob-nav{ display:none !important; }
+  .mob-user{ display:none !important; }
 }
 </style>
 </head>
@@ -247,6 +302,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
 
 <!-- APP -->
 <div id="app">
+  <!-- DESKTOP TOPBAR -->
   <nav class="tb">
     <div class="tbl">
       <div class="tbrand"><div class="li">🌸</div><span>Péče o babičku</span></div>
@@ -261,6 +317,35 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
       <div class="uc"><div class="av" id="tav"></div><span class="tnm" id="tnm"></span><span id="tbg"></span></div>
       <button class="btn bg2 bsm" onclick="logout()">↩</button>
     </div>
+  </nav>
+
+  <!-- MOBILE FLOATING USER CHIP -->
+  <div class="mob-user">
+    <div class="av" id="tav-mob"></div>
+    <span id="tbg-mob"></span>
+    <button class="btn bg2" style="padding:2px 6px;font-size:11px" onclick="logout()">↩</button>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <button class="mob-nb active" id="mob-ov" onclick="nav('ov',this,'mob')">
+      <span class="mob-icon">📊</span>Přehled
+    </button>
+    <button class="mob-nb" id="mob-ex" onclick="nav('ex',this,'mob')">
+      <span class="mob-icon">💰</span>Náklady
+    </button>
+    <button class="mob-nb" id="mob-bu" onclick="nav('bu',this,'mob')">
+      <span class="mob-icon">📋</span>Rozpočet
+    </button>
+    <button class="mob-nb" id="mob-re" onclick="nav('re',this,'mob')">
+      <span class="mob-icon">🔨</span>Reko
+    </button>
+    <button class="mob-nb" id="mob-rp" onclick="nav('rp',this,'mob')">
+      <span class="mob-icon">🔧</span>Opravy
+    </button>
+    <button class="mob-nb" id="mob-us" onclick="nav('us',this,'mob')" style="display:none">
+      <span class="mob-icon">👥</span>Uživatelé
+    </button>
   </nav>
 
   <div class="mn">
@@ -674,18 +759,40 @@ function show2(s){
 
 function updateTop(){
   const n = CP?.full_name||CU.email;
-  g('tav').textContent = n.charAt(0).toUpperCase();
-  g('tnm').textContent = n.split(' ')[0];
-  g('tbg').innerHTML = `<span class="badge b-${CP?.role||'viewer'}" style="margin-left:4px">${rl(CP?.role)}</span>`;
+  const initial = n.charAt(0).toUpperCase();
+  const roleHTML = `<span class="badge b-${CP?.role||'viewer'}" style="margin-left:4px">${rl(CP?.role)}</span>`;
+
+  // Desktop
+  if(g('tav')) g('tav').textContent = initial;
+  if(g('tnm')) g('tnm').textContent = n.split(' ')[0];
+  if(g('tbg')) g('tbg').innerHTML = roleHTML;
+
+  // Mobile chip
+  if(g('tav-mob')) g('tav-mob').textContent = initial;
+  if(g('tbg-mob')) g('tbg-mob').innerHTML = roleHTML;
+
+  // Admin záložka - desktop i mobil
   const uBtn = g('nav-us');
   if(uBtn) uBtn.style.display = isA()?'':'none';
+  const uBtnMob = g('mob-us');
+  if(uBtnMob) uBtnMob.style.display = isA()?'flex':'none';
 }
 
-function nav(p,btn){
+function nav(p, btn, source){
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('active'));
+  // Desktop nav
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));
+  // Mobile nav
+  document.querySelectorAll('.mob-nb').forEach(x=>x.classList.remove('active'));
+
   g('pg-'+p)?.classList.add('active');
-  if(btn) btn.classList.add('active');
+
+  // Aktivuj správné tlačítko v obou lištách
+  const desktopBtn = document.querySelector(`.nb[data-p="${p}"]`);
+  if(desktopBtn) desktopBtn.classList.add('active');
+  const mobBtn = g('mob-'+p);
+  if(mobBtn) mobBtn.classList.add('active');
+
   if(p==='ov') renderOV();
   if(p==='ex'){renderExSt();renderEx();}
   if(p==='bu') renderBU();
