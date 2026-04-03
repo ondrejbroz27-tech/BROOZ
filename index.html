@@ -12,7 +12,7 @@
   :root {
     --bg:#f0ebe3; --surface:#faf7f4; --border:#e8e0d6; --border-hover:#c8bdb0;
     --accent-games:#c94a0f; --accent-finance:#0a6644; --accent-business:#1247a8;
-    --accent-brain:#6b28a0; --accent-tools:#8a6200; --accent-reality:#0a7055; --accent-contact:#1a1614;
+    --accent-brain:#6b28a0; --accent-tools:#8a6200; --accent-reality:#0a7055; --accent-contact:#1a1614; --accent-family:#a0622a;
     --text:#1a1614; --muted:#8a7e74; --subtle:#ede6dc;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -138,6 +138,7 @@
   <button class="filter-chip" onclick="setFilter('podnikani',this)">💼 Podnikání</button>
   <button class="filter-chip" onclick="setFilter('reality',this)">🏠 Reality</button>
   <button class="filter-chip" onclick="setFilter('nastroje',this)">🔧 Nástroje</button>
+  <button class="filter-chip" onclick="setFilter('rodina',this)">🌸 Rodina</button>
   <button class="filter-chip" onclick="setFilter('kontakt',this)">📬 Kontakt</button>
 </div>
 <div class="section-label">Sekce</div>
@@ -224,6 +225,21 @@
     </div>
     <div class="tile-arrow">↗</div>
   </a>
+  <!-- RODINA -->
+  <a class="tile" href="babicka/index.html" style="--tile-accent:#a0622a;" data-category="rodina">
+    <div class="tile-wash"></div><div class="tile-bar"></div>
+    <div class="tile-icon">🌸</div><div class="tile-cat">Rodina</div>
+    <div class="status live"><span class="status-dot"></span>Živé</div>
+    <div class="tile-title">Péče o babičku</div>
+    <div class="tile-desc">Sdílená správa nákladů péče — strava, pečovatelka, zdraví, rekonstrukce. Přihlašování a role pro celou rodinu.</div>
+    <div class="tile-apps">
+      <span class="app-badge">Přehled nákladů</span>
+      <span class="app-badge">Rozpočet</span>
+      <span class="app-badge">Rekonstrukce</span>
+    </div>
+    <div class="tile-arrow">↗</div>
+  </a>
+
   <a class="tile" href="kontakt.html" style="--tile-accent:var(--accent-contact);" data-category="kontakt">
     <div class="tile-wash"></div><div class="tile-bar"></div>
     <div class="tile-icon">📬</div>
@@ -289,7 +305,8 @@
     <a href="kontakt.html">Kontakt</a>
   </div>
 </footer>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
   let cur='all';
   function setFilter(cat,btn){
     cur=cat;
@@ -299,6 +316,13 @@
   }
   function filterTiles(){
     const q=document.getElementById('search').value.toLowerCase().trim();
-    document.querySelectorAll('#grid .tile').forEach(tile=>{
+    document.querySelectorAll('#grid .tile').forEach(function(tile){
       const cat=tile.dataset.category||'';
-      const 
+      const txt=tile.textContent.toLowerCase();
+      const okCat=cur==='all'||cat===cur;
+      const okQ=!q||txt.includes(q);
+      tile.classList.toggle('hidden',!(okCat&&okQ));
+    });
+  }
+</script>
+</body></html>
