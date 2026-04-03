@@ -416,7 +416,8 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
         <div><div class="pt">Rozpočet</div><div class="ps">Příjmy, limity, bilance</div></div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <div class="mn2"><button onclick="bum(-1)">‹</button><span id="bu-ms"></span><button onclick="bum(1)">›</button></div>
-          <button class="btn bp" onclick="openBM()">✎ Upravit</button>
+          <button class="btn bs" onclick="openSettingsModal()">⚙ Příjmy a úspory</button>
+          <button class="btn bp" onclick="openBM()">✎ Upravit limity</button>
         </div>
       </div>
       <div class="bg3">
@@ -614,28 +615,12 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
   </div>
 </div>
 
-<!-- BUDGET MODAL -->
+<!-- BUDGET MODAL - pouze výdajové limity -->
 <div id="mo-bu" class="mo">
   <div class="md" style="max-width:620px">
-    <div class="mh"><span class="mt2" id="bu-mt">Upravit rozpočet</span><button class="btn bg2 bic" onclick="cm('mo-bu')">✕</button></div>
+    <div class="mh"><span class="mt2" id="bu-mt">Výdajové limity</span><button class="btn bg2 bic" onclick="cm('mo-bu')">✕</button></div>
     <div class="mb2">
-      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">📥 PRAVIDELNÉ MĚSÍČNÍ PŘÍJMY</p>
-      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Částky které přicházejí každý měsíc</p>
-      <div class="fr col2">
-        <div class="fg"><label>Důchod (Kč/měsíc)</label><input type="number" id="b-pe" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Příspěvek na péči (Kč/měsíc)</label><input type="number" id="b-ca2" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Ostatní státní příspěvky (Kč/měsíc)</label><input type="number" id="b-sb" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Ostatní příjmy (Kč/měsíc)</label><input type="number" id="b-oi" min="0" step="100" placeholder="0"></div>
-      </div>
-      <hr class="div" style="margin:8px 0">
-      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">🏦 ÚSPORY A POHLEDÁVKY (celková částka)</p>
-      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Jednorázové — celkový stav, ne měsíční</p>
-      <div class="fr col2">
-        <div class="fg"><label>Celkové úspory (Kč)</label><input type="number" id="b-sa" min="0" step="1000" placeholder="0"></div>
-        <div class="fg"><label>Pohledávky (Kč)</label><input type="number" id="b-re" min="0" step="1000" placeholder="0"></div>
-      </div>
-      <hr class="div">
-      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">📤 VÝDAJOVÉ LIMITY (Kč / měsíc)</p>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Měsíční limity výdajů pro <strong id="bu-month-label"></strong></p>
       <div class="fr col2">
         <div class="fg"><label>Strava a potraviny</label><input type="number" id="b-fo" min="0" step="100" placeholder="0"></div>
         <div class="fg"><label>Pečovatelka / asistentka</label><input type="number" id="b-ca" min="0" step="100" placeholder="0"></div>
@@ -648,7 +633,31 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
         <div class="fg"><label>Ostatní</label><input type="number" id="b-ot" min="0" step="100" placeholder="0"></div>
       </div>
     </div>
-    <div class="mf"><button class="btn bs" onclick="cm('mo-bu')">Zrušit</button><button class="btn bp" onclick="saveBU()">Uložit rozpočet</button></div>
+    <div class="mf"><button class="btn bs" onclick="cm('mo-bu')">Zrušit</button><button class="btn bp" onclick="saveBU()">Uložit limity</button></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL - globální příjmy a úspory -->
+<div id="mo-set" class="mo">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><span class="mt2">⚙ Příjmy a úspory</span><button class="btn bg2 bic" onclick="cm('mo-set')">✕</button></div>
+    <div class="mb2">
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Toto nastavení platí <strong>pro všechny měsíce</strong>. Aktualizuj pouze při změně.</p>
+      <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">📥 Pravidelné měsíční příjmy</p>
+      <div class="fr col2">
+        <div class="fg"><label>Důchod (Kč/měsíc)</label><input type="number" id="s-pe" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Příspěvek na péči (Kč/měsíc)</label><input type="number" id="s-ca" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Ostatní státní příspěvky (Kč/měsíc)</label><input type="number" id="s-sb" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Ostatní příjmy (Kč/měsíc)</label><input type="number" id="s-oi" min="0" step="100" placeholder="0"></div>
+      </div>
+      <hr class="div">
+      <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">🏦 Úspory a pohledávky (celková částka)</p>
+      <div class="fr col2">
+        <div class="fg"><label>Celkové úspory (Kč)</label><input type="number" id="s-sa" min="0" step="1000" placeholder="0"></div>
+        <div class="fg"><label>Pohledávky (Kč)</label><input type="number" id="s-re" min="0" step="1000" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn bs" onclick="cm('mo-set')">Zrušit</button><button class="btn bp" onclick="saveSettings()">Uložit nastavení</button></div>
   </div>
 </div>
 
@@ -734,7 +743,7 @@ const { createClient } = window.supabase;
 const sb = createClient(SB_URL, SB_KEY);
 
 // ── STATE ──
-let CU=null, CP=null, profs=[], exps=[], reps=[], renos=[], riList=[], bud={}, docs=[];
+let CU=null, CP=null, profs=[], exps=[], reps=[], renos=[], riList=[], bud={}, docs=[], settings={};
 let ovM=new Date(), buM=new Date();
 let exSort={f:'date',d:'desc'}, rpSort={f:'date',d:'desc'};
 let openR=new Set();
@@ -771,13 +780,14 @@ async function onLogin(u){
 
 async function loadAll(){
   try {
-    const [a,b,c,d,e,f] = await Promise.all([
+    const [a,b,c,d,e,f,gs] = await Promise.all([
       sb.from('profiles').select('*'),
       sb.from('expenses').select('*').order('date',{ascending:false}),
       sb.from('repairs').select('*').order('date',{ascending:false}),
       sb.from('renovations').select('*').order('created_at',{ascending:false}),
       sb.from('renovation_items').select('*').order('created_at',{ascending:true}),
       sb.from('documents').select('*').order('created_at',{ascending:false}),
+      sb.from('settings').select('*').eq('id','global').maybeSingle(),
     ]);
     profs = a.data||[];
     exps  = b.data||[];
@@ -785,6 +795,7 @@ async function loadAll(){
     renos = d.data||[];
     riList= e.data||[];
     docs  = f.data||[];
+    settings = gs.data||{};
 
     // Najdi aktuální profil
     CP = profs.find(p=>p.id===CU.id);
@@ -1228,22 +1239,24 @@ function renderBU(){
   const y=buM.getFullYear(), m=buM.getMonth();
   g('bu-ms').textContent = ms(buM);
   const d=bud;
+  const s=settings;
 
-  // Měsíční příjmy
+  // Měsíční příjmy ze global settings
   const inRows=[
-    ['Důchod (měsíční)',d.income_pension],
-    ['Příspěvek na péči (měsíční)',d.income_care_allowance],
-    ['Státní příspěvky (měsíční)',d.income_state_benefits],
-    ['Ostatní příjmy (měsíční)',d.income_other],
+    ['Důchod',s.income_pension],
+    ['Příspěvek na péči',s.income_care_allowance],
+    ['Státní příspěvky',s.income_state_benefits],
+    ['Ostatní příjmy',s.income_other],
   ];
-  const totalMonthlyInc = inRows.reduce((s,[,v])=>s+(+v||0),0);
-
-  // Úspory (celkové, jednorázové)
-  const totalSavings = (+d.savings_total||0);
-  const totalReceivables = (+d.savings_receivables||0);
+  const totalMonthlyInc = inRows.reduce((s2,[,v])=>s2+(+v||0),0);
+  const totalSavings = (+s.savings_total||0);
+  const totalReceivables = (+s.savings_receivables||0);
 
   g('bu-inc').innerHTML = `
-    <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Pravidelné měsíční příjmy</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Pravidelné měsíční příjmy</p>
+      ${isA()?`<button class="btn bs bsm" onclick="openSettingsModal()">✎ Upravit</button>`:''}
+    </div>
     ${inRows.map(([l,v])=>`
       <div class="brow"><span class="brl">${l}</span><span class="brv inc">${fmt(+v||0)}</span></div>
     `).join('')}
@@ -1261,7 +1274,7 @@ function renderBU(){
     ['Léky a zdravotní péče',d.limit_health],['Úklid a domácnost',d.limit_household],
     ['Rekonstrukce',d.limit_renovation],['Opravy',d.limit_repairs],
     ['Doprava a výlety',d.limit_transport],['Oblečení a drogerie',d.limit_clothing],['Ostatní',d.limit_other]];
-  const totalLim = limMap.reduce((s,[,v])=>s+(+v||0),0);
+  const totalLim = limMap.reduce((s2,[,v])=>s2+(+v||0),0);
   const me = exps.filter(e=>inM(e.date,y,m));
   const totalPaid = sm(me,'amount_paid');
   const bal = totalMonthlyInc - totalPaid;
@@ -1277,7 +1290,6 @@ function renderBU(){
       <span class="bbv" style="color:${bal>=0?'var(--green)':'var(--red)'}">${bal>=0?'+':''}${fmt(bal)}</span>
     </div>`;
 
-  // Plnění kategorií
   const ca={};
   CATS.forEach(c=>ca[c]=0);
   me.forEach(e=>ca[e.category]=(ca[e.category]||0)+(+e.amount_paid||0));
@@ -1305,13 +1317,8 @@ async function bum(d){ buM=new Date(buM); buM.setMonth(buM.getMonth()+d); await 
 async function openBM(){
   if(!isA()) return toast('Pouze admin může upravovat rozpočet.','ter');
   const d=bud;
-  g('bu-mt').textContent=`Rozpočet — ${ms(buM)}`;
-  sv('b-pe',d.income_pension||'');
-  sv('b-ca2',d.income_care_allowance||'');
-  sv('b-sb',d.income_state_benefits||'');
-  sv('b-oi',d.income_other||'');
-  sv('b-sa',d.savings_total||'');
-  sv('b-re',d.savings_receivables||'');
+  g('bu-mt').textContent=`Výdajové limity`;
+  if(g('bu-month-label')) g('bu-month-label').textContent=ms(buM);
   sv('b-fo',d.limit_food||''); sv('b-ca',d.limit_caregiver||'');
   sv('b-he',d.limit_health||''); sv('b-ho',d.limit_household||'');
   sv('b-rv',d.limit_renovation||''); sv('b-rp',d.limit_repairs||'');
@@ -1323,12 +1330,6 @@ async function openBM(){
 async function saveBU(){
   const y=buM.getFullYear(), m=buM.getMonth()+1;
   const p={year:y,month:m,
-    income_pension:parseFloat(gv('b-pe'))||0,
-    income_care_allowance:parseFloat(gv('b-ca2'))||0,
-    income_state_benefits:parseFloat(gv('b-sb'))||0,
-    income_other:parseFloat(gv('b-oi'))||0,
-    savings_total:parseFloat(gv('b-sa'))||0,
-    savings_receivables:parseFloat(gv('b-re'))||0,
     limit_food:parseFloat(gv('b-fo'))||0, limit_caregiver:parseFloat(gv('b-ca'))||0,
     limit_health:parseFloat(gv('b-he'))||0, limit_household:parseFloat(gv('b-ho'))||0,
     limit_renovation:parseFloat(gv('b-rv'))||0, limit_repairs:parseFloat(gv('b-rp'))||0,
@@ -1337,7 +1338,37 @@ async function saveBU(){
     updated_by:CU.id, updated_at:new Date().toISOString()};
   const {error}=await sb.from('budget').upsert(p,{onConflict:'year,month'});
   if(error) return toast('Chyba: '+error.message,'ter');
-  cm('mo-bu'); await loadBud(); renderBU(); toast('Rozpočet uložen ✓');
+  cm('mo-bu'); await loadBud(); renderBU(); toast('Limity uloženy ✓');
+}
+
+function openSettingsModal(){
+  if(!isA()) return toast('Pouze admin může upravovat nastavení.','ter');
+  const s=settings;
+  sv('s-pe',s.income_pension||'');
+  sv('s-ca',s.income_care_allowance||'');
+  sv('s-sb',s.income_state_benefits||'');
+  sv('s-oi',s.income_other||'');
+  sv('s-sa',s.savings_total||'');
+  sv('s-re',s.savings_receivables||'');
+  om('mo-set');
+}
+
+async function saveSettings(){
+  const p={
+    id:'global',
+    income_pension:parseFloat(gv('s-pe'))||0,
+    income_care_allowance:parseFloat(gv('s-ca'))||0,
+    income_state_benefits:parseFloat(gv('s-sb'))||0,
+    income_other:parseFloat(gv('s-oi'))||0,
+    savings_total:parseFloat(gv('s-sa'))||0,
+    savings_receivables:parseFloat(gv('s-re'))||0,
+    updated_by:CU.id, updated_at:new Date().toISOString()
+  };
+  const {error}=await sb.from('settings').upsert(p,{onConflict:'id'});
+  if(error) return toast('Chyba: '+error.message,'ter');
+  const {data}=await sb.from('settings').select('*').eq('id','global').maybeSingle();
+  settings=data||{};
+  cm('mo-set'); renderBU(); toast('Nastavení uloženo ✓');
 }
 
 // ── USERS ──
@@ -1484,9 +1515,8 @@ const at=e=>{
   return t;
 };
 const getInc=()=>{
-  const d=bud;
-  // Pouze měsíční příjmy (důchod + příspěvky)
-  return(+d.income_pension||0)+(+d.income_care_allowance||0)+(+d.income_state_benefits||0)+(+d.income_other||0);
+  const s=settings;
+  return(+s.income_pension||0)+(+s.income_care_allowance||0)+(+s.income_state_benefits||0)+(+s.income_other||0);
 };
 const sc=(l,v,s,c,ic)=>`<div class="sc ${c}"><div class="sl">${l}</div><div class="sv">${v}</div><div class="ss">${s}</div><div class="si">${ic}</div></div>`;
 
