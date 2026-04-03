@@ -312,6 +312,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
       <button class="nb" data-p="re" onclick="nav('re',this)">🔨 Reko</button>
       <button class="nb" data-p="rp" onclick="nav('rp',this)">🔧 Opravy</button>
       <button class="nb" id="nav-us" data-p="us" onclick="nav('us',this)" style="display:none">👥 Uživatelé</button>
+      <button class="nb" data-p="do" onclick="nav('do',this)">📁 Dokumenty</button>
     </div>
     <div class="tbr">
       <div class="uc"><div class="av" id="tav"></div><span class="tnm" id="tnm"></span><span id="tbg"></span></div>
@@ -345,6 +346,9 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
     </button>
     <button class="mob-nb" id="mob-us" onclick="nav('us',this,'mob')" style="display:none">
       <span class="mob-icon">👥</span>Uživatelé
+    </button>
+    <button class="mob-nb" id="mob-do" onclick="nav('do',this,'mob')">
+      <span class="mob-icon">📁</span>Dokumenty
     </button>
   </nav>
 
@@ -481,6 +485,24 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
       </div>
     </div>
 
+    <!-- DOKUMENTY -->
+    <div id="pg-do" class="pg">
+      <div class="ph">
+        <div><div class="pt">Dokumenty</div><div class="ps">Zdravotní, pojistky, smlouvy, nemovitosti</div></div>
+        <button class="btn bp" onclick="openDocModal()">＋ Nahrát dokument</button>
+      </div>
+      <!-- Kategorie filtry -->
+      <div class="fb" style="margin-bottom:16px">
+        <button class="btn bs bsm active-cat" onclick="filterDocs('',this)">Vše</button>
+        <button class="btn bs bsm" onclick="filterDocs('Zdravotní dokumentace',this)">🏥 Zdravotní</button>
+        <button class="btn bs bsm" onclick="filterDocs('Pojistky a smlouvy',this)">📋 Pojistky</button>
+        <button class="btn bs bsm" onclick="filterDocs('Nemovitosti',this)">🏠 Nemovitosti</button>
+        <button class="btn bs bsm" onclick="filterDocs('Ostatní dokumenty',this)">📄 Ostatní</button>
+      </div>
+      <!-- Grid dokumentů -->
+      <div id="do-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
+    </div>
+
   </div><!-- /mn -->
 </div><!-- /app -->
 
@@ -507,7 +529,14 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
           <option>Částečně zaplaceno</option><option>Zaplaceno</option>
         </select></div>
       </div>
-      <div class="fg"><label>Poznámka</label><textarea id="ex-nt" placeholder="Volitelná poznámka…"></textarea></div>
+      <div class="fr col2">
+        <div class="fg"><label>Typ výdaje</label><select id="ex-typ">
+          <option value="jednorázový">Jednorázový</option>
+          <option value="měsíční">Pravidelný měsíční</option>
+          <option value="roční">Pravidelný roční</option>
+        </select></div>
+        <div class="fg"><label>Poznámka</label><input type="text" id="ex-nt" placeholder="Volitelná poznámka…"></div>
+      </div>
       <p class="tsm tmut" id="ex-aud" style="display:none;margin-top:6px"></p>
       <p class="err" id="ex-er" style="display:none;margin-top:6px"></p>
     </div>
@@ -590,12 +619,20 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
   <div class="md" style="max-width:620px">
     <div class="mh"><span class="mt2" id="bu-mt">Upravit rozpočet</span><button class="btn bg2 bic" onclick="cm('mo-bu')">✕</button></div>
     <div class="mb2">
-      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">📥 PŘÍJMY (Kč / měsíc)</p>
+      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">📥 PRAVIDELNÉ MĚSÍČNÍ PŘÍJMY</p>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Částky které přicházejí každý měsíc</p>
       <div class="fr col2">
-        <div class="fg"><label>Důchod</label><input type="number" id="b-pe" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Pohledávky</label><input type="number" id="b-re" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Úspory (čerpání)</label><input type="number" id="b-sa" min="0" step="100" placeholder="0"></div>
-        <div class="fg"><label>Ostatní příjmy</label><input type="number" id="b-oi" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Důchod (Kč/měsíc)</label><input type="number" id="b-pe" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Příspěvek na péči (Kč/měsíc)</label><input type="number" id="b-ca2" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Ostatní státní příspěvky (Kč/měsíc)</label><input type="number" id="b-sb" min="0" step="100" placeholder="0"></div>
+        <div class="fg"><label>Ostatní příjmy (Kč/měsíc)</label><input type="number" id="b-oi" min="0" step="100" placeholder="0"></div>
+      </div>
+      <hr class="div" style="margin:8px 0">
+      <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">🏦 ÚSPORY A POHLEDÁVKY (celková částka)</p>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Jednorázové — celkový stav, ne měsíční</p>
+      <div class="fr col2">
+        <div class="fg"><label>Celkové úspory (Kč)</label><input type="number" id="b-sa" min="0" step="1000" placeholder="0"></div>
+        <div class="fg"><label>Pohledávky (Kč)</label><input type="number" id="b-re" min="0" step="1000" placeholder="0"></div>
       </div>
       <hr class="div">
       <p style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">📤 VÝDAJOVÉ LIMITY (Kč / měsíc)</p>
@@ -653,6 +690,37 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
   </div>
 </div>
 
+<!-- DOCUMENT MODAL -->
+<div id="mo-do" class="mo">
+  <div class="md">
+    <div class="mh"><span class="mt2" id="do-mt">Nahrát dokument</span><button class="btn bg2 bic" onclick="cm('mo-do')">✕</button></div>
+    <div class="mb2">
+      <input type="hidden" id="do-id">
+      <div class="fg"><label>Název dokumentu *</label><input type="text" id="do-nm" placeholder="Např. Propouštěcí zpráva 2026"></div>
+      <div class="fg"><label>Kategorie *</label><select id="do-cat">
+        <option>Zdravotní dokumentace</option>
+        <option>Pojistky a smlouvy</option>
+        <option>Nemovitosti</option>
+        <option>Ostatní dokumenty</option>
+      </select></div>
+      <div class="fg"><label>Popis</label><input type="text" id="do-ds" placeholder="Stručný popis obsahu…"></div>
+      <div class="fg" id="do-file-wrap">
+        <label>Soubor * (PDF nebo obrázek, max 50 MB)</label>
+        <input type="file" id="do-file" accept=".pdf,image/*" style="padding:6px;background:var(--bg)">
+      </div>
+      <div id="do-prog-wrap" style="display:none;margin-top:8px">
+        <div class="sl" style="margin-bottom:4px">Nahrávám…</div>
+        <div class="prog"><div class="pf pg2" id="do-prog" style="width:0%"></div></div>
+      </div>
+      <p class="err" id="do-er" style="display:none;margin-top:8px"></p>
+    </div>
+    <div class="mf">
+      <button class="btn bs" onclick="cm('mo-do')">Zrušit</button>
+      <button class="btn bp" id="do-save-btn" onclick="saveDoc()">Nahrát</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // !! VYPLŇ tyto dvě hodnoty po vytvoření Supabase projektu
@@ -666,7 +734,7 @@ const { createClient } = window.supabase;
 const sb = createClient(SB_URL, SB_KEY);
 
 // ── STATE ──
-let CU=null, CP=null, profs=[], exps=[], reps=[], renos=[], riList=[], bud={};
+let CU=null, CP=null, profs=[], exps=[], reps=[], renos=[], riList=[], bud={}, docs=[];
 let ovM=new Date(), buM=new Date();
 let exSort={f:'date',d:'desc'}, rpSort={f:'date',d:'desc'};
 let openR=new Set();
@@ -703,18 +771,20 @@ async function onLogin(u){
 
 async function loadAll(){
   try {
-    const [a,b,c,d,e] = await Promise.all([
+    const [a,b,c,d,e,f] = await Promise.all([
       sb.from('profiles').select('*'),
       sb.from('expenses').select('*').order('date',{ascending:false}),
       sb.from('repairs').select('*').order('date',{ascending:false}),
       sb.from('renovations').select('*').order('created_at',{ascending:false}),
       sb.from('renovation_items').select('*').order('created_at',{ascending:true}),
+      sb.from('documents').select('*').order('created_at',{ascending:false}),
     ]);
     profs = a.data||[];
     exps  = b.data||[];
     reps  = c.data||[];
     renos = d.data||[];
     riList= e.data||[];
+    docs  = f.data||[];
 
     // Najdi aktuální profil
     CP = profs.find(p=>p.id===CU.id);
@@ -799,6 +869,7 @@ function nav(p, btn, source){
   if(p==='re') renderRE();
   if(p==='rp'){renderRpSt();renderRp();}
   if(p==='us') renderUS();
+  if(p==='do') renderDocs('');
 }
 
 // ── OVERVIEW ──
@@ -882,7 +953,7 @@ function exRow(e){
     <td class="td-muted">${fd(e.date)}</td>
     <td><strong>${esc(e.description)}</strong>${e.note?`<br><span class="tsm tmut">${esc(e.note)}</span>`:''}</td>
     <td><span class="chip">${esc(e.category||'')}</span></td>
-    <td>${sb2(e.status)}</td>
+    <td>${sb2(e.status)} ${e.expense_type&&e.expense_type!=='jednorázový'?`<span class="badge" style="background:var(--pbg);color:var(--purple);border:1px solid var(--pbd);margin-left:2px">${e.expense_type==='měsíční'?'📅 měs.':'📆 roč.'}</span>`:''}</td>
     <td class="tm">${fmt(e.amount_planned)}</td>
     <td class="tm">${fmt(e.amount_paid)}</td>
     <td class="${diff>0?'dn':diff<0?'dp':''}">${diff!==0?(diff>0?'+':'')+fmt(diff):'—'}</td>
@@ -905,6 +976,7 @@ async function openEM(id){
   sv('ex-pl', e?.amount_planned!=null ? e.amount_planned : '');
   sv('ex-pa', e?.amount_paid!=null ? e.amount_paid : '');
   sv('ex-sts', e?.status||'Plánovaný');
+  sv('ex-typ', e?.expense_type||'jednorázový');
   sv('ex-nt', e?.note||'');
   const aud=g('ex-aud');
   if(e){ aud.style.display=''; aud.textContent=at(e); } else aud.style.display='none';
@@ -922,6 +994,7 @@ async function saveEx(){
     amount_planned: parseFloat(gv('ex-pl'))||0,
     amount_paid: parseFloat(gv('ex-pa'))||0,
     status: gv('ex-sts'),
+    expense_type: gv('ex-typ')||'jednorázový',
     note: gv('ex-nt')||null,
     updated_by: CU.id,
     updated_at: new Date().toISOString(),
@@ -1155,13 +1228,33 @@ function renderBU(){
   const y=buM.getFullYear(), m=buM.getMonth();
   g('bu-ms').textContent = ms(buM);
   const d=bud;
-  const inRows=[['Důchod',d.income_pension],['Pohledávky',d.income_receivables],['Úspory',d.income_savings],['Ostatní příjmy',d.income_other]];
-  const totalInc = inRows.reduce((s,[,v])=>s+(+v||0),0);
-  g('bu-inc').innerHTML = inRows.map(([l,v])=>`
-    <div class="brow"><span class="brl">${l}</span><span class="brv inc">${fmt(+v||0)}</span></div>
-  `).join('') + `
+
+  // Měsíční příjmy
+  const inRows=[
+    ['Důchod (měsíční)',d.income_pension],
+    ['Příspěvek na péči (měsíční)',d.income_care_allowance],
+    ['Státní příspěvky (měsíční)',d.income_state_benefits],
+    ['Ostatní příjmy (měsíční)',d.income_other],
+  ];
+  const totalMonthlyInc = inRows.reduce((s,[,v])=>s+(+v||0),0);
+
+  // Úspory (celkové, jednorázové)
+  const totalSavings = (+d.savings_total||0);
+  const totalReceivables = (+d.savings_receivables||0);
+
+  g('bu-inc').innerHTML = `
+    <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Pravidelné měsíční příjmy</p>
+    ${inRows.map(([l,v])=>`
+      <div class="brow"><span class="brl">${l}</span><span class="brv inc">${fmt(+v||0)}</span></div>
+    `).join('')}
     <div class="brow" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px">
-      <strong>Celkem příjmy</strong><span class="brv inc" style="font-size:18px">${fmt(totalInc)}</span>
+      <strong>Celkem měsíčně</strong><span class="brv inc" style="font-size:18px">${fmt(totalMonthlyInc)}</span>
+    </div>
+    <p style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-top:16px;margin-bottom:8px">Úspory a pohledávky (celková částka)</p>
+    <div class="brow"><span class="brl">Celkové úspory</span><span class="brv" style="color:var(--blue)">${fmt(totalSavings)}</span></div>
+    <div class="brow"><span class="brl">Pohledávky</span><span class="brv" style="color:var(--blue)">${fmt(totalReceivables)}</span></div>
+    <div class="brow" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px">
+      <strong>Rezervy celkem</strong><span class="brv" style="color:var(--blue);font-size:16px">${fmt(totalSavings+totalReceivables)}</span>
     </div>`;
 
   const limMap=[['Strava a potraviny',d.limit_food],['Pečovatelka / asistentka',d.limit_caregiver],
@@ -1171,7 +1264,7 @@ function renderBU(){
   const totalLim = limMap.reduce((s,[,v])=>s+(+v||0),0);
   const me = exps.filter(e=>inM(e.date,y,m));
   const totalPaid = sm(me,'amount_paid');
-  const bal = totalInc - totalPaid;
+  const bal = totalMonthlyInc - totalPaid;
 
   g('bu-lim').innerHTML = limMap.map(([l,v])=>`
     <div class="brow"><span class="brl">${l}</span><span class="brv exc">${fmt(+v||0)}</span></div>
@@ -1189,11 +1282,10 @@ function renderBU(){
   CATS.forEach(c=>ca[c]=0);
   me.forEach(e=>ca[e.category]=(ca[e.category]||0)+(+e.amount_paid||0));
   g('bu-cat').innerHTML = CATS.map(cat=>{
-    const act = ca[cat]||0;
-    const lim = +(d[CLMAP[cat]]||0);
-    const pct = lim>0 ? Math.min(100, act/lim*100) : 0;
-    const over = lim>0 && act>lim;
-    const pctCls = pct>100?'pr':pct>80?'po':'pg2';
+    const act=ca[cat]||0, lim=+(d[CLMAP[cat]]||0);
+    const pct=lim>0?Math.min(100,act/lim*100):0;
+    const over=lim>0&&act>lim;
+    const pctCls=pct>100?'pr':pct>80?'po':'pg2';
     return `<div style="padding:10px 0;border-bottom:1px solid var(--bg2)">
       <div class="df jsb" style="margin-bottom:5px">
         <span style="font-size:13px;font-weight:500">${cat}</span>
@@ -1214,8 +1306,12 @@ async function openBM(){
   if(!isA()) return toast('Pouze admin může upravovat rozpočet.','ter');
   const d=bud;
   g('bu-mt').textContent=`Rozpočet — ${ms(buM)}`;
-  sv('b-pe',d.income_pension||''); sv('b-re',d.income_receivables||'');
-  sv('b-sa',d.income_savings||''); sv('b-oi',d.income_other||'');
+  sv('b-pe',d.income_pension||'');
+  sv('b-ca2',d.income_care_allowance||'');
+  sv('b-sb',d.income_state_benefits||'');
+  sv('b-oi',d.income_other||'');
+  sv('b-sa',d.savings_total||'');
+  sv('b-re',d.savings_receivables||'');
   sv('b-fo',d.limit_food||''); sv('b-ca',d.limit_caregiver||'');
   sv('b-he',d.limit_health||''); sv('b-ho',d.limit_household||'');
   sv('b-rv',d.limit_renovation||''); sv('b-rp',d.limit_repairs||'');
@@ -1227,8 +1323,12 @@ async function openBM(){
 async function saveBU(){
   const y=buM.getFullYear(), m=buM.getMonth()+1;
   const p={year:y,month:m,
-    income_pension:parseFloat(gv('b-pe'))||0, income_receivables:parseFloat(gv('b-re'))||0,
-    income_savings:parseFloat(gv('b-sa'))||0, income_other:parseFloat(gv('b-oi'))||0,
+    income_pension:parseFloat(gv('b-pe'))||0,
+    income_care_allowance:parseFloat(gv('b-ca2'))||0,
+    income_state_benefits:parseFloat(gv('b-sb'))||0,
+    income_other:parseFloat(gv('b-oi'))||0,
+    savings_total:parseFloat(gv('b-sa'))||0,
+    savings_receivables:parseFloat(gv('b-re'))||0,
     limit_food:parseFloat(gv('b-fo'))||0, limit_caregiver:parseFloat(gv('b-ca'))||0,
     limit_health:parseFloat(gv('b-he'))||0, limit_household:parseFloat(gv('b-ho'))||0,
     limit_renovation:parseFloat(gv('b-rv'))||0, limit_repairs:parseFloat(gv('b-rp'))||0,
@@ -1383,10 +1483,152 @@ const at=e=>{
   if(e.updated_by&&e.updated_by!==e.created_by) t+=` | Upravil: ${pn(e.updated_by)} · ${fd(e.updated_at?.split('T')[0]||'')}`;
   return t;
 };
-const getInc=()=>{const d=bud;return(+d.income_pension||0)+(+d.income_receivables||0)+(+d.income_savings||0)+(+d.income_other||0);};
+const getInc=()=>{
+  const d=bud;
+  // Pouze měsíční příjmy (důchod + příspěvky)
+  return(+d.income_pension||0)+(+d.income_care_allowance||0)+(+d.income_state_benefits||0)+(+d.income_other||0);
+};
 const sc=(l,v,s,c,ic)=>`<div class="sc ${c}"><div class="sl">${l}</div><div class="sv">${v}</div><div class="ss">${s}</div><div class="si">${ic}</div></div>`;
 
-init();
-</script>
+// ── DOCUMENTS ──
+let docsFilter = '';
+
+function filterDocs(cat, btn){
+  docsFilter = cat;
+  document.querySelectorAll('.active-cat').forEach(b=>b.classList.remove('active-cat'));
+  if(btn) btn.classList.add('active-cat');
+  renderDocs(cat);
+}
+
+function renderDocs(cat){
+  const filtered = cat ? docs.filter(d=>d.category===cat) : docs;
+  if(!filtered.length){
+    g('do-grid').innerHTML=`<div class="empty2" style="grid-column:1/-1"><div class="ei">📁</div>Žádné dokumenty${cat?' v této kategorii':''}</div>`;
+    return;
+  }
+  g('do-grid').innerHTML = filtered.map(d=>{
+    const isPdf = d.file_type==='application/pdf';
+    const size = d.file_size ? (d.file_size/1024/1024).toFixed(1)+'MB' : '';
+    const catColors = {
+      'Zdravotní dokumentace':'var(--red)',
+      'Pojistky a smlouvy':'var(--blue)',
+      'Nemovitosti':'var(--green)',
+      'Ostatní dokumenty':'var(--text3)',
+    };
+    const catIcons = {
+      'Zdravotní dokumentace':'🏥',
+      'Pojistky a smlouvy':'📋',
+      'Nemovitosti':'🏠',
+      'Ostatní dokumenty':'📄',
+    };
+    return `<div class="card" style="padding:16px;position:relative">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:40px;height:40px;background:${isPdf?'var(--rbg)':'var(--bbg)'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${isPdf?'📄':'🖼'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name)}</div>
+          <div style="font-size:11px;color:${catColors[d.category]||'var(--text3)'}">${catIcons[d.category]||'📄'} ${d.category}</div>
+        </div>
+      </div>
+      ${d.description?`<p style="font-size:12px;color:var(--text3);margin-bottom:8px">${esc(d.description)}</p>`:''}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <span style="font-size:11px;color:var(--text3)">${fd(d.created_at?.split('T')[0]||'')} · ${size}</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn bs bsm" onclick="downloadDoc('${d.id}','${d.file_path}','${d.file_name}')">⬇ Stáhnout</button>
+          ${isA()?`<button class="btn bd bic bsm" onclick="deleteDoc('${d.id}','${d.file_path}')">🗑</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDocModal(){
+  sv('do-id',''); sv('do-nm',''); sv('do-ds','');
+  sv('do-cat','Zdravotní dokumentace');
+  const fw=g('do-file-wrap'); if(fw) fw.style.display='';
+  const dp=g('do-prog-wrap'); if(dp) dp.style.display='none';
+  g('do-er').style.display='none';
+  const fi=g('do-file'); if(fi) fi.value='';
+  const btn=g('do-save-btn'); if(btn){btn.disabled=false;btn.textContent='Nahrát';}
+  om('mo-do');
+}
+
+async function saveDoc(){
+  g('do-er').style.display='none';
+  const name=gv('do-nm'), cat=gv('do-cat'), desc=gv('do-ds');
+  const fileInput=g('do-file');
+  const file=fileInput?.files?.[0];
+  if(!name){show('do-er','Vyplňte název dokumentu.');return;}
+  if(!file){show('do-er','Vyberte soubor.');return;}
+  if(file.size>52428800){show('do-er','Soubor je příliš velký (max 50 MB).');return;}
+
+  const btn=g('do-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Nahrávám…';}
+  g('do-prog-wrap').style.display='';
+
+  try {
+    // Unikátní název souboru
+    const ext = file.name.split('.').pop();
+    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const filePath = `${CU.id}/${safeName}`;
+
+    // Upload do Supabase Storage
+    const {error:upErr} = await sb.storage.from('documents').upload(filePath, file, {
+      cacheControl:'3600',
+      upsert:false,
+    });
+    if(upErr) throw upErr;
+
+    g('do-prog').style.width='70%';
+
+    // Ulož metadata do DB
+    const {error:dbErr} = await sb.from('documents').insert({
+      name, description:desc||null, category:cat,
+      file_path:filePath, file_name:file.name,
+      file_size:file.size, file_type:file.type,
+      created_by:CU.id, created_at:new Date().toISOString(),
+      updated_by:CU.id, updated_at:new Date().toISOString(),
+    }).select();
+    if(dbErr) throw dbErr;
+
+    g('do-prog').style.width='100%';
+
+    // Reload dokumentů
+    const {data} = await sb.from('documents').select('*').order('created_at',{ascending:false});
+    docs = data||[];
+    cm('mo-do');
+    renderDocs(docsFilter);
+    toast('Dokument nahrán ✓');
+  } catch(e){
+    show('do-er','Chyba: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='Nahrát';}
+    g('do-prog-wrap').style.display='none';
+  }
+}
+
+async function downloadDoc(id, filePath, fileName){
+  try {
+    const {data, error} = await sb.storage.from('documents').download(filePath);
+    if(error) throw error;
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href=url; a.download=fileName; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  } catch(e){ toast('Chyba stahování: '+e.message,'ter'); }
+}
+
+async function deleteDoc(id, filePath){
+  if(!confirm('Opravdu smazat tento dokument?')) return;
+  try {
+    await sb.storage.from('documents').remove([filePath]);
+    await sb.from('documents').delete().eq('id',id);
+    const {data}=await sb.from('documents').select('*').order('created_at',{ascending:false});
+    docs=data||[];
+    renderDocs(docsFilter);
+    toast('Dokument smazán ✓');
+  } catch(e){ toast('Chyba: '+e.message,'ter'); }
+}
+
+// ── EXPENSE TYPE in saveEx ──
+init();</script>
 </body>
 </html>
