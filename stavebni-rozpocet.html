@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Položkový rozpočet domu | Brooz Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1D9E75;
+            --primary-dark: #0F6E56;
+            --secondary: #378ADD;
+            --accent: #EF9F27;
+            --danger: #E24B4A;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F1EFE8;
+            --text-primary: #2C2C2A;
+            --text-secondary: #5F5E5A;
+            --border: #D3D1C7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #E1F5EE 0%, #E6F1FB 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-primary);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 24px;
+            background: transparent;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--bg-secondary);
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.1);
+        }
+
+        input[type="range"] {
+            padding: 0;
+            height: 6px;
+            background: var(--bg-secondary);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-dark);
+        }
+
+        .range-value {
+            display: inline-block;
+            font-weight: 600;
+            color: var(--primary);
+            margin-left: 8px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-option label {
+            display: block;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 500;
+            background: var(--bg-primary);
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            border-color: var(--primary);
+            background: #E1F5EE;
+            color: var(--primary-dark);
+        }
+
+        .radio-option label:hover {
+            border-color: var(--primary);
+        }
+
+        .summary-card {
+            position: sticky;
+            top: 20px;
+        }
+
+        .total-price {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .total-price .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .total-price .amount {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .total-price .per-m2 {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .price-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .price-card {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .price-card .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .price-card .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-item .name {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .breakdown-item .value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .detailed-breakdown {
+            margin-top: 20px;
+        }
+
+        .category-section {
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-header h4 {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .category-header .price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .category-items {
+            display: none;
+            padding-left: 12px;
+        }
+
+        .category-items.active {
+            display: block;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .item-row .item-name {
+            color: var(--text-secondary);
+        }
+
+        .item-row .item-price {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .export-buttons-full {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(29, 158, 117, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c93d3c;
+        }
+
+        .price-editor-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .price-editor-label {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .price-editor-grid input {
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        .price-section-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 8px;
+            padding: 0 8px;
+        }
+
+        .price-section-header span {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .total-price .amount {
+                font-size: 32px;
+            }
+
+            .export-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .price-editor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price-section-header {
+                display: none;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .tabs, .btn, .form-section, .card:not(.summary-card) {
+                display: none !important;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Položkový rozpočet domu</h1>
+            <p>Přesná kalkulace nákladů na stavbu rodinného domu - materiál + práce</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('params')">📋 Parametry stavby</button>
+            <button class="tab-btn" onclick="switchTab('prices')">💰 Nastavení cen</button>
+        </div>
+
+        <div id="tab-params" class="tab-content active">
+            <div class="main-grid">
+                <div class="card">
+                    <h2>Parametry stavby</h2>
+
+                    <div class="form-section">
+                        <h3>📏 Základní rozměry</h3>
+                        
+                        <div class="form-group">
+                            <label>Zastavěná plocha (m²) <span class="range-value" id="area-value">120</span></label>
+                            <input type="range" id="area" min="50" max="300" value="120" step="10">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet nadzemních podlaží</label>
+                            <div class="radio-group">
+                                <div class="radio-option">
+                                    <input type="radio" id="floors-1" name="floors" value="1">
+                                    <label for="floors-1">1 NP</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="floors-2" name="floors" value="2" checked>
+                                    <label for="floors-2">2 NP</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="floors-3" name="floors" value="3">
+                                    <label for="floors-3">3 NP</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tvar domu</label>
+                            <select id="house-shape">
+                                <option value="square">Čtvercový / obdélníkový</option>
+                                <option value="lshape">Tvar L</option>
+                                <option value="ushape">Tvar U</option>
+                                <option value="complex">Složitý tvar</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🏗️ Konstrukční systém</h3>
+                        
+                        <div class="form-group">
+                            <label>Typ zdiva</label>
+                            <select id="wall-type">
+                                <option value="ytong">Ytong 375mm (dvouvrstvé)</option>
+                                <option value="ytong-lambda">Ytong Lambda 300mm (dvouvrstvé)</option>
+                                <option value="heluz">Heluz Family 500mm (jednovrstvé)</option>
+                                <option value="itonq">Itonq 500mm (jednovrstvé)</option>
+                                <option value="ceramic">Keramické tvárnice Porotherm</option>
+                                <option value="brick">Klasické cihly 440mm</option>
+                                <option value="wood">Dřevostavba</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Zateplení</label>
+                            <select id="insulation">
+                                <option value="none">Bez zateplení</option>
+                                <option value="eps100">EPS 100mm (polystyren)</option>
+                                <option value="eps150">EPS 150mm (polystyren)</option>
+                                <option value="eps200">EPS 200mm (polystyren)</option>
+                                <option value="eps250">EPS 250mm (polystyren)</option>
+                                <option value="mineral100">Minerální vata 100mm</option>
+                                <option value="mineral150">Minerální vata 150mm</option>
+                                <option value="mineral200">Minerální vata 200mm</option>
+                                <option value="mineral250">Minerální vata 250mm</option>
+                                <option value="pir120">PIR desky 120mm</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Typ střechy</label>
+                            <select id="roof-type">
+                                <option value="flat">Plochá střecha</option>
+                                <option value="saddle">Sedlová střecha</option>
+                                <option value="hip">Valbová střecha</option>
+                                <option value="mansard">Mansardová střecha</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Typ krovu</label>
+                            <select id="roof-structure">
+                                <option value="trusses">Vazníky (prefabrikované)</option>
+                                <option value="beams">Trámy (klasický krov)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Zastřešení</label>
+                            <select id="roofing">
+                                <option value="tiles">Betonová taška</option>
+                                <option value="ceramic">Keramická taška</option>
+                                <option value="metal">Plechová krytina</option>
+                                <option value="shingle">Asfaltový šindel</option>
+                                <option value="membrane">Fóliová membrána (plochá)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🚪 Vybavení</h3>
+                        
+                        <div class="form-group">
+                            <label>Počet obytných místností <span class="range-value" id="rooms-value">5</span></label>
+                            <input type="range" id="rooms" min="2" max="12" value="5" step="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet koupelen <span class="range-value" id="bathrooms-value">2</span></label>
+                            <input type="range" id="bathrooms" min="1" max="4" value="2" step="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet oken <span class="range-value" id="windows-value">12</span></label>
+                            <input type="range" id="windows" min="4" max="30" value="12" step="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet střešních oken <span class="range-value" id="roof-windows-value">0</span></label>
+                            <input type="range" id="roof-windows" min="0" max="8" value="0" step="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet vchodových dveří <span class="range-value" id="ext-doors-value">2</span></label>
+                            <input type="range" id="ext-doors" min="1" max="4" value="2" step="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Počet interiérových dveří <span class="range-value" id="int-doors-value">8</span></label>
+                            <input type="range" id="int-doors" min="2" max="20" value="8" step="1">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>⚙️ Způsob realizace</h3>
+                        
+                        <div class="form-group">
+                            <label>Typ stavby</label>
+                            <div class="radio-group">
+                                <div class="radio-option">
+                                    <input type="radio" id="build-self" name="build-type" value="self">
+                                    <label for="build-self">Svépomocí</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="build-contract" name="build-type" value="contract" checked>
+                                    <label for="build-contract">Subdodávky</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="build-turnkey" name="build-type" value="turnkey">
+                                    <label for="build-turnkey">Na klíč</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Standard vybavení</label>
+                            <select id="standard">
+                                <option value="basic">Základní</option>
+                                <option value="standard">Standardní</option>
+                                <option value="premium">Nadstandardní</option>
+                                <option value="luxury">Luxusní</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔌 Technické instalace</h3>
+                        
+                        <div class="form-group">
+                            <label>Vytápění</label>
+                            <select id="heating">
+                                <option value="gas">Plynový kotel</option>
+                                <option value="heatpump">Tepelné čerpadlo</option>
+                                <option value="heatpump-water">Tepelné čerpadlo (s TV)</option>
+                                <option value="electric">Elektrické topení</option>
+                                <option value="solid">Kotel na tuhá paliva</option>
+                                <option value="underfloor">Podlahové topení</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Příprava teplé vody</label>
+                            <select id="water-heating">
+                                <option value="boiler">Elektrický bojler</option>
+                                <option value="solar">Solární systém</option>
+                                <option value="combined">Kombinovaný systém</option>
+                                <option value="heatpump">V rámci TČ</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Větrání</label>
+                            <select id="ventilation">
+                                <option value="none">Přirozené</option>
+                                <option value="mechanical">Mechanické nucené</option>
+                                <option value="recuperation">S rekuperací</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Solární panely</label>
+                            <select id="solar-panels">
+                                <option value="none">Bez FV</option>
+                                <option value="preparation">Příprava pro FV</option>
+                                <option value="panels">FV panely (5 kWp)</option>
+                                <option value="panels-battery">FV + baterie (10 kWh)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card card">
+                    <h2>Celkový rozpočet</h2>
+                    
+                    <div class="total-price">
+                        <div class="label">Celková cena stavby</div>
+                        <div class="amount" id="total-price">0 Kč</div>
+                        <div class="per-m2" id="price-per-m2">0 Kč/m²</div>
+                    </div>
+
+                    <div class="price-breakdown">
+                        <div class="price-card">
+                            <div class="label">Materiál</div>
+                            <div class="value" id="material-total">0 Kč</div>
+                        </div>
+                        <div class="price-card">
+                            <div class="label">Práce</div>
+                            <div class="value" id="labor-total">0 Kč</div>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <span class="name">Užitná plocha</span>
+                        <span class="value" id="usable-area">0 m²</span>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <span class="name">Obestavěný prostor</span>
+                        <span class="value" id="built-volume">0 m³</span>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <span class="name">Způsob realizace</span>
+                        <span class="value" id="build-method">Subdodávky</span>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <span class="name">Standard</span>
+                        <span class="value" id="standard-level">Standardní</span>
+                    </div>
+
+                    <div class="export-buttons">
+                        <button class="btn btn-primary" onclick="exportFullPDF()">📄 Export PDF</button>
+                        <button class="btn btn-secondary" onclick="saveToStorage()">💾 Uložit</button>
+                    </div>
+
+                    <div class="export-buttons-full">
+                        <button class="btn btn-secondary" onclick="exportMaterialPDF()">📋 Tisk pouze materiál</button>
+                    </div>
+
+                    <div class="detailed-breakdown">
+                        <h2 style="margin-bottom: 16px;">Podrobný rozpis</h2>
+                        
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <h4>🏗️ Hrubá stavba</h4>
+                                <span class="price" id="cat-structure">0 Kč</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="item-row">
+                                    <span class="item-name">Zemní práce</span>
+                                    <span class="item-price" id="item-earthwork">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Základy</span>
+                                    <span class="item-price" id="item-foundation">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Svislé konstrukce</span>
+                                    <span class="item-price" id="item-walls">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Stropy</span>
+                                    <span class="item-price" id="item-floors">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Střecha</span>
+                                    <span class="item-price" id="item-roof">0 Kč</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <h4>🎨 Dokončovací práce</h4>
+                                <span class="price" id="cat-finishing">0 Kč</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="item-row">
+                                    <span class="item-name">Zateplení</span>
+                                    <span class="item-price" id="item-insulation">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Omítky</span>
+                                    <span class="item-price" id="item-plaster">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Podlahy</span>
+                                    <span class="item-price" id="item-flooring">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Malování</span>
+                                    <span class="item-price" id="item-painting">0 Kč</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <h4>🚪 Okna a dveře</h4>
+                                <span class="price" id="cat-openings">0 Kč</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="item-row">
+                                    <span class="item-name">Okna</span>
+                                    <span class="item-price" id="item-windows">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Střešní okna</span>
+                                    <span class="item-price" id="item-roof-windows">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Vchodové dveře</span>
+                                    <span class="item-price" id="item-ext-doors">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Interiérové dveře</span>
+                                    <span class="item-price" id="item-int-doors">0 Kč</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <h4>🔧 Instalace</h4>
+                                <span class="price" id="cat-installations">0 Kč</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="item-row">
+                                    <span class="item-name">Elektroinstalace</span>
+                                    <span class="item-price" id="item-electric">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Voda a kanalizace</span>
+                                    <span class="item-price" id="item-plumbing">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Vytápění</span>
+                                    <span class="item-price" id="item-heating">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Větrání</span>
+                                    <span class="item-price" id="item-ventilation">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">FV systém</span>
+                                    <span class="item-price" id="item-solar">0 Kč</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <h4>🚿 Vybavení koupelen</h4>
+                                <span class="price" id="cat-bathrooms">0 Kč</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="item-row">
+                                    <span class="item-name">Obklady a dlažby</span>
+                                    <span class="item-price" id="item-tiles">0 Kč</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-name">Sanitární zařízení</span>
+                                    <span class="item-price" id="item-sanitary">0 Kč</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-prices" class="tab-content">
+            <div class="card" style="max-width: 1200px; margin: 0 auto;">
+                <h2>⚙️ Nastavení jednotkových cen</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">
+                    Zde můžete upravit ceny materiálů a prací podle aktuálních nabídek nebo vaší lokality. Ceny jsou v Kč/m² nebo Kč/ks.
+                </p>
+
+                <div class="form-section">
+                    <h3>🧱 Zdivo (Kč/m²)</h3>
+                    <div class="price-section-header">
+                        <span>Typ</span>
+                        <span>Materiál</span>
+                        <span>Práce</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Ytong 375mm</span>
+                        <input type="number" id="price-ytong-mat" value="1800" step="50">
+                        <input type="number" id="price-ytong-lab" value="650" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Ytong Lambda 300mm</span>
+                        <input type="number" id="price-ytong-lambda-mat" value="2000" step="50">
+                        <input type="number" id="price-ytong-lambda-lab" value="700" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Heluz Family 500mm</span>
+                        <input type="number" id="price-heluz-mat" value="2400" step="50">
+                        <input type="number" id="price-heluz-lab" value="800" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Itonq 500mm</span>
+                        <input type="number" id="price-itonq-mat" value="2300" step="50">
+                        <input type="number" id="price-itonq-lab" value="750" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Porotherm</span>
+                        <input type="number" id="price-ceramic-mat" value="2100" step="50">
+                        <input type="number" id="price-ceramic-lab" value="750" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Klasické cihly 440mm</span>
+                        <input type="number" id="price-brick-mat" value="1600" step="50">
+                        <input type="number" id="price-brick-lab" value="600" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Dřevostavba</span>
+                        <input type="number" id="price-wood-mat" value="2800" step="50">
+                        <input type="number" id="price-wood-lab" value="1200" step="50">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🧊 Zateplení (Kč/m²)</h3>
+                    <div class="price-section-header">
+                        <span>Typ</span>
+                        <span>Materiál</span>
+                        <span>Práce</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">EPS 100mm</span>
+                        <input type="number" id="price-eps100-mat" value="280" step="20">
+                        <input type="number" id="price-eps100-lab" value="320" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">EPS 150mm</span>
+                        <input type="number" id="price-eps150-mat" value="400" step="20">
+                        <input type="number" id="price-eps150-lab" value="380" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">EPS 200mm</span>
+                        <input type="number" id="price-eps200-mat" value="520" step="20">
+                        <input type="number" id="price-eps200-lab" value="420" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">EPS 250mm</span>
+                        <input type="number" id="price-eps250-mat" value="650" step="20">
+                        <input type="number" id="price-eps250-lab" value="480" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Minerální vata 100mm</span>
+                        <input type="number" id="price-mineral100-mat" value="340" step="20">
+                        <input type="number" id="price-mineral100-lab" value="350" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Minerální vata 150mm</span>
+                        <input type="number" id="price-mineral150-mat" value="470" step="20">
+                        <input type="number" id="price-mineral150-lab" value="400" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Minerální vata 200mm</span>
+                        <input type="number" id="price-mineral200-mat" value="600" step="20">
+                        <input type="number" id="price-mineral200-lab" value="450" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Minerální vata 250mm</span>
+                        <input type="number" id="price-mineral250-mat" value="750" step="20">
+                        <input type="number" id="price-mineral250-lab" value="500" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">PIR desky 120mm</span>
+                        <input type="number" id="price-pir120-mat" value="560" step="20">
+                        <input type="number" id="price-pir120-lab" value="450" step="20">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🏠 Střecha (Kč/m²)</h3>
+                    <div class="price-section-header">
+                        <span>Typ</span>
+                        <span>Materiál</span>
+                        <span>Práce</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Krov - vazníky</span>
+                        <input type="number" id="price-trusses-mat" value="1200" step="50">
+                        <input type="number" id="price-trusses-lab" value="800" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Krov - trámy</span>
+                        <input type="number" id="price-beams-mat" value="1600" step="50">
+                        <input type="number" id="price-beams-lab" value="1400" step="50">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Betonová taška</span>
+                        <input type="number" id="price-tiles-mat" value="420" step="20">
+                        <input type="number" id="price-tiles-lab" value="350" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Keramická taška</span>
+                        <input type="number" id="price-ceramic-roof-mat" value="620" step="20">
+                        <input type="number" id="price-ceramic-roof-lab" value="450" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Plechová krytina</span>
+                        <input type="number" id="price-metal-mat" value="350" step="20">
+                        <input type="number" id="price-metal-lab" value="280" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Fóliová membrána</span>
+                        <input type="number" id="price-membrane-mat" value="480" step="20">
+                        <input type="number" id="price-membrane-lab" value="420" step="20">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🎨 Dokončovací práce (Kč/m²)</h3>
+                    <div class="price-section-header">
+                        <span>Typ</span>
+                        <span>Materiál</span>
+                        <span>Práce</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Omítky</span>
+                        <input type="number" id="price-plaster-mat" value="180" step="10">
+                        <input type="number" id="price-plaster-lab" value="280" step="10">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Podlahy (základní)</span>
+                        <input type="number" id="price-flooring-mat" value="400" step="20">
+                        <input type="number" id="price-flooring-lab" value="350" step="20">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Malování</span>
+                        <input type="number" id="price-painting-mat" value="50" step="5">
+                        <input type="number" id="price-painting-lab" value="120" step="10">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Obklady (Kč/m²)</span>
+                        <input type="number" id="price-tiles-bath-mat" value="450" step="20">
+                        <input type="number" id="price-tiles-bath-lab" value="380" step="20">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🚪 Okna a dveře (Kč/ks)</h3>
+                    <div class="price-section-header">
+                        <span>Typ</span>
+                        <span>Materiál</span>
+                        <span>Práce</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Okno (standardní)</span>
+                        <input type="number" id="price-window-mat" value="12000" step="500">
+                        <input type="number" id="price-window-lab" value="2500" step="200">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Střešní okno</span>
+                        <input type="number" id="price-roof-window-mat" value="15000" step="500">
+                        <input type="number" id="price-roof-window-lab" value="3500" step="200">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Vchodové dveře</span>
+                        <input type="number" id="price-ext-door-mat" value="25000" step="1000">
+                        <input type="number" id="price-ext-door-lab" value="4500" step="500">
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Interiérové dveře</span>
+                        <input type="number" id="price-int-door-mat" value="5500" step="500">
+                        <input type="number" id="price-int-door-lab" value="1800" step="200">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🔧 Technologie (Kč) - pouze materiál</h3>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Tepelné čerpadlo</span>
+                        <input type="number" id="price-heatpump" value="280000" step="10000">
+                        <span style="color: var(--text-secondary); font-size: 12px;">montáž dle plochy</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">FV 5kWp</span>
+                        <input type="number" id="price-solar-5kw" value="150000" step="10000">
+                        <span style="color: var(--text-secondary); font-size: 12px;">montáž dle plochy</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Baterie 10kWh</span>
+                        <input type="number" id="price-battery-10kwh" value="180000" step="10000">
+                        <span style="color: var(--text-secondary); font-size: 12px;">montáž dle plochy</span>
+                    </div>
+                    <div class="price-editor-grid">
+                        <span class="price-editor-label">Rekuperace</span>
+                        <input type="number" id="price-recuperation" value="180000" step="10000">
+                        <span style="color: var(--text-secondary); font-size: 12px;">montáž dle plochy</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="savePrices()">💾 Uložit ceny</button>
+                    <button class="btn btn-secondary" onclick="resetPrices()">🔄 Obnovit výchozí</button>
+                    <button class="btn btn-danger" onclick="switchTab('params')">← Zpět na parametry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'params') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tab-params').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tab-prices').classList.add('active');
+            }
+        }
+
+        function loadPrices() {
+            const saved = localStorage.getItem('custom-prices');
+            if (saved) {
+                const prices = JSON.parse(saved);
+                Object.keys(prices).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input) input.value = prices[key];
+                });
+            }
+        }
+
+        function savePrices() {
+            const priceInputs = document.querySelectorAll('[id^="price-"]');
+            const prices = {};
+            priceInputs.forEach(input => {
+                prices[input.id] = parseInt(input.value);
+            });
+            localStorage.setItem('custom-prices', JSON.stringify(prices));
+            alert('✅ Ceny byly uloženy!');
+            calculate();
+        }
+
+        function resetPrices() {
+            if (confirm('Opravdu chcete obnovit výchozí ceny?')) {
+                localStorage.removeItem('custom-prices');
+                location.reload();
+            }
+        }
+
+        function getPrice(id) {
+            const input = document.getElementById('price-' + id);
+            return input ? parseInt(input.value) : 0;
+        }
+
+        const sliders = ['area', 'rooms', 'bathrooms', 'windows', 'roof-windows', 'ext-doors', 'int-doors'];
+        sliders.forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                document.getElementById(id + '-value').textContent = e.target.value;
+                calculate();
+            });
+        });
+
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('change', calculate);
+        });
+
+        function toggleCategory(element) {
+            const items = element.nextElementSibling;
+            items.classList.toggle('active');
+        }
+
+        function calculate() {
+            const area = parseInt(document.getElementById('area').value);
+            const floors = parseInt(document.querySelector('input[name="floors"]:checked').value);
+            const houseShape = document.getElementById('house-shape').value;
+            const wallType = document.getElementById('wall-type').value;
+            const insulation = document.getElementById('insulation').value;
+            const roofType = document.getElementById('roof-type').value;
+            const roofStructure = document.getElementById('roof-structure').value;
+            const roofing = document.getElementById('roofing').value;
+            const rooms = parseInt(document.getElementById('rooms').value);
+            const bathrooms = parseInt(document.getElementById('bathrooms').value);
+            const windows = parseInt(document.getElementById('windows').value);
+            const roofWindows = parseInt(document.getElementById('roof-windows').value);
+            const extDoors = parseInt(document.getElementById('ext-doors').value);
+            const intDoors = parseInt(document.getElementById('int-doors').value);
+            const buildType = document.querySelector('input[name="build-type"]:checked').value;
+            const standard = document.getElementById('standard').value;
+            const heating = document.getElementById('heating').value;
+            const waterHeating = document.getElementById('water-heating').value;
+            const ventilation = document.getElementById('ventilation').value;
+            const solarPanels = document.getElementById('solar-panels').value;
+
+            const shapeCoef = {
+                square: 1.0,
+                lshape: 1.12,
+                ushape: 1.18,
+                complex: 1.25
+            }[houseShape];
+
+            const standardCoef = {
+                basic: 0.75,
+                standard: 1.0,
+                premium: 1.4,
+                luxury: 2.0
+            }[standard];
+
+            const usableArea = area * floors * 0.85;
+            const wallArea = area * floors * 3.2;
+            const roofArea = area * (roofType === 'flat' ? 1 : 1.3);
+            const builtVolume = area * floors * 3.2;
+
+            let totalMaterial = 0;
+            let totalLabor = 0;
+
+            const earthworkMat = area * 200 * shapeCoef;
+            const earthworkLab = area * 350 * shapeCoef;
+            
+            const foundationMat = area * 1800 * shapeCoef;
+            const foundationLab = area * 1200 * shapeCoef;
+            
+            const wallsMat = wallArea * getPrice(wallType + '-mat') * shapeCoef;
+            const wallsLab = wallArea * getPrice(wallType + '-lab') * shapeCoef;
+            
+            const floorsMat = area * floors * 1200;
+            const floorsLab = area * floors * 800;
+            
+            const roofStructureMat = roofArea * getPrice(roofStructure + '-mat');
+            const roofStructureLab = roofArea * getPrice(roofStructure + '-lab');
+            
+            const roofingKey = roofing === 'ceramic' ? 'ceramic-roof' : roofing;
+            const roofingMat = roofArea * getPrice(roofingKey + '-mat');
+            const roofingLab = roofArea * getPrice(roofingKey + '-lab');
+            
+            const structureMat = earthworkMat + foundationMat + wallsMat + floorsMat + roofStructureMat + roofingMat;
+            const structureLab = earthworkLab + foundationLab + wallsLab + floorsLab + roofStructureLab + roofingLab;
+
+            const insulationMat = insulation !== 'none' ? wallArea * getPrice(insulation + '-mat') : 0;
+            const insulationLab = insulation !== 'none' ? wallArea * getPrice(insulation + '-lab') : 0;
+            
+            const plasterMat = wallArea * getPrice('plaster-mat');
+            const plasterLab = wallArea * getPrice('plaster-lab');
+            
+            const flooringMat = usableArea * getPrice('flooring-mat') * standardCoef;
+            const flooringLab = usableArea * getPrice('flooring-lab') * standardCoef;
+            
+            const paintingMat = wallArea * getPrice('painting-mat');
+            const paintingLab = wallArea * getPrice('painting-lab');
+            
+            const finishingMat = insulationMat + plasterMat + flooringMat + paintingMat;
+            const finishingLab = insulationLab + plasterLab + flooringLab + paintingLab;
+
+            const windowsMat = windows * getPrice('window-mat') * standardCoef;
+            const windowsLab = windows * getPrice('window-lab');
+            
+            const roofWindowsMat = roofWindows * getPrice('roof-window-mat') * standardCoef;
+            const roofWindowsLab = roofWindows * getPrice('roof-window-lab');
+            
+            const extDoorsMat = extDoors * getPrice('ext-door-mat') * standardCoef;
+            const extDoorsLab = extDoors * getPrice('ext-door-lab');
+            
+            const intDoorsMat = intDoors * getPrice('int-door-mat') * standardCoef;
+            const intDoorsLab = intDoors * getPrice('int-door-lab');
+            
+            const openingsMat = windowsMat + roofWindowsMat + extDoorsMat + intDoorsMat;
+            const openingsLab = windowsLab + roofWindowsLab + extDoorsLab + intDoorsLab;
+
+            const electricMat = usableArea * 650 * standardCoef;
+            const electricLab = usableArea * 450 * standardCoef;
+            
+            const plumbingMat = usableArea * 500 + bathrooms * 30000;
+            const plumbingLab = usableArea * 400 + bathrooms * 25000;
+            
+            let heatingMat = 0;
+            let heatingLab = 0;
+            
+            if (heating === 'gas') {
+                heatingMat = 100000 + usableArea * 250;
+                heatingLab = 80000;
+            } else if (heating === 'heatpump') {
+                heatingMat = getPrice('heatpump') + usableArea * 300;
+                heatingLab = 120000;
+            } else if (heating === 'heatpump-water') {
+                heatingMat = getPrice('heatpump') + 80000 + usableArea * 300;
+                heatingLab = 140000;
+            } else if (heating === 'electric') {
+                heatingMat = 60000 + usableArea * 180;
+                heatingLab = 50000;
+            } else if (heating === 'underfloor') {
+                heatingMat = usableArea * 800;
+                heatingLab = usableArea * 400;
+            }
+            
+            let waterHeatingMat = 0;
+            let waterHeatingLab = 0;
+            
+            if (waterHeating === 'boiler') {
+                waterHeatingMat = 18000;
+                waterHeatingLab = 8000;
+            } else if (waterHeating === 'solar') {
+                waterHeatingMat = 85000;
+                waterHeatingLab = 40000;
+            } else if (waterHeating === 'combined') {
+                waterHeatingMat = 60000;
+                waterHeatingLab = 30000;
+            } else if (waterHeating === 'heatpump' && heating !== 'heatpump-water') {
+                waterHeatingMat = 0;
+                waterHeatingLab = 0;
+            }
+            
+            let ventilationMat = 0;
+            let ventilationLab = 0;
+            
+            if (ventilation === 'mechanical') {
+                ventilationMat = 70000;
+                ventilationLab = 35000;
+            } else if (ventilation === 'recuperation') {
+                ventilationMat = getPrice('recuperation');
+                ventilationLab = 80000;
+            }
+            
+            let solarMat = 0;
+            let solarLab = 0;
+            
+            if (solarPanels === 'preparation') {
+                solarMat = 15000;
+                solarLab = 20000;
+            } else if (solarPanels === 'panels') {
+                solarMat = getPrice('solar-5kw');
+                solarLab = 60000;
+            } else if (solarPanels === 'panels-battery') {
+                solarMat = getPrice('solar-5kw') + getPrice('battery-10kwh');
+                solarLab = 100000;
+            }
+            
+            const installationsMat = electricMat + plumbingMat + heatingMat + waterHeatingMat + ventilationMat + solarMat;
+            const installationsLab = electricLab + plumbingLab + heatingLab + waterHeatingLab + ventilationLab + solarLab;
+
+            const tilesMat = bathrooms * 60000 * standardCoef;
+            const tilesLab = bathrooms * 35000;
+            
+            const sanitaryMat = bathrooms * 45000 * standardCoef;
+            const sanitaryLab = bathrooms * 25000;
+            
+            const bathroomsMat = tilesMat + sanitaryMat;
+            const bathroomsLab = tilesLab + sanitaryLab;
+
+            totalMaterial = structureMat + finishingMat + openingsMat + installationsMat + bathroomsMat;
+            totalLabor = structureLab + finishingLab + openingsLab + installationsLab + bathroomsLab;
+
+            let finalMaterial = totalMaterial;
+            let finalLabor = totalLabor;
+            let gzOverhead = 0;
+
+            if (buildType === 'self') {
+                finalLabor = 0;
+            } else if (buildType === 'turnkey') {
+                gzOverhead = (totalMaterial + totalLabor) * 0.25;
+            }
+
+            const totalPrice = finalMaterial + finalLabor + gzOverhead;
+
+            document.getElementById('total-price').textContent = formatPrice(totalPrice);
+            document.getElementById('price-per-m2').textContent = formatPrice(totalPrice / usableArea) + '/m²';
+            document.getElementById('material-total').textContent = formatPrice(finalMaterial);
+            document.getElementById('labor-total').textContent = formatPrice(finalLabor + gzOverhead);
+            document.getElementById('usable-area').textContent = Math.round(usableArea) + ' m²';
+            document.getElementById('built-volume').textContent = Math.round(builtVolume) + ' m³';
+
+            const buildMethodMap = {
+                self: 'Svépomocí',
+                contract: 'Subdodávky',
+                turnkey: 'Na klíč'
+            };
+            document.getElementById('build-method').textContent = buildMethodMap[buildType];
+
+            const standardMap = {
+                basic: 'Základní',
+                standard: 'Standardní',
+                premium: 'Nadstandardní',
+                luxury: 'Luxusní'
+            };
+            document.getElementById('standard-level').textContent = standardMap[standard];
+
+            document.getElementById('cat-structure').textContent = formatPrice(structureMat + structureLab);
+            document.getElementById('cat-finishing').textContent = formatPrice(finishingMat + finishingLab);
+            document.getElementById('cat-openings').textContent = formatPrice(openingsMat + openingsLab);
+            document.getElementById('cat-installations').textContent = formatPrice(installationsMat + installationsLab);
+            document.getElementById('cat-bathrooms').textContent = formatPrice(bathroomsMat + bathroomsLab);
+
+            document.getElementById('item-earthwork').textContent = formatPrice(earthworkMat + earthworkLab);
+            document.getElementById('item-foundation').textContent = formatPrice(foundationMat + foundationLab);
+            document.getElementById('item-walls').textContent = formatPrice(wallsMat + wallsLab);
+            document.getElementById('item-floors').textContent = formatPrice(floorsMat + floorsLab);
+            document.getElementById('item-roof').textContent = formatPrice(roofStructureMat + roofStructureLab + roofingMat + roofingLab);
+
+            document.getElementById('item-insulation').textContent = formatPrice(insulationMat + insulationLab);
+            document.getElementById('item-plaster').textContent = formatPrice(plasterMat + plasterLab);
+            document.getElementById('item-flooring').textContent = formatPrice(flooringMat + flooringLab);
+            document.getElementById('item-painting').textContent = formatPrice(paintingMat + paintingLab);
+
+            document.getElementById('item-windows').textContent = formatPrice(windowsMat + windowsLab);
+            document.getElementById('item-roof-windows').textContent = formatPrice(roofWindowsMat + roofWindowsLab);
+            document.getElementById('item-ext-doors').textContent = formatPrice(extDoorsMat + extDoorsLab);
+            document.getElementById('item-int-doors').textContent = formatPrice(intDoorsMat + intDoorsLab);
+
+            document.getElementById('item-electric').textContent = formatPrice(electricMat + electricLab);
+            document.getElementById('item-plumbing').textContent = formatPrice(plumbingMat + plumbingLab);
+            document.getElementById('item-heating').textContent = formatPrice(heatingMat + heatingLab + waterHeatingMat + waterHeatingLab);
+            document.getElementById('item-ventilation').textContent = formatPrice(ventilationMat + ventilationLab);
+            document.getElementById('item-solar').textContent = formatPrice(solarMat + solarLab);
+
+            document.getElementById('item-tiles').textContent = formatPrice(tilesMat + tilesLab);
+            document.getElementById('item-sanitary').textContent = formatPrice(sanitaryMat + sanitaryLab);
+        }
+
+        function formatPrice(price) {
+            return Math.round(price).toLocaleString('cs-CZ') + ' Kč';
+        }
+
+        function exportFullPDF() {
+            window.print();
+        }
+
+        function exportMaterialPDF() {
+            alert('Pro tisk pouze materiálu použijte funkci Print (Ctrl+P)');
+            window.print();
+        }
+
+        function saveToStorage() {
+            const data = {
+                area: document.getElementById('area').value,
+                floors: document.querySelector('input[name="floors"]:checked').value,
+                houseShape: document.getElementById('house-shape').value,
+                wallType: document.getElementById('wall-type').value,
+                insulation: document.getElementById('insulation').value,
+                roofType: document.getElementById('roof-type').value,
+                roofStructure: document.getElementById('roof-structure').value,
+                roofing: document.getElementById('roofing').value,
+                rooms: document.getElementById('rooms').value,
+                bathrooms: document.getElementById('bathrooms').value,
+                windows: document.getElementById('windows').value,
+                roofWindows: document.getElementById('roof-windows').value,
+                extDoors: document.getElementById('ext-doors').value,
+                intDoors: document.getElementById('int-doors').value,
+                buildType: document.querySelector('input[name="build-type"]:checked').value,
+                standard: document.getElementById('standard').value,
+                heating: document.getElementById('heating').value,
+                waterHeating: document.getElementById('water-heating').value,
+                ventilation: document.getElementById('ventilation').value,
+                solarPanels: document.getElementById('solar-panels').value,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('stavebni-rozpocet', JSON.stringify(data));
+            alert('✅ Rozpočet byl uložen do prohlížeče!');
+        }
+
+        window.addEventListener('load', () => {
+            loadPrices();
+            
+            const saved = localStorage.getItem('stavebni-rozpocet');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('area').value = data.area;
+                document.querySelector(`input[name="floors"][value="${data.floors}"]`).checked = true;
+                document.getElementById('house-shape').value = data.houseShape;
+                document.getElementById('wall-type').value = data.wallType;
+                document.getElementById('insulation').value = data.insulation;
+                document.getElementById('roof-type').value = data.roofType;
+                if (data.roofStructure) document.getElementById('roof-structure').value = data.roofStructure;
+                document.getElementById('roofing').value = data.roofing;
+                document.getElementById('rooms').value = data.rooms;
+                document.getElementById('bathrooms').value = data.bathrooms;
+                document.getElementById('windows').value = data.windows;
+                if (data.roofWindows !== undefined) document.getElementById('roof-windows').value = data.roofWindows;
+                document.getElementById('ext-doors').value = data.extDoors;
+                document.getElementById('int-doors').value = data.intDoors;
+                document.querySelector(`input[name="build-type"][value="${data.buildType}"]`).checked = true;
+                document.getElementById('standard').value = data.standard;
+                document.getElementById('heating').value = data.heating;
+                document.getElementById('water-heating').value = data.waterHeating;
+                document.getElementById('ventilation').value = data.ventilation;
+                if (data.solarPanels) document.getElementById('solar-panels').value = data.solarPanels;
+
+                document.getElementById('area-value').textContent = data.area;
+                document.getElementById('rooms-value').textContent = data.rooms;
+                document.getElementById('bathrooms-value').textContent = data.bathrooms;
+                document.getElementById('windows-value').textContent = data.windows;
+                if (data.roofWindows !== undefined) document.getElementById('roof-windows-value').textContent = data.roofWindows;
+                document.getElementById('ext-doors-value').textContent = data.extDoors;
+                document.getElementById('int-doors-value').textContent = data.intDoors;
+            }
+            calculate();
+        });
+    </script>
+</body>
+</html>

@@ -12,7 +12,7 @@
   :root {
     --bg:#f0ebe3; --surface:#faf7f4; --border:#e8e0d6; --border-hover:#c8bdb0;
     --accent-games:#c94a0f; --accent-finance:#0a6644; --accent-business:#1247a8;
-    --accent-brain:#6b28a0; --accent-tools:#8a6200; --accent-reality:#0a7055; --accent-contact:#1a1614; --accent-family:#a0622a;
+    --accent-brain:#6b28a0; --accent-tools:#8a6200; --accent-reality:#0a7055; --accent-contact:#1a1614; --accent-zdravi:#b5282e; --accent-dum:#8a5200; --accent-family:#a0622a;
     --text:#1a1614; --muted:#8a7e74; --subtle:#ede6dc;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -138,6 +138,8 @@
   <button class="filter-chip" onclick="setFilter('podnikani',this)">💼 Podnikání</button>
   <button class="filter-chip" onclick="setFilter('reality',this)">🏠 Reality</button>
   <button class="filter-chip" onclick="setFilter('nastroje',this)">🔧 Nástroje</button>
+  <button class="filter-chip" onclick="setFilter('zdravi',this)">💪 Zdraví</button>
+  <button class="filter-chip" onclick="setFilter('dum',this)">🏗️ Dům</button>
   <button class="filter-chip" onclick="setFilter('rodina',this)">🌸 Rodina</button>
   <button class="filter-chip" onclick="setFilter('kontakt',this)">📬 Kontakt</button>
 </div>
@@ -225,6 +227,37 @@
     </div>
     <div class="tile-arrow">↗</div>
   </a>
+  <!-- HIIT TRACKER -->
+  <a class="tile" href="hiit-tracker.html" style="--tile-accent:var(--accent-zdravi);" data-category="zdravi">
+    <div class="tile-wash"></div><div class="tile-bar"></div>
+    <div class="tile-icon">💪</div><div class="tile-cat">Zdraví &amp; Fitness</div>
+    <div class="status live"><span class="status-dot"></span>Živé</div>
+    <div class="tile-title">HIIT Tracker</div>
+    <div class="tile-desc">Sledování HIIT tréninků, kalorický deficit a progres. Ukládání v prohlížeči — pokračuješ tam kde jsi skončil.</div>
+    <div class="tile-apps">
+      <span class="app-badge">HIIT</span>
+      <span class="app-badge">Kalorický deficit</span>
+      <span class="app-badge">Progres</span>
+    </div>
+    <div class="tile-arrow">↗</div>
+  </a>
+
+  <!-- STAVEBNÍ ROZPOČET -->
+  <a class="tile" href="stavebni-rozpocet.html" style="--tile-accent:var(--accent-dum);" data-category="dum">
+    <div class="tile-wash"></div><div class="tile-bar"></div>
+    <div class="tile-icon">🏗️</div><div class="tile-cat">Dům &amp; Stavba</div>
+    <div class="status live"><span class="status-dot"></span>Živé</div>
+    <div class="tile-title">Položkový rozpočet domu</div>
+    <div class="tile-desc">Přesná kalkulace nákladů na stavbu rodinného domu — materiál i práce. Uložení v prohlížeči.</div>
+    <div class="tile-apps">
+      <span class="app-badge">Materiál</span>
+      <span class="app-badge">Práce</span>
+      <span class="app-badge">Kalkulace</span>
+    </div>
+    <div class="tile-arrow">↗</div>
+  </a>
+
+
   <!-- RODINA -->
   <a class="tile" href="babicka/index.html" style="--tile-accent:#a0622a;" data-category="rodina">
     <div class="tile-wash"></div><div class="tile-bar"></div>
