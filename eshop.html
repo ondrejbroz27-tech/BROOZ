@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="cs" style="background:#1a3a2a !important;color-scheme:light !important;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>E-shop — Brooz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#1a3a2a; --gold:#c9a84c; --text:#f0ece4; --muted:rgba(240,236,228,0.5); --border:rgba(201,168,76,0.2); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:1.5rem 4rem; position:fixed; top:0; left:0; right:0; z-index:100; background:linear-gradient(to bottom,rgba(0,0,0,0.5),transparent); }
+  .nav-logo { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.8rem; letter-spacing:0.35em; color:var(--gold); text-decoration:none; }
+  .back-link { font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); text-decoration:none; border-bottom:1px solid var(--border); padding-bottom:2px; transition:color 0.2s; }
+  .back-link:hover { color:var(--gold); }
+  main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; }
+  .label { font-size:0.65rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); margin-bottom:1.5rem; display:flex; align-items:center; justify-content:center; gap:1rem; }
+  .label::before, .label::after { content:''; display:block; width:40px; height:1px; background:var(--gold); opacity:0.4; }
+  h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:clamp(3rem,8vw,6rem); line-height:1; letter-spacing:-0.02em; margin-bottom:1.5rem; }
+  h1 em { font-style:italic; color:var(--gold); }
+  p { font-size:0.9rem; color:var(--muted); max-width:420px; line-height:1.8; margin-bottom:2.5rem; }
+  .coming-badge { display:inline-flex; align-items:center; gap:0.6rem; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); border:1px solid var(--border); padding:0.5rem 1.5rem; border-radius:999px; }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--gold); animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  footer { padding:1.5rem 4rem; border-top:1px solid var(--border); text-align:center; font-size:0.7rem; color:var(--muted); }
+  @media(max-width:600px){ nav,footer{padding:1rem 1.5rem;} }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Brooz</a>
+  <a class="back-link" href="index.html">← Zpět</a>
+</nav>
+
+<main>
+  <div class="label">E-shop</div>
+  <h1>Brzy <em>otevřeme</em></h1>
+  <p>Připravujeme pro vás e-shop s prototypovými díly, 3D tisknutými komponenty a dalším automotive příslušenstvím. Sledujte nás na YouTube pro nejnovější novinky.</p>
+  <div class="coming-badge">
+    <div class="dot"></div>
+    V přípravě
+  </div>
+</main>
+
+<footer>© 2026 Ondřej Brož — Brooz</footer>
+</body>
+</html>
