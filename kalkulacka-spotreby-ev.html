@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elektromobil Kalkulačka | BROOZ Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Archivo:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-electric: #00ff9f;
+            --secondary-electric: #0066ff;
+            --bg-dark: #0a0e1a;
+            --bg-card: #141824;
+            --bg-input: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #8b92a8;
+            --border: #2a3044;
+            --success: #00ff9f;
+            --warning: #ffa500;
+            --danger: #ff3366;
+            --slider-track: #2a3044;
+            --slider-fill: rgba(0, 255, 159, 0.3);
+        }
+
+        [data-theme="light"] {
+            --primary-electric: #00d084;
+            --secondary-electric: #0052cc;
+            --bg-dark: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-input: #f0f2f5;
+            --text-primary: #1a1f2e;
+            --text-secondary: #5a6375;
+            --border: #d1d5db;
+            --success: #00d084;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --slider-track: #e5e7eb;
+            --slider-fill: rgba(0, 208, 132, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Archivo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
+        }
+
+        [data-theme="light"] .animated-bg {
+            opacity: 0.08;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 208, 132, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 82, 204, 0.15) 0%, transparent 50%);
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-electric), var(--secondary-electric));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab {
+            font-family: 'Orbitron', sans-serif;
+            padding: 15px 30px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--primary-electric);
+        }
+
+        .tab.active {
+            color: var(--primary-electric);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-electric);
+            animation: expandWidth 0.3s ease-out;
+        }
+
+        @keyframes expandWidth {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--primary-electric);
+            box-shadow: 0 0 20px rgba(0, 255, 159, 0.1);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-electric);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '⚡';
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-electric);
+            box-shadow: 0 0 0 3px rgba(0, 255, 159, 0.1);
+        }
+
+        .quick-select {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            padding: 15px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Archivo', sans-serif;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary-electric);
+            background: rgba(0, 255, 159, 0.05);
+        }
+
+        .quick-btn.active {
+            border-color: var(--primary-electric);
+            background: rgba(0, 255, 159, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 159, 0.2);
+        }
+
+        .slider-container {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .slider-value {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-electric);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: var(--slider-track);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--primary-electric);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 255, 159, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(0, 255, 159, 0.8);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: var(--primary-electric);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 255, 159, 0.5);
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: var(--slider-track);
+            height: 8px;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-ms-track {
+            background: var(--slider-track);
+            height: 8px;
+            border-radius: 5px;
+            border: none;
+            color: transparent;
+        }
+
+        .charging-split {
+            display: grid;
+            gap: 20px;
+        }
+
+        .charging-item {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .charging-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .charging-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .charging-percent {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--primary-electric);
+        }
+
+        .results {
+            background: linear-gradient(135deg, rgba(0, 255, 159, 0.05), rgba(0, 102, 255, 0.05));
+            border-radius: 12px;
+            padding: 30px;
+            border: 2px solid var(--primary-electric);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 159, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 255, 159, 0.4);
+            }
+        }
+
+        .result-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-electric);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .result-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-electric);
+        }
+
+        .result-unit {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-left: 5px;
+        }
+
+        .breakdown {
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .breakdown-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .car-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .car-card:hover {
+            border-color: var(--primary-electric);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 159, 0.2);
+        }
+
+        .car-card.winner {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(0, 255, 159, 0.3);
+        }
+
+        .car-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--primary-electric);
+        }
+
+        .car-type {
+            display: inline-block;
+            padding: 5px 15px;
+            background: var(--bg-input);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .car-stats {
+            margin: 20px 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .cost-highlight {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 159, 0.1), rgba(0, 102, 255, 0.1));
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .cost-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .cost-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-electric);
+        }
+
+        .savings-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: var(--success);
+            color: var(--bg-dark);
+            border-radius: 20px;
+            font-weight: 700;
+            margin-top: 10px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .quick-select {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 50px;
+            border-top: 2px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .brooz-link {
+            color: var(--primary-electric);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .brooz-link:hover {
+            text-shadow: 0 0 10px rgba(0, 255, 159, 0.8);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-electric);
+            box-shadow: 0 4px 16px rgba(0, 255, 159, 0.2);
+        }
+
+        .theme-icon {
+            font-size: 1.3rem;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover .theme-icon {
+            transform: rotate(20deg);
+        }
+
+        .theme-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="animated-bg"></div>
+    
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+        <span class="theme-label" id="themeLabel">Tmavý mód</span>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>⚡ ELEKTROMOBIL KALKULAČKA</h1>
+            <p class="subtitle">Přesný výpočet spotřeby, ztrát a nákladů na provoz elektromobilu</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('calculator')">Kalkulačka spotřeby</button>
+            <button class="tab" onclick="switchTab('comparison')">EV vs Spalovací</button>
+        </div>
+
+        <!-- TAB 1: Kalkulačka -->
+        <div id="calculator" class="tab-content active">
+            <div class="grid-2">
+                <div>
+                    <div class="card">
+                        <h2 class="card-title">Základní parametry</h2>
+                        
+                        <div class="input-group">
+                            <label>Roční nájezd (km)</label>
+                            <input type="number" id="yearlyKm" value="15000" oninput="calculate()">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Výběr elektromobilu</label>
+                            <div class="quick-select">
+                                <button class="quick-btn active" onclick="selectCar('tesla_my', 17, this)">
+                                    Tesla Model Y<br>
+                                    <small>17 kWh/100km</small>
+                                </button>
+                                <button class="quick-btn" onclick="selectCar('tesla_m3', 15, this)">
+                                    Tesla Model 3<br>
+                                    <small>15 kWh/100km</small>
+                                </button>
+                                <button class="quick-btn" onclick="selectCar('enyaq_150', 19, this)">
+                                    Škoda Enyaq 150<br>
+                                    <small>19 kWh/100km</small>
+                                </button>
+                                <button class="quick-btn" onclick="selectCar('enyaq_rs', 21, this)">
+                                    Škoda Enyaq RS<br>
+                                    <small>21 kWh/100km</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Spotřeba elektromobilu (kWh/100km)</label>
+                            <input type="number" id="consumption" value="17" step="0.1" oninput="calculate()">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="card-title">Mix cest</h2>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Město</label>
+                                <span class="slider-value" id="cityValue">40%</span>
+                            </div>
+                            <input type="range" id="cityPercent" min="0" max="100" value="40" oninput="updateMixSliders()">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Mimo město</label>
+                                <span class="slider-value" id="ruralValue">40%</span>
+                            </div>
+                            <input type="range" id="ruralPercent" min="0" max="100" value="40" oninput="updateMixSliders()">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Dálnice</label>
+                                <span class="slider-value" id="highwayValue">20%</span>
+                            </div>
+                            <input type="range" id="highwayPercent" min="0" max="100" value="20" oninput="updateMixSliders()">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="card-title">Účinnosti systému</h2>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Rekuperace energie</label>
+                                <span class="slider-value" id="recupValue">16%</span>
+                            </div>
+                            <input type="range" id="recuperation" min="10" max="20" value="16" step="1" oninput="updateRecuperation()">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Účinnost baterie</label>
+                                <span class="slider-value" id="batteryValue">97.5%</span>
+                            </div>
+                            <input type="range" id="batteryEff" min="95" max="99" value="97.5" step="0.1" oninput="updateBatteryEff()">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <label>Účinnost nabíjení</label>
+                                <span class="slider-value" id="chargingValue">90%</span>
+                            </div>
+                            <input type="range" id="chargingEff" min="85" max="95" value="90" step="1" oninput="updateChargingEff()">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <h2 class="card-title">Rozdělení nabíjení</h2>
+                        
+                        <div class="charging-split">
+                            <div class="charging-item">
+                                <div class="charging-header">
+                                    <span class="charging-name">🏠 Doma ze sítě</span>
+                                    <span class="charging-percent" id="homeGridPercent">50%</span>
+                                </div>
+                                <input type="range" id="homeGrid" min="0" max="100" value="50" oninput="updateChargingSplit()">
+                                <div class="input-group" style="margin-top: 10px;">
+                                    <label>Cena elektřiny (Kč/kWh)</label>
+                                    <input type="number" id="homeGridPrice" value="3.89" step="0.01" oninput="calculate()">
+                                    <div style="margin-top: 8px; padding: 8px 12px; background: var(--bg-dark); border-radius: 6px; border-left: 3px solid var(--primary-electric);">
+                                        <small style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">
+                                            💡 <strong style="color: var(--primary-electric);">Tarif ČEZ online 2026</strong> - nízký tarif i s cenou za distribuci, který je platný 20 hodin denně (Já osobně ho mám a využívám)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="charging-item">
+                                <div class="charging-header">
+                                    <span class="charging-name">☀️ Doma ze solárů</span>
+                                    <span class="charging-percent" id="homeSolarPercent">30%</span>
+                                </div>
+                                <input type="range" id="homeSolar" min="0" max="100" value="30" oninput="updateChargingSplit()">
+                                <div class="input-group" style="margin-top: 10px;">
+                                    <label>Cena elektřiny (Kč/kWh)</label>
+                                    <input type="number" id="homeSolarPrice" value="0.00" step="0.01" oninput="calculate()">
+                                </div>
+                            </div>
+
+                            <div class="charging-item">
+                                <div class="charging-header">
+                                    <span class="charging-name">🏨 Destination charger</span>
+                                    <span class="charging-percent" id="destPercent">15%</span>
+                                </div>
+                                <input type="range" id="destination" min="0" max="100" value="15" oninput="updateChargingSplit()">
+                                <div class="input-group" style="margin-top: 10px;">
+                                    <label>Cena elektřiny (Kč/kWh)</label>
+                                    <input type="number" id="destPrice" value="8.50" step="0.01" oninput="calculate()">
+                                </div>
+                            </div>
+
+                            <div class="charging-item">
+                                <div class="charging-header">
+                                    <span class="charging-name">⚡ Rychlonabíječky</span>
+                                    <span class="charging-percent" id="fastPercent">5%</span>
+                                </div>
+                                <input type="range" id="fast" min="0" max="100" value="5" oninput="updateChargingSplit()">
+                                <div class="input-group" style="margin-top: 10px;">
+                                    <label>Cena elektřiny (Kč/kWh)</label>
+                                    <input type="number" id="fastPrice" value="12.00" step="0.01" oninput="calculate()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 10px; background: var(--bg-input); border-radius: 8px; text-align: center;">
+                            <span style="color: var(--text-secondary);">Celkem: </span>
+                            <span id="totalCharging" style="font-family: 'Orbitron'; font-weight: 700; color: var(--primary-electric);">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="results">
+                        <h3 class="result-title">📊 VÝSLEDKY KALKULACE</h3>
+                        
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <div class="result-label">Roční spotřeba</div>
+                                <div class="result-value" id="resultYearlyConsumption">2550<span class="result-unit">kWh</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Roční náklady</div>
+                                <div class="result-value" id="resultYearlyCost">5738<span class="result-unit">Kč</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Cena za km</div>
+                                <div class="result-value" id="resultCostPerKm">0.38<span class="result-unit">Kč</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Měsíční náklad</div>
+                                <div class="result-value" id="resultMonthlyCost">478<span class="result-unit">Kč</span></div>
+                            </div>
+                        </div>
+
+                        <div class="breakdown">
+                            <div class="breakdown-title">📋 Detailní rozpis nákladů</div>
+                            <div class="breakdown-item">
+                                <span>🏠 Nabíjení doma ze sítě</span>
+                                <span id="breakdownHomeGrid" style="font-weight: 700; color: var(--primary-electric);">2869 Kč</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>☀️ Nabíjení doma ze solárů</span>
+                                <span id="breakdownHomeSolar" style="font-weight: 700; color: var(--success);">0 Kč</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>🏨 Destination charger</span>
+                                <span id="breakdownDest" style="font-weight: 700; color: var(--warning);">1913 Kč</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>⚡ Rychlonabíječky</span>
+                                <span id="breakdownFast" style="font-weight: 700; color: var(--danger);">956 Kč</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>💚 Ušetřeno rekuperací</span>
+                                <span id="breakdownRecup" style="font-weight: 700; color: var(--success);">-408 kWh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Porovnání -->
+        <div id="comparison" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">Parametry porovnání</h2>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Roční nájezd (km)</label>
+                        <input type="number" id="compYearlyKm" value="15000" oninput="calculateComparison()">
+                    </div>
+                    <div class="input-group">
+                        <label>Cena nafty (Kč/l)</label>
+                        <input type="number" id="dieselPrice" value="35.50" step="0.1" oninput="calculateComparison()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="comparison-grid" id="comparisonResults">
+                <!-- Results will be populated by JS -->
+            </div>
+        </div>
+
+        <footer>
+            <p>Vytvořeno v <a href="https://brooz.cz" class="brooz-link">BROOZ Studio</a> | © 2025 Ondřej Brož</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">Data k prosinci 2025 | Ceny elektřiny dle ČEZ</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if (newTheme === 'dark') {
+                themeIcon.textContent = '☀️';
+                themeLabel.textContent = 'Světlý mód';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeLabel.textContent = 'Tmavý mód';
+            }
+        }
+
+        // Initialize theme from localStorage or default to light
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            
+            if (savedTheme === 'dark') {
+                themeIcon.textContent = '☀️';
+                themeLabel.textContent = 'Světlý mód';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeLabel.textContent = 'Tmavý mód';
+            }
+        }
+
+        // Car database
+        const cars = {
+            ev: {
+                tesla_my: { name: 'Tesla Model Y LR', consumption: 17 },
+                tesla_m3: { name: 'Tesla Model 3 LR', consumption: 15 },
+                enyaq_150: { name: 'Škoda Enyaq 150kW', consumption: 19 },
+                enyaq_rs: { name: 'Škoda Enyaq RS', consumption: 21 }
+            },
+            ice: [
+                { name: 'Škoda Octavia 2.0 TDI', consumption: 5.2, power: 150 },
+                { name: 'Škoda Superb 2.0 TDI', consumption: 5.8, power: 150 },
+                { name: 'VW Passat 2.0 TDI', consumption: 5.5, power: 150 },
+                { name: 'Audi A4 2.0 TDI', consumption: 5.6, power: 150 },
+                { name: 'BMW 320d', consumption: 5.4, power: 190 },
+                { name: 'Mercedes C220d', consumption: 5.5, power: 194 },
+                { name: 'Škoda Kodiaq 2.0 TDI', consumption: 6.8, power: 150 },
+                { name: 'VW Tiguan 2.0 TDI', consumption: 6.5, power: 150 }
+            ]
+        };
+
+        function selectCar(carId, consumption, element) {
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('consumption').value = consumption;
+            calculate();
+        }
+
+        function updateMixSliders() {
+            const event = window.event || {};
+            const changedElement = event.target;
+            const changedId = changedElement?.id;
+            
+            let city = parseInt(document.getElementById('cityPercent').value);
+            let rural = parseInt(document.getElementById('ruralPercent').value);
+            let highway = parseInt(document.getElementById('highwayPercent').value);
+            
+            const total = city + rural + highway;
+            
+            // Auto-adjust other sliders to maintain 100% total
+            if (total !== 100 && changedId) {
+                if (changedId === 'cityPercent') {
+                    const remaining = 100 - city;
+                    const oldTotal = rural + highway;
+                    if (oldTotal > 0) {
+                        rural = Math.round(rural * remaining / oldTotal);
+                        highway = 100 - city - rural;
+                        document.getElementById('ruralPercent').value = rural;
+                        document.getElementById('highwayPercent').value = highway;
+                    }
+                } else if (changedId === 'ruralPercent') {
+                    const remaining = 100 - rural;
+                    const oldTotal = city + highway;
+                    if (oldTotal > 0) {
+                        city = Math.round(city * remaining / oldTotal);
+                        highway = 100 - rural - city;
+                        document.getElementById('cityPercent').value = city;
+                        document.getElementById('highwayPercent').value = highway;
+                    }
+                } else if (changedId === 'highwayPercent') {
+                    const remaining = 100 - highway;
+                    const oldTotal = city + rural;
+                    if (oldTotal > 0) {
+                        city = Math.round(city * remaining / oldTotal);
+                        rural = 100 - highway - city;
+                        document.getElementById('cityPercent').value = city;
+                        document.getElementById('ruralPercent').value = rural;
+                    }
+                }
+            }
+            
+            document.getElementById('cityValue').textContent = document.getElementById('cityPercent').value + '%';
+            document.getElementById('ruralValue').textContent = document.getElementById('ruralPercent').value + '%';
+            document.getElementById('highwayValue').textContent = document.getElementById('highwayPercent').value + '%';
+            
+            calculate();
+        }
+
+        function updateChargingSplit() {
+            const homeGrid = parseInt(document.getElementById('homeGrid').value);
+            const homeSolar = parseInt(document.getElementById('homeSolar').value);
+            const destination = parseInt(document.getElementById('destination').value);
+            const fast = parseInt(document.getElementById('fast').value);
+            
+            const total = homeGrid + homeSolar + destination + fast;
+            
+            if (total > 100) {
+                const event = window.event || {};
+                const changedId = event.target?.id;
+                
+                if (changedId === 'homeGrid') {
+                    const remaining = homeSolar + destination + fast;
+                    if (remaining > 0) {
+                        const scale = (100 - homeGrid) / remaining;
+                        document.getElementById('homeSolar').value = Math.floor(homeSolar * scale);
+                        document.getElementById('destination').value = Math.floor(destination * scale);
+                        document.getElementById('fast').value = 100 - homeGrid - parseInt(document.getElementById('homeSolar').value) - parseInt(document.getElementById('destination').value);
+                    }
+                } else if (changedId === 'homeSolar') {
+                    const remaining = homeGrid + destination + fast;
+                    if (remaining > 0) {
+                        const scale = (100 - homeSolar) / remaining;
+                        document.getElementById('homeGrid').value = Math.floor(homeGrid * scale);
+                        document.getElementById('destination').value = Math.floor(destination * scale);
+                        document.getElementById('fast').value = 100 - homeSolar - parseInt(document.getElementById('homeGrid').value) - parseInt(document.getElementById('destination').value);
+                    }
+                } else if (changedId === 'destination') {
+                    const remaining = homeGrid + homeSolar + fast;
+                    if (remaining > 0) {
+                        const scale = (100 - destination) / remaining;
+                        document.getElementById('homeGrid').value = Math.floor(homeGrid * scale);
+                        document.getElementById('homeSolar').value = Math.floor(homeSolar * scale);
+                        document.getElementById('fast').value = 100 - destination - parseInt(document.getElementById('homeGrid').value) - parseInt(document.getElementById('homeSolar').value);
+                    }
+                } else if (changedId === 'fast') {
+                    const remaining = homeGrid + homeSolar + destination;
+                    if (remaining > 0) {
+                        const scale = (100 - fast) / remaining;
+                        document.getElementById('homeGrid').value = Math.floor(homeGrid * scale);
+                        document.getElementById('homeSolar').value = Math.floor(homeSolar * scale);
+                        document.getElementById('destination').value = 100 - fast - parseInt(document.getElementById('homeGrid').value) - parseInt(document.getElementById('homeSolar').value);
+                    }
+                }
+            }
+            
+            document.getElementById('homeGridPercent').textContent = document.getElementById('homeGrid').value + '%';
+            document.getElementById('homeSolarPercent').textContent = document.getElementById('homeSolar').value + '%';
+            document.getElementById('destPercent').textContent = document.getElementById('destination').value + '%';
+            document.getElementById('fastPercent').textContent = document.getElementById('fast').value + '%';
+            
+            const finalTotal = parseInt(document.getElementById('homeGrid').value) + 
+                              parseInt(document.getElementById('homeSolar').value) + 
+                              parseInt(document.getElementById('destination').value) + 
+                              parseInt(document.getElementById('fast').value);
+            
+            document.getElementById('totalCharging').textContent = finalTotal + '%';
+            
+            calculate();
+        }
+
+        function updateRecuperation() {
+            const value = document.getElementById('recuperation').value;
+            document.getElementById('recupValue').textContent = value + '%';
+            calculate();
+        }
+
+        function updateBatteryEff() {
+            const value = document.getElementById('batteryEff').value;
+            document.getElementById('batteryValue').textContent = value + '%';
+            calculate();
+        }
+
+        function updateChargingEff() {
+            const value = document.getElementById('chargingEff').value;
+            document.getElementById('chargingValue').textContent = value + '%';
+            calculate();
+        }
+
+        function calculate() {
+            const yearlyKm = parseFloat(document.getElementById('yearlyKm').value) || 0;
+            const baseConsumption = parseFloat(document.getElementById('consumption').value) || 0; // WLTP baseline
+            const recuperation = parseFloat(document.getElementById('recuperation').value) / 100;
+            const batteryEff = parseFloat(document.getElementById('batteryEff').value) / 100;
+            const chargingEff = parseFloat(document.getElementById('chargingEff').value) / 100;
+            
+            // Get road mix percentages
+            const cityPercent = parseFloat(document.getElementById('cityPercent').value) / 100;
+            const ruralPercent = parseFloat(document.getElementById('ruralPercent').value) / 100;
+            const highwayPercent = parseFloat(document.getElementById('highwayPercent').value) / 100;
+            
+            // Consumption multipliers based on real data
+            // City: base 1.0, then apply recuperation (10-20%, default 16%)
+            // Rural: +7% (1.07) with small recuperation effect (3-6%, scaled from city)
+            // Highway: +40% (1.40) due to aerodynamic drag, minimal recuperation (1-2%)
+            const cityMultiplier = 1.0 * (1 - recuperation); // Full recuperation effect in city
+            const ruralMultiplier = 1.07 * (1 - recuperation * 0.3); // 30% of city recup effect
+            const highwayMultiplier = 1.40 * (1 - recuperation * 0.1); // 10% of city recup effect
+            
+            // Calculate weighted average consumption
+            const weightedConsumption = baseConsumption * (
+                (cityPercent * cityMultiplier) + 
+                (ruralPercent * ruralMultiplier) + 
+                (highwayPercent * highwayMultiplier)
+            );
+            
+            // Calculate total energy needed from battery
+            const batteryConsumption = (yearlyKm / 100) * weightedConsumption;
+            
+            // Apply battery efficiency losses
+            const afterBattery = batteryConsumption / batteryEff;
+            
+            // Apply charging efficiency losses
+            const totalConsumption = afterBattery / chargingEff;
+            
+            // Get charging split
+            const homeGridPercent = parseFloat(document.getElementById('homeGrid').value) / 100;
+            const homeSolarPercent = parseFloat(document.getElementById('homeSolar').value) / 100;
+            const destPercent = parseFloat(document.getElementById('destination').value) / 100;
+            const fastPercent = parseFloat(document.getElementById('fast').value) / 100;
+            
+            // Get prices
+            const homeGridPrice = parseFloat(document.getElementById('homeGridPrice').value) || 0;
+            const homeSolarPrice = parseFloat(document.getElementById('homeSolarPrice').value) || 0;
+            const destPrice = parseFloat(document.getElementById('destPrice').value) || 0;
+            const fastPrice = parseFloat(document.getElementById('fastPrice').value) || 0;
+            
+            // Calculate costs per source
+            const homeGridCost = totalConsumption * homeGridPercent * homeGridPrice;
+            const homeSolarCost = totalConsumption * homeSolarPercent * homeSolarPrice;
+            const destCost = totalConsumption * destPercent * destPrice;
+            const fastCost = totalConsumption * fastPercent * fastPrice;
+            
+            const totalCost = homeGridCost + homeSolarCost + destCost + fastCost;
+            const costPerKm = totalCost / yearlyKm;
+            const monthlyCost = totalCost / 12;
+            
+            // Calculate recuperation savings across all road types
+            const cityKm = yearlyKm * cityPercent;
+            const ruralKm = yearlyKm * ruralPercent;
+            const highwayKm = yearlyKm * highwayPercent;
+            
+            const recupSavingsCity = (cityKm / 100) * baseConsumption * recuperation;
+            const recupSavingsRural = (ruralKm / 100) * baseConsumption * recuperation * 0.3;
+            const recupSavingsHighway = (highwayKm / 100) * baseConsumption * recuperation * 0.1;
+            const totalRecupSavings = recupSavingsCity + recupSavingsRural + recupSavingsHighway;
+            
+            // Update results
+            document.getElementById('resultYearlyConsumption').innerHTML = 
+                Math.round(totalConsumption) + '<span class="result-unit">kWh</span>';
+            document.getElementById('resultYearlyCost').innerHTML = 
+                Math.round(totalCost) + '<span class="result-unit">Kč</span>';
+            document.getElementById('resultCostPerKm').innerHTML = 
+                costPerKm.toFixed(2) + '<span class="result-unit">Kč</span>';
+            document.getElementById('resultMonthlyCost').innerHTML = 
+                Math.round(monthlyCost) + '<span class="result-unit">Kč</span>';
+            
+            // Update breakdown
+            document.getElementById('breakdownHomeGrid').textContent = Math.round(homeGridCost) + ' Kč';
+            document.getElementById('breakdownHomeSolar').textContent = Math.round(homeSolarCost) + ' Kč';
+            document.getElementById('breakdownDest').textContent = Math.round(destCost) + ' Kč';
+            document.getElementById('breakdownFast').textContent = Math.round(fastCost) + ' Kč';
+            document.getElementById('breakdownRecup').textContent = '-' + Math.round(totalRecupSavings) + ' kWh (' + 
+                Math.round(recupSavingsCity) + ' město + ' + 
+                Math.round(recupSavingsRural) + ' mimo + ' + 
+                Math.round(recupSavingsHighway) + ' dálnice)';
+        }
+
+        function calculateComparison() {
+            const yearlyKm = parseFloat(document.getElementById('compYearlyKm').value) || 0;
+            const dieselPrice = parseFloat(document.getElementById('dieselPrice').value) || 0;
+            
+            // Get EV data from calculator
+            const baseConsumption = parseFloat(document.getElementById('consumption').value) || 17;
+            const recuperation = parseFloat(document.getElementById('recuperation').value) / 100;
+            
+            // Get road mix
+            const cityPercent = parseFloat(document.getElementById('cityPercent').value) / 100;
+            const ruralPercent = parseFloat(document.getElementById('ruralPercent').value) / 100;
+            const highwayPercent = parseFloat(document.getElementById('highwayPercent').value) / 100;
+            
+            // Consumption multipliers with recuperation
+            const cityMultiplier = 1.0 * (1 - recuperation);
+            const ruralMultiplier = 1.07 * (1 - recuperation * 0.3);
+            const highwayMultiplier = 1.40 * (1 - recuperation * 0.1);
+            
+            // Calculate weighted average consumption
+            const weightedConsumption = baseConsumption * (
+                (cityPercent * cityMultiplier) + 
+                (ruralPercent * ruralMultiplier) + 
+                (highwayPercent * highwayMultiplier)
+            );
+            
+            const batteryEff = parseFloat(document.getElementById('batteryEff').value) / 100;
+            const chargingEff = parseFloat(document.getElementById('chargingEff').value) / 100;
+            
+            // Calculate total energy needed
+            const batteryConsumption = (yearlyKm / 100) * weightedConsumption;
+            const afterBattery = batteryConsumption / batteryEff;
+            const totalConsumption = afterBattery / chargingEff;
+            
+            // Get charging split and prices
+            const homeGridPercent = parseFloat(document.getElementById('homeGrid').value) / 100;
+            const homeSolarPercent = parseFloat(document.getElementById('homeSolar').value) / 100;
+            const destPercent = parseFloat(document.getElementById('destination').value) / 100;
+            const fastPercent = parseFloat(document.getElementById('fast').value) / 100;
+            
+            const homeGridPrice = parseFloat(document.getElementById('homeGridPrice').value) || 3.89;
+            const homeSolarPrice = parseFloat(document.getElementById('homeSolarPrice').value) || 0;
+            const destPrice = parseFloat(document.getElementById('destPrice').value) || 8.50;
+            const fastPrice = parseFloat(document.getElementById('fastPrice').value) || 12.00;
+            
+            const avgEvPrice = (homeGridPrice * homeGridPercent) + 
+                              (homeSolarPrice * homeSolarPercent) + 
+                              (destPrice * destPercent) + 
+                              (fastPrice * fastPercent);
+            
+            const evYearlyCost = totalConsumption * avgEvPrice;
+            
+            // Generate comparison cards
+            let html = '';
+            
+            cars.ice.forEach(car => {
+                const iceYearlyCost = (yearlyKm / 100) * car.consumption * dieselPrice;
+                const savings = iceYearlyCost - evYearlyCost;
+                const savingsPercent = ((savings / iceYearlyCost) * 100).toFixed(1);
+                const isEvWinner = savings > 0;
+                
+                html += `
+                    <div class="car-card ${isEvWinner ? 'winner' : ''}">
+                        <div class="car-name">${car.name}</div>
+                        <span class="car-type">⛽ DIESEL ${car.power} PS</span>
+                        
+                        <div class="car-stats">
+                            <div class="stat-row">
+                                <span>Spotřeba</span>
+                                <span class="stat-value">${car.consumption} l/100km</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Roční nájezd</span>
+                                <span class="stat-value">${yearlyKm.toLocaleString('cs-CZ')} km</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Roční spotřeba</span>
+                                <span class="stat-value">${Math.round((yearlyKm / 100) * car.consumption)} l</span>
+                            </div>
+                        </div>
+                        
+                        <div class="cost-highlight">
+                            <div class="cost-label">Roční náklady DIESEL</div>
+                            <div class="cost-value">${Math.round(iceYearlyCost).toLocaleString('cs-CZ')} Kč</div>
+                        </div>
+                        
+                        <div class="cost-highlight" style="margin-top: 10px;">
+                            <div class="cost-label">Roční náklady EV</div>
+                            <div class="cost-value" style="color: var(--success);">${Math.round(evYearlyCost).toLocaleString('cs-CZ')} Kč</div>
+                        </div>
+                        
+                        ${isEvWinner ? `
+                            <div style="text-align: center; margin-top: 15px;">
+                                <div class="savings-badge">
+                                    💰 Úspora ${Math.round(savings).toLocaleString('cs-CZ')} Kč/rok (${savingsPercent}%)
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="text-align: center; margin-top: 15px; color: var(--danger); font-weight: 600;">
+                                ⚠️ Diesel je levnější o ${Math.round(Math.abs(savings)).toLocaleString('cs-CZ')} Kč/rok
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('comparisonResults').innerHTML = html;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'comparison') {
+                calculateComparison();
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            calculate();
+            calculateComparison();
+        });
+    </script>
+</body>
+</html>
