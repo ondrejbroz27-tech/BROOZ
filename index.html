@@ -614,6 +614,7 @@ section { padding: 8rem 4rem; max-width: 1300px; margin: 0 auto; }
   color: var(--text);
   text-decoration: none;
   transition: color 0.2s;
+  word-break: break-all;
 }
 
 .contact-value a:hover { color: var(--gold); }
@@ -684,7 +685,7 @@ footer a:hover { color: var(--gold); }
     <li><a href="#gallery" id="t-nav-gallery">Projekt</a></li>
     <li><a href="#apps" id="t-nav-apps">Aplikace</a></li>
     <li><a href="eshop.html" id="t-nav-eshop">E-shop</a>
-    <a href="#contact" id="t-nav-contact">Kontakt</a></li>
+    <a href="#contact" id="t-nav-contact" style="margin-left:0.5rem;">Kontakt</a></li>
   </ul>
   <div class="nav-right">
     <div class="color-switcher">
@@ -896,12 +897,17 @@ footer a:hover { color: var(--gold); }
         <div class="app-tile-title" id="t-a2t">Finance & Investice</div>
         <div class="app-tile-desc" id="t-a2d">Auto kalkulačka EV vs diesel, ETF portfolio, dividendový model</div>
       </a>
+      <a class="app-tile" href="emobilita.html">
+        <div class="app-tile-icon">⚡</div>
+        <div class="app-tile-title" id="t-a10t">E-mobilita</div>
+        <div class="app-tile-desc" id="t-a10d">Auto kalkulačka EV, kalkulačka spotřeby elektromobilu</div>
+      </a>
       <a class="app-tile" href="podnikani.html">
         <div class="app-tile-icon">💼</div>
         <div class="app-tile-title" id="t-a3t">Podnikání & OSVČ</div>
         <div class="app-tile-desc" data-cz="Fakturační systém, faktura skener s OCR, DPH kalkulačka" data-en="Invoicing system, invoice scanner with OCR, VAT calculator"id="t-a3d">Fakturační systém, faktura skener OCR, DPH</div>
       </a>
-      <a class="app-tile" href="reality.html">
+      <a class="app-tile" href="realita.html">
         <div class="app-tile-icon">🏠</div>
         <div class="app-tile-title" id="t-a4t">Správa nemovitostí</div>
         <div class="app-tile-desc" id="t-a4d">Přehled nájemníků, smlouvy, lhůty</div>
@@ -913,7 +919,7 @@ footer a:hover { color: var(--gold); }
       </a>
       <a class="app-tile" href="nastroje.html">
         <div class="app-tile-icon">🔧</div>
-        <div class="app-tile-title" id="t-a6t">Nástroje & IQ Testy</div>
+        <div class="app-tile-title" id="t-a6t">IQ Testy</div>
         <div class="app-tile-desc" id="t-a6d">IQ test, servisní knížka vozidla</div>
       </a>
       <a class="app-tile" href="stavebni-rozpocet.html">
@@ -925,6 +931,11 @@ footer a:hover { color: var(--gold); }
         <div class="app-tile-icon">💪</div>
         <div class="app-tile-title" id="t-a8t">HIIT Tracker</div>
         <div class="app-tile-desc" id="t-a8d">Tréninky, kalorický deficit, progres</div>
+      </a>
+      <a class="app-tile" href="vozidla.html">
+        <div class="app-tile-icon">🚗</div>
+        <div class="app-tile-title" id="t-a11t">Vozidla</div>
+        <div class="app-tile-desc" id="t-a11d">Servisní knížka v2 — digitální správa vozidla</div>
       </a>
       <a class="app-tile" href="babicka/index.html">
         <div class="app-tile-icon">🌸</div>
@@ -958,7 +969,7 @@ footer a:hover { color: var(--gold); }
     <div>
       <div class="contact-item">
         <div class="contact-label">Email</div>
-        <div class="contact-value"><a href="/cdn-cgi/l/email-protection#0c6362687e69666e7e63763e3b4c6b616d6560226f6361"><span class="__cf_email__" data-cfemail="e48b8a8096818e86968b9ed6d3a48389858d88ca878b89">[email&#160;protected]</span></a></div>
+        <div class="contact-value"><a href="mailto:ondrej.broz@brooz.cz">ondrej.broz@brooz.cz</a></div>
       </div>
       <div class="contact-item" style="margin-top:2rem;">
         <div class="contact-label" id="t-telefon">Telefon</div>
@@ -1044,10 +1055,12 @@ const i18n = {
     a3t:'Podnikání & OSVČ',a3d:'Fakturační systém, faktura skener OCR, DPH',
     a4t:'Správa nemovitostí',a4d:'Přehled nájemníků, smlouvy, lhůty',
     a5t:'Diagnostika & Brainstorming',a5d:'MindScope, OCD/ASD/ADHD screening',
-    a6t:'Nástroje & IQ Testy',a6d:'IQ test, servisní knížka vozidla',
+    a6t:'IQ Testy',a6d:'IQ test, servisní knížka vozidla',
     a7t:'Rozpočet domu',a7d:'Položkový rozpočet stavby, materiál + práce',
     a8t:'HIIT Tracker',a8d:'Tréninky, kalorický deficit, progres',
     a9t:'Péče o babičku',a9d:'Náklady péče, rozpočet, rodina',
+    a10t:'E-mobilita',a10d:'Auto kalkulačka EV, kalkulačka spotřeby elektromobilu',
+    a11t:'Vozidla',a11d:'Servisní knížka v2 — digitální správa vozidla',
   },
   en: {
     nav_about: 'About', nav_services: 'Services', nav_gallery: 'Project',
@@ -1098,10 +1111,12 @@ const i18n = {
     a3t:'Business & Freelance',a3d:'Invoicing system, invoice scanner OCR, VAT',
     a4t:'Property Management',a4d:'Tenant overview, contracts, notice periods',
     a5t:'Diagnostics & Brainstorming',a5d:'MindScope, OCD/ASD/ADHD screening',
-    a6t:'Tools & IQ Tests',a6d:'IQ test, vehicle service book',
+    a6t:'IQ Tests',a6d:'IQ test, vehicle service book',
     a7t:'House Budget',a7d:'Itemized construction budget, materials + labour',
     a8t:'HIIT Tracker',a8d:'Workouts, calorie deficit, progress',
     a9t:'Grandmother Care',a9d:'Care costs, budget, family',
+    a10t:'E-mobility',a10d:'EV car calculator, electric vehicle consumption calculator',
+    a11t:'Vehicles',a11d:'Service book v2 — digital vehicle management',
   }
 };
 
@@ -1133,7 +1148,7 @@ const translationMap = [
   ['a3t','t-a3t'],['a3d','t-a3d'],['a4t','t-a4t'],['a4d','t-a4d'],
   ['a5t','t-a5t'],['a5d','t-a5d'],['a6t','t-a6t'],['a6d','t-a6d'],
   ['a7t','t-a7t'],['a7d','t-a7d'],['a8t','t-a8t'],['a8d','t-a8d'],
-  ['a9t','t-a9t'],['a9d','t-a9d'],
+  ['a9t','t-a9t'],['a9d','t-a9d'],['a10t','t-a10t'],['a10d','t-a10d'],['a11t','t-a11t'],['a11d','t-a11d'],
 ];
 
 let currentLang = 'cs';

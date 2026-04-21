@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="cs" style="background:#f0ebe3 !important;color-scheme:light !important;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<style>:root{color-scheme:light only;}</style>
+<title>Vozidla — Brooz Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#f0ebe3; --surface:#faf7f4; --border:#e8e0d6; --border-hover:#c8bdb0;
+    --accent-games:#c94a0f; --accent-finance:#0a6644; --accent-business:#1247a8;
+    --accent-brain:#6b28a0; --accent-tools:#8a6200; --accent-reality:#0a7055; --accent-contact:#1a1614;
+    --text:#1a1614; --muted:#8a7e74; --subtle:#ede6dc;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  nav{max-width:1180px;margin:0 auto;padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+  .back-link{display:inline-flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);background:var(--surface);padding:.4rem .9rem;border-radius:999px;transition:all .18s;}
+  .back-link:hover{color:var(--text);border-color:var(--border-hover);}
+  .breadcrumb{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--muted);text-decoration:none;}.breadcrumb a:hover{color:var(--text);}
+  .breadcrumb span{color:var(--border-hover);}
+  .section-label{max-width:1180px;margin:0 auto 1.5rem;padding:0 2rem;display:flex;align-items:center;gap:1rem;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+  .grid{max-width:1180px;margin:0 auto 3rem;padding:0 2rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;}
+  .tile{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.8rem;text-decoration:none;color:var(--text);display:block;overflow:hidden;transition:transform .28s cubic-bezier(.34,1.4,.64,1),border-color .22s,box-shadow .22s;animation:fadeUp .4s ease both;}
+  .tile:nth-child(1){animation-delay:.04s}.tile:nth-child(2){animation-delay:.09s}.tile:nth-child(3){animation-delay:.14s}.tile:nth-child(4){animation-delay:.19s}.tile:nth-child(5){animation-delay:.24s}.tile:nth-child(6){animation-delay:.29s}.tile:nth-child(7){animation-delay:.34s}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .tile:hover{transform:translateY(-3px);border-color:var(--tile-accent,var(--border-hover));box-shadow:0 8px 28px rgba(0,0,0,.07);}
+  .tile-bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--tile-accent,transparent);border-radius:18px 18px 0 0;opacity:0;transition:opacity .22s;}
+  .tile:hover .tile-bar{opacity:1;}
+  .tile-wash{position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:var(--tile-accent,transparent);opacity:.04;filter:blur(32px);pointer-events:none;transition:opacity .3s,transform .3s;}
+  .tile:hover .tile-wash{opacity:.10;transform:scale(1.3);}
+  .tile-icon{font-size:2rem;display:block;margin-bottom:1rem;line-height:1;}
+  .tile-cat{font-size:.67rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tile-accent,var(--muted));font-weight:500;margin-bottom:.4rem;}
+  .tile-title{font-family:'Lora',Georgia,serif;font-weight:600;font-size:1.18rem;letter-spacing:-.01em;margin-bottom:.55rem;line-height:1.25;}
+  .tile-desc{font-size:.83rem;color:var(--muted);line-height:1.65;font-weight:300;}
+  .tile-apps{margin-top:1rem;display:flex;flex-wrap:wrap;gap:.35rem;}
+  .app-badge{font-size:.68rem;padding:.2rem .6rem;border-radius:999px;background:var(--subtle);border:1px solid var(--border);color:var(--muted);white-space:nowrap;transition:background .18s,color .18s;}
+  .tile:hover .app-badge{background:#e8e5de;color:var(--text);}
+  .tile-arrow{position:absolute;bottom:1.4rem;right:1.4rem;font-size:1rem;opacity:0;color:var(--tile-accent,var(--muted));transform:translate(-3px,3px);transition:opacity .22s,transform .22s;}
+  .tile:hover .tile-arrow{opacity:1;transform:translate(0,0);}
+  .tile.featured{grid-column:span 2;display:flex;align-items:flex-start;gap:2rem;padding:2.2rem;}
+  .tile.featured .tile-content{flex:1;}
+  .tile.featured .tile-icon{font-size:2.5rem;flex-shrink:0;margin-bottom:0;margin-top:.2rem;}
+  .tile.coming-soon{opacity:.55;cursor:default;pointer-events:none;}
+  .status{display:inline-flex;align-items:center;gap:.4rem;font-size:.67rem;padding:.18rem .6rem;border-radius:999px;border:1px solid;margin-bottom:.75rem;font-weight:500;}
+  .status.live{border-color:#0a664430;color:#0a6644;background:#0a664410;}
+  .status.wip{border-color:#8a620030;color:#7a5500;background:#8a620010;}
+  .status.soon{border-color:#6b28a030;color:#6b28a0;background:#6b28a010;}
+  .status-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .search-wrap{max-width:1180px;margin:0 auto 1.5rem;padding:0 2rem;}
+  .search-bar{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.2rem .75rem 2.8rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%239e9a94' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:1rem center;}
+  .search-bar:focus{border-color:#1247a8;box-shadow:0 0 0 3px rgba(18,71,168,.08);}
+  .search-bar::placeholder{color:#b0ada6;}
+  .filters{max-width:1180px;margin:0 auto 2.5rem;padding:0 2rem;display:flex;gap:.45rem;flex-wrap:wrap;}
+  .filter-chip{padding:.3rem .9rem;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Inter',sans-serif;font-size:.76rem;cursor:pointer;transition:all .18s;}
+  .filter-chip:hover{border-color:var(--border-hover);color:var(--text);background:var(--subtle);}
+  .filter-chip.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .divider{max-width:1180px;margin:0 auto 2.5rem;padding:0 2rem;height:1px;background:var(--border);}
+  footer{max-width:1180px;margin:3rem auto 0;padding:1.8rem 2rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+  footer p{font-size:.76rem;color:var(--muted);}
+  footer a{color:var(--muted);text-decoration:none;font-size:.76rem;border-bottom:1px solid var(--border);transition:color .18s;}
+  footer a:hover{color:var(--text);}
+  .page-header{max-width:1180px;margin:0 auto;padding:1rem 2rem 2.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem;}
+  .page-icon{font-size:2.5rem;margin-bottom:.8rem;display:block;}
+  .page-title{font-family:'Lora',Georgia,serif;font-weight:600;font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:-.02em;margin-bottom:.5rem;}
+  .page-title em{font-style:italic;color:var(--page-accent,#c94a0f);}
+  .page-desc{font-size:.88rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:560px;}
+  .page-meta{margin-top:1rem;display:flex;gap:1rem;flex-wrap:wrap;}
+  .meta-chip{font-size:.72rem;padding:.22rem .7rem;border-radius:999px;background:var(--subtle);border:1px solid var(--border);color:var(--muted);font-weight:500;}
+  .tile.hidden{display:none;}
+  @media(max-width:700px){
+    .tile.featured{grid-column:span 1;flex-direction:column;}
+    .tile.featured .tile-icon{margin-bottom:.8rem;}
+    nav,footer{padding:1rem;}
+    .grid,.filters,.search-wrap,.section-label,.page-header{padding-left:1rem;padding-right:1rem;}
+    header{padding:1.5rem 1rem 1rem;}
+  }
+</style>
+</head>
+<body style="background:#f0ebe3 !important;color:#1a1614 !important;">
+<nav>
+  <a class="back-link" href="index.html">← Brooz Studio</a>
+  <div class="breadcrumb"><a href="index.html">Brooz Studio</a><span>/</span><span>Vozidla</span></div>
+</nav>
+<div class="page-header">
+  <span class="page-icon">🚗</span>
+  <h1 class="page-title">Vozidla</h1>
+  <p class="page-desc">Digitální správa vozidel — servisní záznamy, opravy a historie údržby.</p>
+  <div class="page-meta"><span class="meta-chip">🚗 Vozidla</span><span class="meta-chip">🔧 Servis</span></div>
+</div>
+<div class="section-label">Dostupné nástroje</div>
+<div class="grid">  <a class="tile"  href="servisni-knizka-v2.html" style="--tile-accent:#c94a0f;">
+    <div class="tile-wash"></div><div class="tile-bar"></div>
+    <div class="tile-icon">🚗</div>
+    <div class="tile-cat">Auto / Servis</div>
+    <div class="status live"><span class="status-dot"></span>Spustit</div>
+    <div class="tile-title">Servisní knížka v2</div>
+    <div class="tile-desc">Digitální servisní knížka pro vaše vozidlo. Přehled oprav, výměn a nákladů na údržbu.</div>
+    <div class="tile-apps"><span class="app-badge">Servis</span><span class="app-badge">Opravy</span><span class="app-badge">Historie</span><span class="app-badge">Náklady</span></div>
+    <div class="tile-arrow">↗</div>
+  </a></div>
+<footer>
+  <p>© 2026 Ondřej Brož — Brooz Studio</p>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+    <a href="index.html">← Domů</a>
+    <a href="kontakt.html">Kontakt</a>
+  </div>
+</footer>
+</body></html>
