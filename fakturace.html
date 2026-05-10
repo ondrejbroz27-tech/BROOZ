@@ -126,21 +126,7 @@ const initialState = {
     // NEW: Payment matching & rentals management
     fioToken: "",
     platby: [], // Matched payments from Fio
-    emailSablona: `Dobrý den,
-
-chtěl/a bych Vás upozornit, že jsme k dnešnímu dni neobdrželi platbu nájemného ve výši {CASTKA} za měsíc {MESIC}.
-
-Původní termín splatnosti: {SPLATNOST}
-
-Prosím o uhrazení na účet: {UCET}
-
-Děkuji za pochopení.
-
-S pozdravem,
-{JMENO_PRONAJIMATEL}`,
-    upominky: [], // History of sent reminders
-    
-    // NEW: Email reminder templates for invoices and rentals
+    // Email reminder templates for invoices and rentals
     emailSablonyFaktury: {
         upominka1: `Dobrý den,
 
@@ -3287,16 +3273,12 @@ function Dashboard({ data, notify }) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     
-                                    console.log('🔵 Tlačítko kliknuto!', f.cislo);
-                                    console.log('🔍 isGmailConnected:', isGmailConnected());
                                     
                                     if (!isGmailConnected()) {
-                                        console.log('❌ Gmail není připojen');
-                                        notify("\u274C Nejprve p\u0159ipojte Google Drive (zahrnuje Gmail)");
+                                                                                notify("\u274C Nejprve p\u0159ipojte Google Drive (zahrnuje Gmail)");
                                         return;
                                     }
                                     
-                                    console.log('✅ Gmail připojen, odesílám...');
                                     
                                     (async function() {
                                         try {
@@ -3356,9 +3338,17 @@ function Dashboard({ data, notify }) {
                     
                     return !zaplaceno;  // Zobrazí pokud není zaplaceno
                 }).slice(0, 5).map(function(p) {
-                    const hasEmail = (p.tenant && p.tenant.email && p.tenant.email.includes('@'));
+                    // ⭐ Hledej nájemníka z nové struktury data.najemnici
+                    const aktivniNajemnik = (data.najemnici || []).find(function(n) {
+                        if (n.nemovitostId !== p.id) return false;
+                        if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+                        return true;
+                    });
+                    // Fallback na starou strukturu p.tenant
+                    const tenantEmail = (aktivniNajemnik && aktivniNajemnik.email) || (p.tenant && p.tenant.email) || "";
+                    const tenantName = (aktivniNajemnik && aktivniNajemnik.jmeno) || (p.tenant && p.tenant.name) || "Bez nájemníka";
+                    const hasEmail = tenantEmail && tenantEmail.includes('@');
                     const rent = (p.income && p.income.rent) || 0;
-                    const tenantName = (p.tenant && p.tenant.name) || "Bez nájemníka";
                     
                     return (React.createElement("div", { key: p.id, style: { display: "flex", justifyContent: "space-between",
                             padding: "8px 0", borderBottom: "1px solid #f3f4f6", alignItems: "center" } },
@@ -3376,55 +3366,36 @@ function Dashboard({ data, notify }) {
                                 onClick: function(e) {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    
-                                    console.log('🔵 Tlačítko nájmu kliknuto!', p.name);
-                                    console.log('🔍 isGmailConnected:', isGmailConnected());
-                                    
                                     if (!isGmailConnected()) {
-                                        console.log('❌ Gmail není připojen');
                                         notify("\u274C Nejprve p\u0159ipojte Google Drive (zahrnuje Gmail)");
                                         return;
                                     }
-                                    
-                                    console.log('✅ Gmail připojen, odesílám...');
-                                    
                                     (async function() {
                                         try {
                                             notify("\uD83D\uDCE7 Odes\u00EDl\u00E1m upom\u00EDnku n\u00E1jemn\u00EDkovi...");
-                                            
-                                            // Vytvoř nájemníka pro sendRentalReminder
                                             const najemnik = {
-                                                id: p.id,
+                                                id: aktivniNajemnik ? aktivniNajemnik.id : p.id,
                                                 name: tenantName,
-                                                email: p.tenant.email,
-                                                rent: rent,
+                                                email: tenantEmail,
+                                                najem: rent,
                                                 propertyName: p.name,
                                                 propertyAddress: p.address
                                             };
-                                            
                                             await sendRentalReminder(najemnik, 1, data.platby || [], data.firma, data.emailSablonyNajmy, notify);
                                             notify("\u2705 Upom\u00EDnka n\u00E1jemn\u00EDkovi odesl\u00E1na!");
                                         } catch (error) {
-                                            console.error('❌ Chyba při odesílání:', error);
                                             notify("\u274C Chyba: " + error.message);
                                         }
                                     })();
                                 },
                                 style: { 
-                                    background: "#10b981", 
-                                    color: "#fff", 
-                                    border: "none", 
-                                    padding: "6px 12px", 
-                                    borderRadius: "6px", 
-                                    fontSize: "11px", 
-                                    cursor: "pointer",
-                                    fontWeight: "600",
-                                    whiteSpace: "nowrap",
-                                    position: "relative",
-                                    zIndex: 10
+                                    background: "#10b981", color: "#fff", border: "none", 
+                                    padding: "6px 12px", borderRadius: "6px", fontSize: "11px", 
+                                    cursor: "pointer", fontWeight: "600", whiteSpace: "nowrap",
+                                    position: "relative", zIndex: 10
                                 },
                                 type: "button",
-                                title: "Odeslat 1. upom\u00EDnku na email: " + (p.tenant && p.tenant.email)
+                                title: "Odeslat 1. upom\u00EDnku na email: " + tenantEmail
                             }, "\uD83D\uDCE7 Upom\u00EDnka"))));
                 }),
                 ((data.nemovitosti && data.nemovitosti.properties) || []).filter(function(p) {
@@ -5140,13 +5111,21 @@ function RTFinance({ p }) {
             React.createElement("div", { style: { fontWeight: "700", fontSize: "13px", color: c } }, v)))))));
 }
 // ── Tab: Nájem & zálohy ──
-function RTNajem({ p }) {
+function RTNajem({ p, data }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const z = p.zaloh || {};
     const totalZ = _sumZal(p);
     const platitTxt = { najemnik: "Nájemník přímo", pronajimatel: "Pronajímatel (z nájmu)", mix: "Mix" }[z.plati || "najemnik"];
-    const depAccTxt = { sporici: "Spořicí účet", bezny: "Běžný účet", hotovost: "Hotovost" }[((_a = p.tenant) === null || _a === void 0 ? void 0 : _a.depositAccount) || "bezny"];
-    const depStaTxt = { skladena: "Složena ✅", vracena: "Vrácena", castecne: "Část. vrácena ⚠️" }[((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.depositStatus) || "skladena"];
+    // ⭐ Hledej nájemníka z nové struktury
+    const aktivniNajemnik = data ? (data.najemnici || []).find(function(n) {
+        if (n.nemovitostId !== p.id) return false;
+        if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+        return true;
+    }) : null;
+    // Kauce - primárně z nájemníka, fallback na p.tenant
+    const kauce = (aktivniNajemnik && aktivniNajemnik.kauce) || (((_a = p.tenant) === null || _a === void 0 ? void 0 : _a.deposit) || 0);
+    const depAccTxt = { sporici: "Spořicí účet", bezny: "Běžný účet", hotovost: "Hotovost" }[((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.depositAccount) || "bezny"];
+    const depStaTxt = { skladena: "Složena ✅", vracena: "Vrácena", castecne: "Část. vrácena ⚠️" }[((_c = p.tenant) === null || _c === void 0 ? void 0 : _c.depositStatus) || "skladena"];
     return (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "12px" } },
         React.createElement(Card, null,
             React.createElement(RSH, { label: "Z\u00E1lohy na energie / m\u011Bs\u00EDc" }),
@@ -5181,10 +5160,10 @@ function RTNajem({ p }) {
             React.createElement(RRow, { label: "Ro\u010Dn\u00ED p\u0159\u00EDsp\u011Bvek", value: formatCZK((((_e = p.fondOprav) === null || _e === void 0 ? void 0 : _e.mesicne) || 0) * 12), color: "#d97706" })),
         React.createElement(Card, null,
             React.createElement(RSH, { label: "Kauce n\u00E1jemn\u00EDka" }),
-            React.createElement(RRow, { label: "V\u00FD\u0161e kauce", value: formatCZK(((_f = p.tenant) === null || _f === void 0 ? void 0 : _f.deposit) || 0), color: "#16a34a" }),
+            React.createElement(RRow, { label: "V\u00FD\u0161e kauce", value: formatCZK(kauce), color: "#16a34a" }),
             React.createElement(RRow, { label: "Stav kauce", value: depStaTxt, color: ((_g = p.tenant) === null || _g === void 0 ? void 0 : _g.depositStatus) === "skladena" ? "#16a34a" : "#d97706" }),
             React.createElement(RRow, { label: "Ulo\u017Een\u00ED kauce", value: depAccTxt, color: "#4f46e5" }),
-            React.createElement(RRow, { label: "N\u00E1sobek n\u00E1jmu", value: ((_h = p.income) === null || _h === void 0 ? void 0 : _h.rent) > 0 ? ((((_j = p.tenant) === null || _j === void 0 ? void 0 : _j.deposit) || 0) / p.income.rent).toFixed(1) + "× nájmu" : "—", color: "#0891b2" }),
+            React.createElement(RRow, { label: "N\u00E1sobek n\u00E1jmu", value: ((_h = p.income) === null || _h === void 0 ? void 0 : _h.rent) > 0 ? (kauce / p.income.rent).toFixed(1) + "\u00D7 n\u00E1jmu" : "—", color: "#0891b2" }),
             React.createElement("div", { style: { background: "#f8fafc", borderRadius: "8px", padding: "8px 10px",
                     fontSize: "11px", color: "#6b7280", marginTop: "10px" } }, "\u2139\uFE0F Max. 3\u00D7 n\u00E1jem (\u00A7 2254 OZ). Vr\u00E1cen\u00ED do 1 m\u011Bs. od skon\u010Den\u00ED n\u00E1jmu."))));
 }
@@ -6053,7 +6032,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
                 fontSize: "11px", cursor: "pointer", fontWeight: "600", whiteSpace: "nowrap", flexShrink: 0 } }, t.label)))),
         tab === "prehled" && React.createElement(RTPrehled, { p: p, data: data }),
         tab === "finance" && React.createElement(RTFinance, { p: p }),
-        tab === "najem" && React.createElement(RTNajem, { p: p }),
+        tab === "najem" && React.createElement(RTNajem, { p: p, data: data }),
         tab === "odpisy" && React.createElement(RTOdpisy, { p: p, onUpdate: onUpdate, notify: notify }),
         tab === "smlouva" && React.createElement(RTSmlouva, { p: p, onContract: genContract, onNotice: genNotice, data: data }),
         tab === "najemnici" && React.createElement(RTNajemnici, { p: p, onUpdate: onUpdate, notify: notify }),
@@ -6187,16 +6166,9 @@ function RForm({ initial, onSave, onBack }) {
             React.createElement(Input, { label: "Splatnost do", type: "date", value: ((_w = f.mortgage) === null || _w === void 0 ? void 0 : _w.endDate) || "", onChange: v => setMort("endDate", v) }),
             React.createElement(Input, { label: "Banka", value: ((_x = f.mortgage) === null || _x === void 0 ? void 0 : _x.bank) || "", onChange: v => setMort("bank", v), placeholder: "KB, \u010CSOB..." })),
         React.createElement(RSH, { label: "N\u00E1jemn\u00EDk" }),
-        React.createElement(Input, { label: "Jm\u00E9no n\u00E1jemn\u00EDka", value: ((_y = f.tenant) === null || _y === void 0 ? void 0 : _y.name) || "", onChange: v => setTen("name", v) }),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
-            React.createElement(Input, { label: "Telefon", value: ((_z = f.tenant) === null || _z === void 0 ? void 0 : _z.phone) || "", onChange: v => setTen("phone", v) }),
-            React.createElement(Input, { label: "Email", type: "email", value: ((_0 = f.tenant) === null || _0 === void 0 ? void 0 : _0.email) || "", onChange: v => setTen("email", v) }),
-            React.createElement(Input, { label: "Smlouva od", type: "date", value: ((_1 = f.tenant) === null || _1 === void 0 ? void 0 : _1.since) || "", onChange: v => setTen("since", v) }),
-            React.createElement(Input, { label: "Smlouva do", type: "date", value: ((_2 = f.tenant) === null || _2 === void 0 ? void 0 : _2.contractEnd) || "", onChange: v => setTen("contractEnd", v) }),
-            React.createElement(Input, { label: "Kauce (K\u010D)", type: "number", value: ((_3 = f.tenant) === null || _3 === void 0 ? void 0 : _3.deposit) || 0, onChange: v => setTen("deposit", +v || 0) }),
-            React.createElement(Select, { label: "Stav kauce", value: ((_4 = f.tenant) === null || _4 === void 0 ? void 0 : _4.depositStatus) || "skladena", onChange: v => setTen("depositStatus", v), options: [{ value: "skladena", label: "Složena" }, { value: "vracena", label: "Vrácena" }, { value: "castecne", label: "Část. vrácena" }] }),
-            React.createElement(Select, { label: "Kauce ulo\u017Eena", value: ((_5 = f.tenant) === null || _5 === void 0 ? void 0 : _5.depositAccount) || "bezny", onChange: v => setTen("depositAccount", v), options: [{ value: "bezny", label: "Běžný účet" }, { value: "sporici", label: "Spořicí účet" }, { value: "hotovost", label: "Hotovost" }] }),
-            React.createElement(Select, { label: "V\u00FDpov\u011Bdn\u00ED lh\u016Fta", value: ((_6 = f.tenant) === null || _6 === void 0 ? void 0 : _6.noticePeriod) || "2", onChange: v => setTen("noticePeriod", v), options: [{ value: "1", label: "1 měsíc" }, { value: "2", label: "2 měsíce" }, { value: "3", label: "3 měsíce" }] })),
+        React.createElement("div", { style: { background: "#eff6ff", border: "1px solid #93c5fd", borderRadius: "8px", padding: "12px 14px", fontSize: "13px", color: "#1e40af" } },
+            React.createElement("div", { style: { fontWeight: "600", marginBottom: "4px" } }, "\u2139\uFE0F N\u00E1jemn\u00EDka spravujete v sekci N\u00E1jemn\u00EDci"),
+            React.createElement("div", { style: { fontSize: "12px", color: "#3b82f6" } }, "Otev\u0159ete z\u00E1lo\u017Eku N\u00E1jemn\u00EDci v hlavn\u00EDm menu, p\u0159idejte nebo upravte n\u00E1jemn\u00EDka a vyberte tuto nemovitost v poli \u201DP\u0159i\u0159azen\u00FD byt\u201C.")),
         React.createElement(RSH, { label: "Pozn\u00E1mky" }),
         React.createElement(Textarea, { label: "", value: f.notes || "", onChange: v => set("notes", v), rows: 3 }),
         React.createElement("div", { style: { display: "flex", gap: "12px", marginTop: "16px" } },
@@ -6318,7 +6290,14 @@ function RDashboard({ properties, onOpen, onAdd, data, updateData, notify }) {
             var _a, _b, _c, _d, _e, _f;
             const cf = _calcCF(p);
             const ltv = p.currentPrice > 0 ? (((_a = p.mortgage) === null || _a === void 0 ? void 0 : _a.remaining) || 0) / p.currentPrice * 100 : 0;
-            const cDays = _daysUntil((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.contractEnd);
+            // ⭐ Konec smlouvy z nové struktury nájemníků
+    const aktivniNajemnikCard = data ? (data.najemnici || []).find(function(n) {
+        if (n.nemovitostId !== p.id) return false;
+        if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+        return true;
+    }) : null;
+    const contractEnd = (aktivniNajemnikCard && aktivniNajemnikCard.datumOdchodu) || ((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.contractEnd);
+    const cDays = _daysUntil(contractEnd);
             const fDays = _daysUntil((_c = p.mortgage) === null || _c === void 0 ? void 0 : _c.fixationEnd);
             const alerts = [];
             if (cDays !== null && cDays >= 0 && cDays < 60)
