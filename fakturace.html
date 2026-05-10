@@ -2150,6 +2150,71 @@ function ConfirmDialog({ message, onYes, onNo }) {
                 React.createElement("button", { onClick: onYes, style: { padding: "9px 24px", border: "none", borderRadius: "8px",
                         background: "#dc2626", color: "#fff", fontSize: "13px", fontWeight: "600", cursor: "pointer" } }, "Ano, smazat")))));
 }
+
+// ⭐ ConfirmSendDialog — potvrzovací dialog pro odesílání upomínek
+function ConfirmSendDialog({ recipientName, recipientEmail, type, onConfirm, onCancel }) {
+    const [phase, setPhase] = (0, useState)("confirm");
+    const [errorMsg, setErrorMsg] = (0, useState)("");
+
+    const handleSend = async function() {
+        setPhase("sending");
+        try {
+            await onConfirm();
+            setPhase("success");
+        } catch(e) {
+            setErrorMsg(e.message || "Neznámá chyba");
+            setPhase("error");
+        }
+    };
+
+    const overlayStyle = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 4000, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" };
+    const boxStyle = { background: "#fff", borderRadius: "16px", padding: "32px 28px", maxWidth: "400px", width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.35)", textAlign: "center" };
+    const btnBase = { padding: "11px 28px", borderRadius: "10px", fontSize: "14px", fontWeight: "700", cursor: "pointer", border: "none", minWidth: "100px" };
+
+    if (phase === "confirm") {
+        return React.createElement("div", { style: overlayStyle },
+            React.createElement("div", { style: boxStyle },
+                React.createElement("div", { style: { fontSize: "40px", marginBottom: "12px" } }, "\uD83D\uDCE7"),
+                React.createElement("div", { style: { fontSize: "17px", fontWeight: "700", color: "#1a3a5c", marginBottom: "8px" } }, "Odeslat upom\u00EDnku?"),
+                React.createElement("div", { style: { fontSize: "13px", color: "#6b7280", marginBottom: "6px", lineHeight: "1.7" } },
+                    type === "faktura" ? "Upom\u00EDnka k nezaplacen\u00E9 faktu\u0159e" : "Upom\u00EDnka k nezaplacen\u00E9mu n\u00E1jmu"),
+                React.createElement("div", { style: { background: "#f8fafc", borderRadius: "10px", padding: "12px 16px", margin: "12px 0 24px", textAlign: "left" } },
+                    React.createElement("div", { style: { fontSize: "12px", color: "#6b7280", marginBottom: "4px" } }, "P\u0159\u00EDjemce:"),
+                    React.createElement("div", { style: { fontWeight: "700", color: "#1a3a5c", fontSize: "14px" } }, recipientName),
+                    React.createElement("div", { style: { fontSize: "12px", color: "#3b82f6", marginTop: "2px" } }, recipientEmail)),
+                React.createElement("div", { style: { display: "flex", gap: "12px", justifyContent: "center" } },
+                    React.createElement("button", { onClick: onCancel, style: Object.assign({}, btnBase, { background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db" }) }, "\u274C Ne"),
+                    React.createElement("button", { onClick: handleSend, style: Object.assign({}, btnBase, { background: "#3b82f6", color: "#fff" }) }, "\u2705 Ano, odeslat"))));
+    }
+    if (phase === "sending") {
+        return React.createElement("div", { style: overlayStyle },
+            React.createElement("div", { style: boxStyle },
+                React.createElement("div", { style: { fontSize: "40px", marginBottom: "16px" } }, "\u23F3"),
+                React.createElement("div", { style: { fontSize: "16px", fontWeight: "700", color: "#1a3a5c", marginBottom: "8px" } }, "Odes\u00EDl\u00E1m upom\u00EDnku..."),
+                React.createElement("div", { style: { fontSize: "13px", color: "#6b7280" } },
+                    "Pros\u00EDm \u010Dekejte, email se odes\u00EDl\u00E1 na ",
+                    React.createElement("strong", null, recipientEmail))));
+    }
+    if (phase === "success") {
+        return React.createElement("div", { style: overlayStyle },
+            React.createElement("div", { style: boxStyle },
+                React.createElement("div", { style: { fontSize: "48px", marginBottom: "12px" } }, "\u2705"),
+                React.createElement("div", { style: { fontSize: "17px", fontWeight: "700", color: "#15803d", marginBottom: "8px" } }, "Upom\u00EDnka odesl\u00E1na!"),
+                React.createElement("div", { style: { fontSize: "13px", color: "#6b7280", marginBottom: "24px", lineHeight: "1.7" } },
+                    "Email byl \u00FAsp\u011B\u0161n\u011B odesl\u00E1n na adresu:",
+                    React.createElement("br", null),
+                    React.createElement("strong", { style: { color: "#1a3a5c" } }, recipientEmail)),
+                React.createElement("button", { onClick: onCancel, style: Object.assign({}, btnBase, { background: "#15803d", color: "#fff", width: "100%" }) }, "Zav\u0159\u00EDt")));
+    }
+    return React.createElement("div", { style: overlayStyle },
+        React.createElement("div", { style: boxStyle },
+            React.createElement("div", { style: { fontSize: "48px", marginBottom: "12px" } }, "\u274C"),
+            React.createElement("div", { style: { fontSize: "17px", fontWeight: "700", color: "#dc2626", marginBottom: "8px" } }, "Upom\u00EDnka nebyla odesl\u00E1na"),
+            React.createElement("div", { style: { fontSize: "13px", color: "#6b7280", marginBottom: "8px" } }, "P\u0159i odes\u00EDl\u00E1n\u00ED do\u0161lo k chyb\u011B:"),
+            React.createElement("div", { style: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "10px 14px", fontSize: "12px", color: "#dc2626", marginBottom: "24px", wordBreak: "break-word" } }, errorMsg),
+            React.createElement("button", { onClick: onCancel, style: Object.assign({}, btnBase, { background: "#6b7280", color: "#fff", width: "100%" }) }, "Zav\u0159\u00EDt")));
+}
+
 // PrintModal — zobrazí dokument přes celou obrazovku
 // Uživatel tiskne přímo přes prohlížeč: Ctrl+P (PC) nebo Sdílet→Tisknout (mobil)
 // PrintModal — zobrazí dokument přes celou obrazovku
@@ -3135,6 +3200,10 @@ function Dashboard({ data, notify }) {
     const sumNezaplaceno = data.faktury.filter(f => f.stav === "vystavena").reduce((s, f) => s + calcFakturaTotal(f.polozky || []).celkem, 0);
     const dphRok = calcDPHHlaseni(data.faktury, rok, Math.ceil(mesic / 3));
     
+    // ⭐ State pro potvrzovací dialogy upomínek
+    const [sendDialog, setSendDialog] = (0, useState)(null);
+    // sendDialog: { type: "faktura"|"najem", recipientName, recipientEmail, onConfirm }
+    
     // Payment stats
     const platbyThisMonth = (data.platby || []).filter(p => {
         const pDate = new Date(p.date);
@@ -3145,6 +3214,13 @@ function Dashboard({ data, notify }) {
     const sumPlatbyMesic = platbyThisMonth.reduce((s, p) => s + (p.amount || 0), 0);
     
     return (React.createElement("div", null,
+        sendDialog && React.createElement(ConfirmSendDialog, {
+            recipientName: sendDialog.recipientName,
+            recipientEmail: sendDialog.recipientEmail,
+            type: sendDialog.type,
+            onConfirm: sendDialog.onConfirm,
+            onCancel: function() { setSendDialog(null); }
+        }),
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "16px", marginBottom: "24px" } },
             React.createElement(StatCard, { label: `Obrat ${rok}`, value: formatCZK(sumRok), color: "#1a3a5c" }),
             React.createElement(StatCard, { label: `Fakturace tento měsíc`, value: formatCZK(sumMesic), color: "#16a34a" }),
@@ -3279,17 +3355,15 @@ function Dashboard({ data, notify }) {
                                         return;
                                     }
                                     
-                                    
-                                    (async function() {
-                                        try {
-                                            notify("\uD83D\uDCE7 Odes\u00EDl\u00E1m upom\u00EDnku...");
+                                    // ⭐ Zobraz potvrzovací dialog
+                                    setSendDialog({
+                                        type: "faktura",
+                                        recipientName: f.zakaznikNazev || "Zákazník",
+                                        recipientEmail: f.zakaznikEmail || "",
+                                        onConfirm: async function() {
                                             await sendInvoiceReminder(f, 1, data.firma, data.emailSablonyFaktury, notify);
-                                            notify("\u2705 Upom\u00EDnka odesl\u00E1na!");
-                                        } catch (error) {
-                                            console.error('❌ Chyba při odesílání:', error);
-                                            notify("\u274C Chyba: " + error.message);
                                         }
-                                    })();
+                                    });
                                 },
                                 style: { 
                                     background: "#3b82f6", 
@@ -3370,9 +3444,12 @@ function Dashboard({ data, notify }) {
                                         notify("\u274C Nejprve p\u0159ipojte Google Drive (zahrnuje Gmail)");
                                         return;
                                     }
-                                    (async function() {
-                                        try {
-                                            notify("\uD83D\uDCE7 Odes\u00EDl\u00E1m upom\u00EDnku n\u00E1jemn\u00EDkovi...");
+                                    // ⭐ Zobraz potvrzovací dialog
+                                    setSendDialog({
+                                        type: "najem",
+                                        recipientName: tenantName,
+                                        recipientEmail: tenantEmail,
+                                        onConfirm: async function() {
                                             const najemnik = {
                                                 id: aktivniNajemnik ? aktivniNajemnik.id : p.id,
                                                 name: tenantName,
@@ -3382,11 +3459,8 @@ function Dashboard({ data, notify }) {
                                                 propertyAddress: p.address
                                             };
                                             await sendRentalReminder(najemnik, 1, data.platby || [], data.firma, data.emailSablonyNajmy, notify);
-                                            notify("\u2705 Upom\u00EDnka n\u00E1jemn\u00EDkovi odesl\u00E1na!");
-                                        } catch (error) {
-                                            notify("\u274C Chyba: " + error.message);
                                         }
-                                    })();
+                                    });
                                 },
                                 style: { 
                                     background: "#10b981", color: "#fff", border: "none", 
