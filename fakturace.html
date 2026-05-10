@@ -81,11 +81,8 @@ const addDays = (date, days) => {
     d.setDate(d.getDate() + days);
     return d.toISOString().split("T")[0];
 };
-// Konverze YYYY-MM-DD na DD.MM.YYYY pro Fio API
-const convertToFioDateFormat = (dateStr) => {
-    const [year, month, day] = dateStr.split('-');
-    return `${day}.${month}.${year}`;
-};
+// DEPRECATED: convertToFioDateFormat - nepoužívá se, Fio API chce YYYY-MM-DD přímo
+// const convertToFioDateFormat = (dateStr) => { ... };
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 const generateInvoiceNumber = (invoices, prefix = "FV") => {
     const year = new Date().getFullYear();
@@ -115,116 +112,8 @@ const initialState = {
         zivnostVydal: "",
         zivnostDatum: "",
     },
-    zakaznici: [
-        {
-            id: "zak_test_001",
-            nazev: "Test Zákazník s.r.o.",
-            ico: "12345678",
-            dic: "CZ12345678",
-            email: "test@example.com",
-            ulice: "Testovací 123",
-            mesto: "Praha",
-            psc: "110 00",
-            aktivni: true
-        },
-        {
-            id: "zak_test_002",
-            nazev: "Ondřej Testovací",
-            ico: "87654321",
-            dic: "",
-            email: "ondrej.test@gmail.com",
-            ulice: "Zkušební 456",
-            mesto: "Brno",
-            psc: "602 00",
-            aktivni: true
-        }
-    ],
-    faktury: [
-        {
-            id: "fv_test_001",
-            cislo: "FV20260001",
-            datumVystaveni: "2026-02-01",
-            datumSplatnosti: "2026-02-15",
-            datumUskutecneni: "2026-02-01",
-            zakaznikId: "zak_test_001",
-            zakaznikNazev: "Test Zákazník s.r.o.",
-            zakaznikIco: "12345678",
-            zakaznikDic: "CZ12345678",
-            zakaznikEmail: "test@example.com",
-            zakaznikAdresa: "Testovací 123, 110 00 Praha",
-            polozky: [
-                {
-                    id: "pol_001",
-                    typ: "sluzba",
-                    popis: "Webový vývoj",
-                    mnozstvi: 10,
-                    jednotka: "hod",
-                    cena: 1000,
-                    sazba: 21
-                }
-            ],
-            stav: "vystavena",
-            zpusobPlatby: "Převodem",
-            variabilniSymbol: "20260001",
-            poznamka: ""
-        },
-        {
-            id: "fv_test_002",
-            cislo: "FV20260002",
-            datumVystaveni: "2026-02-10",
-            datumSplatnosti: "2026-02-24",
-            datumUskutecneni: "2026-02-10",
-            zakaznikId: "zak_test_002",
-            zakaznikNazev: "Ondřej Testovací",
-            zakaznikIco: "87654321",
-            zakaznikDic: "",
-            zakaznikEmail: "ondrej.test@gmail.com",
-            zakaznikAdresa: "Zkušební 456, 602 00 Brno",
-            polozky: [
-                {
-                    id: "pol_002",
-                    typ: "sluzba",
-                    popis: "Konzultace",
-                    mnozstvi: 5,
-                    jednotka: "hod",
-                    cena: 1500,
-                    sazba: 21
-                }
-            ],
-            stav: "vystavena",
-            zpusobPlatby: "Převodem",
-            variabilniSymbol: "20260002",
-            poznamka: ""
-        },
-        {
-            id: "fv_test_003",
-            cislo: "FV20260003",
-            datumVystaveni: "2026-03-01",
-            datumSplatnosti: "2026-03-15",
-            datumUskutecneni: "2026-03-01",
-            zakaznikId: "zak_test_001",
-            zakaznikNazev: "Test Zákazník s.r.o.",
-            zakaznikIco: "12345678",
-            zakaznikDic: "CZ12345678",
-            zakaznikEmail: "test@example.com",
-            zakaznikAdresa: "Testovací 123, 110 00 Praha",
-            polozky: [
-                {
-                    id: "pol_003",
-                    typ: "sluzba",
-                    popis: "Údržba webu",
-                    mnozstvi: 1,
-                    jednotka: "měsíc",
-                    cena: 5000,
-                    sazba: 21
-                }
-            ],
-            stav: "uhrazena",
-            zpusobPlatby: "Převodem",
-            variabilniSymbol: "20260003",
-            poznamka: ""
-        }
-    ],
+    zakaznici: [],
+    faktury: [],
     polozkyMaterialy: [],
     majetek: [],
     danNaklady: {},
@@ -540,6 +429,39 @@ const saveData = (data) => {
         console.error("Save error:", e);
     }
 };
+
+// ⭐ TESTOVACÍ DATA - oddělena od produkčního initialState
+const getTestData = () => ({
+    zakaznici: [
+        { id: "zak_test_001", nazev: "Test Zákazník s.r.o.", ico: "12345678", dic: "CZ12345678",
+          email: "test@example.com", ulice: "Testovací 123", mesto: "Praha", psc: "110 00", aktivni: true },
+        { id: "zak_test_002", nazev: "Ondřej Testovací", ico: "87654321", dic: "",
+          email: "ondrej.test@gmail.com", ulice: "Zkušební 456", mesto: "Brno", psc: "602 00", aktivni: true }
+    ],
+    faktury: [
+        { id: "fv_test_001", cislo: "FV20260001", datumVystaveni: "2026-02-01",
+          datumSplatnosti: "2026-02-15", datumUskutecneni: "2026-02-01",
+          zakaznikId: "zak_test_001", zakaznikNazev: "Test Zákazník s.r.o.",
+          zakaznikIco: "12345678", zakaznikDic: "CZ12345678", zakaznikEmail: "test@example.com",
+          zakaznikAdresa: "Testovací 123, 110 00 Praha",
+          polozky: [{ id: "pol_001", typ: "sluzba", popis: "Webový vývoj", mnozstvi: 10, jednotka: "hod", cena: 1000, sazba: 21 }],
+          stav: "vystavena", zpusobPlatby: "Převodem", variabilniSymbol: "20260001", poznamka: "" },
+        { id: "fv_test_002", cislo: "FV20260002", datumVystaveni: "2026-02-10",
+          datumSplatnosti: "2026-02-24", datumUskutecneni: "2026-02-10",
+          zakaznikId: "zak_test_002", zakaznikNazev: "Ondřej Testovací",
+          zakaznikIco: "87654321", zakaznikDic: "", zakaznikEmail: "ondrej.test@gmail.com",
+          zakaznikAdresa: "Zkušební 456, 602 00 Brno",
+          polozky: [{ id: "pol_002", typ: "sluzba", popis: "Konzultace", mnozstvi: 5, jednotka: "hod", cena: 1500, sazba: 21 }],
+          stav: "vystavena", zpusobPlatby: "Převodem", variabilniSymbol: "20260002", poznamka: "" },
+        { id: "fv_test_003", cislo: "FV20260003", datumVystaveni: "2026-03-01",
+          datumSplatnosti: "2026-03-15", datumUskutecneni: "2026-03-01",
+          zakaznikId: "zak_test_001", zakaznikNazev: "Test Zákazník s.r.o.",
+          zakaznikIco: "12345678", zakaznikDic: "CZ12345678", zakaznikEmail: "test@example.com",
+          zakaznikAdresa: "Testovací 123, 110 00 Praha",
+          polozky: [{ id: "pol_003", typ: "sluzba", popis: "Údržba webu", mnozstvi: 1, jednotka: "měsíc", cena: 5000, sazba: 21 }],
+          stav: "uhrazena", zpusobPlatby: "Převodem", variabilniSymbol: "20260003", poznamka: "" }
+    ]
+});
 // Migrate old polozky field names cenaBezDPH->cena, dphSazba->sazba
 const migratePolozky = (polozky) => (polozky || []).map(p => (Object.assign(Object.assign({}, p), { cena: p.cena !== undefined ? p.cena : (p.cenaBezDPH || 0), sazba: p.sazba !== undefined ? p.sazba : (p.dphSazba || 21) })));
 const migrateFaktury = (faktury) => (faktury || []).map(f => (Object.assign(Object.assign({}, f), { polozky: migratePolozky(f.polozky) })));
@@ -2207,8 +2129,8 @@ ${(firma.banka && (faktura.zpusobPlatby || "Převodem") === "Převodem") ? (() =
     <div style="font-size:9px;color:#888;font-family:Arial">${firma.banka}</div>
   </div>` : '';
 })() : ""}
-<div class="stamp">UHRAZENO</div>
-<scr"+"ipt>window.onload=()=>window.print()</scr"+"ipt>
+${faktura.stav === "uhrazena" ? '<div class="stamp">UHRAZENO</div>' : ""}
+<scr` + `ipt>window.onload=()=>window.print()</scr` + `ipt>
 </body></html>`;
 };
 // ============================================================
@@ -2940,7 +2862,7 @@ function GoogleDriveBtn({ data, updateData, notify }) {
                                 // Načíst Fio token z Drive
                                 const fToken = await loadFioTokenFromDrive();
                                 if (fToken) {
-                                    updateData(prev => ({ ...prev, fioToken: fToken }));
+                                    updateData(prev => Object.assign({}, prev, { fioToken: fToken }));
                                     notify("🏦 Fio API token načten z Drive!");
                                 }
                                 // Týdenní záloha při připojení
@@ -3609,7 +3531,7 @@ function Fakturace({ data, updateData, notify, setModal }) {
             const existing = prev.faktury.findIndex(x => x.id === f.id);
             const faktury = existing >= 0
                 ? prev.faktury.map(x => x.id === f.id ? f : x)
-                : [f, ...prev.faktury];
+                : [f].concat(prev.faktury);
             return Object.assign(Object.assign({}, prev), { faktury });
         });
         setShowForm(false);
@@ -3706,11 +3628,11 @@ function FakturaForm({ faktura, zakaznici, firma, onSave, onClose }) {
         }
     };
     const addPolozka = (typ) => {
-        setPolozky(prev => [...prev, {
-                id: generateId(), typ, popis: "", mnozstvi: 1,
+        setPolozky(prev => prev.concat([{
+                id: generateId(), typ: typ, popis: "", mnozstvi: 1,
                 jednotka: typ === "hodiny" ? "hod" : typ === "material" ? "ks" : "ks",
                 cena: 0, sazba: 21
-            }]);
+            }]));
     };
     const updatePolozka = (id, key, val) => {
         setPolozky(prev => prev.map(p => p.id === id ? Object.assign(Object.assign({}, p), { [key]: val }) : p));
@@ -3818,7 +3740,7 @@ function Zakaznici({ data, updateData, notify }) {
     const save = (z) => {
         updateData(prev => {
             const existing = prev.zakaznici.findIndex(x => x.id === z.id);
-            const zakaznici = existing >= 0 ? prev.zakaznici.map(x => x.id === z.id ? z : x) : [...prev.zakaznici, z];
+            const zakaznici = existing >= 0 ? prev.zakaznici.map(x => x.id === z.id ? z : x) : prev.zakaznici.concat([z]);
             return Object.assign(Object.assign({}, prev), { zakaznici });
         });
         setShowForm(false);
@@ -4540,7 +4462,7 @@ function DanZPrijmu({ data, updateData, notify }) {
             popis: newNaklad.popis || (typ === null || typ === void 0 ? void 0 : typ.label) || "",
             castka: parseFloat(newNaklad.castka) || 0,
         };
-        saveNaklady([...naklady, item]);
+        saveNaklady(naklady.concat([item]));
         setNewNaklad({ typ: "pojisteni", popis: "", castka: 0 });
         setShowAddForm(false);
         notify("Náklad přidán");
@@ -4757,7 +4679,7 @@ function DanZPrijmu({ data, updateData, notify }) {
                             onChange: e => {
                                 const val = parseFloat(e.target.value) || 0;
                                 const updated = naklady.filter(n => n.typ !== "sp_zaloha");
-                                saveNaklady([...updated, { id: "sp_zaloha", typ: "sp_zaloha", label: "SP záloha", popis: "Mě\u0161\u00ED\u010Dn\u00ED z\u00E1loha SP", castka: val }]);
+                                saveNaklady(updated.concat([{ id: "sp_zaloha", typ: "sp_zaloha", label: "SP záloha", popis: "M\u011bs\u00ed\u010dn\u00ed z\u00e1loha SP", castka: val }]));
                             },
                             style: { width: "110px", padding: "6px 8px", border: "2px solid #0369a1", borderRadius: "6px", fontSize: "14px", fontWeight: "700" } }),
                         React.createElement("span", { style: { fontSize: "12px", color: "#6b7280" } }, "Kč/měs")),
@@ -4779,7 +4701,7 @@ function DanZPrijmu({ data, updateData, notify }) {
                             onChange: e => {
                                 const val = parseFloat(e.target.value) || 0;
                                 const updated = naklady.filter(n => n.typ !== "zp_zaloha");
-                                saveNaklady([...updated, { id: "zp_zaloha", typ: "zp_zaloha", label: "ZP záloha", popis: "Mě\u0161\u00ED\u010Dn\u00ED z\u00E1loha ZP", castka: val }]);
+                                saveNaklady(updated.concat([{ id: "zp_zaloha", typ: "zp_zaloha", label: "ZP záloha", popis: "M\u011bs\u00ed\u010dn\u00ed z\u00e1loha ZP", castka: val }]));
                             },
                             style: { width: "110px", padding: "6px 8px", border: "2px solid #0891b2", borderRadius: "6px", fontSize: "14px", fontWeight: "700" } }),
                         React.createElement("span", { style: { fontSize: "12px", color: "#6b7280" } }, "Kč/měs")),
@@ -4920,7 +4842,7 @@ function Majetek({ data, updateData, notify }) {
     const save = (m) => {
         updateData(prev => {
             const existing = prev.majetek.findIndex(x => x.id === m.id);
-            const majetek = existing >= 0 ? prev.majetek.map(x => x.id === m.id ? m : x) : [...prev.majetek, m];
+            const majetek = existing >= 0 ? prev.majetek.map(x => x.id === m.id ? m : x) : prev.majetek.concat([m]);
             return Object.assign(Object.assign({}, prev), { majetek });
         });
         setShowForm(false);
@@ -5007,12 +4929,21 @@ const _calcCF = (p) => {
     if (!p)
         return 0;
     const inc = (((_a = p.income) === null || _a === void 0 ? void 0 : _a.rent) || 0) + (((_b = p.income) === null || _b === void 0 ? void 0 : _b.other) || 0);
-    const exp = Object.values(p.expenses || {}).reduce((a, v) => a + (+v || 0), 0);
+    // Výdaje vlastníka - přidáme fondVlastnik, daň/12, pojištění/12
+    const exp = Object.values(p.expenses || {}).reduce(function(a, v) { return a + (+v || 0); }, 0);
+    const fondVlastnik = ((p.expenses && p.expenses.fondVlastnik) || 0);
+    // Daň a pojištění jsou roční - přepočítáme na měsíc
+    const danMesicne = (((p.expenses && p.expenses.tax) || 0) / 12);
+    const pojisteniMesicne = (((p.expenses && p.expenses.insurance) || 0) / 12);
     const mort = ((_c = p.mortgage) === null || _c === void 0 ? void 0 : _c.monthly) || 0;
     const fond = ((_d = p.fondOprav) === null || _d === void 0 ? void 0 : _d.mesicne) || 0;
+    // Zálohy - všechna nová pole
     const z = p.zaloh || {};
-    const zalP = z.plati === "pronajimatel" ? (z.elektrina || 0) + (z.plyn || 0) + (z.voda || 0) + (z.teplo || 0) + (z.svj || 0) + (z.internet || 0) : 0;
-    return inc - exp - mort - fond - zalP;
+    const zalP = z.plati === "pronajimatel" ? _sumZal(p) : 0;
+    // CF = příjmy - výdaje - hypotéka - fond oprav - zálohy hrazené pronajímatelem
+    // Odečteme jen měsíční položky (daň a pojištění jsou roční, přepočítáme)
+    const expMesicni = exp - ((p.expenses && p.expenses.tax) || 0) - ((p.expenses && p.expenses.insurance) || 0) + danMesicne + pojisteniMesicne;
+    return inc - expMesicni - mort - fond - zalP;
 };
 const _sumZal = (p) => {
     const z = (p === null || p === void 0 ? void 0 : p.zaloh) || {};
@@ -5381,27 +5312,60 @@ function RTOdpisy({ p, onUpdate, notify }) {
                 React.createElement(Btn, { onClick: save }, "\uD83D\uDCBE Ulo\u017Eit nastaven\u00ED odpisov\u00E1n\u00ED"))));
 }
 
-function RTSmlouva({ p, onContract, onNotice }) {
+function RTSmlouva({ p, onContract, onNotice, data }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-    const contractDays = _daysUntil((_a = p.tenant) === null || _a === void 0 ? void 0 : _a.contractEnd);
-    const hasActive = ((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.name) && p.tenant.name !== "Volný" && p.tenant.contractEnd;
+    
+    // ⭐ Hledej nájemníka z nové struktury (data.najemnici)
+    const aktivniNajemnik = data ? (data.najemnici || []).find(function(n) {
+        if (n.nemovitostId !== p.id) return false;
+        if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+        return true;
+    }) : null;
+    
+    // Fallback na starou strukturu p.tenant
+    const tenant = aktivniNajemnik ? {
+        name: aktivniNajemnik.jmeno,
+        phone: aktivniNajemnik.telefon,
+        email: aktivniNajemnik.email,
+        since: aktivniNajemnik.datumNastupu,
+        contractEnd: aktivniNajemnik.datumOdchodu || "",
+        noticePeriod: aktivniNajemnik.vypovedniLhuta || 2,
+        deposit: aktivniNajemnik.kauce || (p.tenant && p.tenant.deposit) || 0,
+        trvalaAdresa: aktivniNajemnik.trvalaAdresa || "",
+        cisloOP: aktivniNajemnik.cisloOP || "",
+        rodneCislo: aktivniNajemnik.rodneCislo || "",
+        ucet: aktivniNajemnik.ucet || "",
+        pocetOsob: aktivniNajemnik.pocetOsob || 1
+    } : (p.tenant || {});
+    
+    const contractDays = _daysUntil(tenant.contractEnd);
+    const hasActive = tenant.name && tenant.name !== "Volný";
+    
     return (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "10px" } },
-        hasActive && React.createElement(RUrgency, { days: contractDays, label: "N\u00E1jemn\u00ED smlouva", endDate: p.tenant.contractEnd }),
+        hasActive && tenant.contractEnd && React.createElement(RUrgency, { days: contractDays, label: "N\u00E1jemn\u00ED smlouva", endDate: tenant.contractEnd }),
         React.createElement(Card, null,
             React.createElement(RSH, { label: "N\u00E1jemn\u00EDk" }),
-            React.createElement(RRow, { label: "Jm\u00E9no", value: ((_c = p.tenant) === null || _c === void 0 ? void 0 : _c.name) || "—" }),
-            React.createElement(RRow, { label: "Telefon", value: ((_d = p.tenant) === null || _d === void 0 ? void 0 : _d.phone) || "—" }),
-            React.createElement(RRow, { label: "Email", value: ((_e = p.tenant) === null || _e === void 0 ? void 0 : _e.email) || "—" }),
-            React.createElement(RRow, { label: "N\u00E1jemn\u00EDk od", value: _fmtCZ((_f = p.tenant) === null || _f === void 0 ? void 0 : _f.since) }),
-            React.createElement(RRow, { label: "Smlouva do", value: _fmtCZ((_g = p.tenant) === null || _g === void 0 ? void 0 : _g.contractEnd) }),
-            React.createElement(RRow, { label: "V\u00FDpov\u011Bdn\u00ED lh\u016Fta", value: (((_h = p.tenant) === null || _h === void 0 ? void 0 : _h.noticePeriod) || 2) + " měsíce" }),
+            React.createElement(RRow, { label: "Jm\u00E9no", value: tenant.name || "—" }),
+            React.createElement(RRow, { label: "Telefon", value: tenant.phone || "—" }),
+            React.createElement(RRow, { label: "Email", value: tenant.email || "—" }),
+            tenant.trvalaAdresa && React.createElement(RRow, { label: "Trval\u00E1 adresa", value: tenant.trvalaAdresa }),
+            tenant.cisloOP && React.createElement(RRow, { label: "\u010C. OP", value: tenant.cisloOP }),
+            tenant.ucet && React.createElement(RRow, { label: "\u010C. \u00FA\u010Dtu", value: tenant.ucet }),
+            React.createElement(RRow, { label: "Po\u010Det osob", value: String(tenant.pocetOsob || 1) }),
+            React.createElement(RRow, { label: "N\u00E1jemn\u00EDk od", value: _fmtCZ(tenant.since) }),
+            React.createElement(RRow, { label: "Smlouva do", value: tenant.contractEnd ? _fmtCZ(tenant.contractEnd) : "Na dobu neur\u010Ditou" }),
+            React.createElement(RRow, { label: "V\u00FDpov\u011Bdn\u00ED lh\u016Fta", value: (tenant.noticePeriod || 2) + " m\u011Bs\u00EDce" }),
             React.createElement(RRow, { label: "V\u00FD\u0161e n\u00E1jmu", value: formatCZK(((_j = p.income) === null || _j === void 0 ? void 0 : _j.rent) || 0), color: "#16a34a" }),
-            React.createElement(RRow, { label: "Kauce", value: formatCZK(((_k = p.tenant) === null || _k === void 0 ? void 0 : _k.deposit) || 0) })),
+            React.createElement(RRow, { label: "Kauce", value: formatCZK(tenant.deposit || 0) })),
         hasActive ? (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "8px" } },
             React.createElement(Btn, { onClick: onContract, variant: "success" }, "\uD83D\uDCC4 Generovat dodatek \u2014 prodlou\u017Een\u00ED n\u00E1jmu"),
             React.createElement(Btn, { onClick: onNotice, variant: "warning" }, "\uD83D\uDCDD Generovat v\u00FDpov\u011B\u010F z n\u00E1jmu"))) : (React.createElement(Card, { style: { textAlign: "center", padding: "24px" } },
             React.createElement("div", { style: { fontSize: "24px", marginBottom: "8px" } }, "\uD83D\uDEAB"),
-            React.createElement("div", { style: { fontSize: "13px", color: "#9ca3af" } }, "Byt nem\u00E1 aktivn\u00EDho n\u00E1jemn\u00EDka se smlouvou.")))));
+            React.createElement("div", { style: { fontSize: "13px", color: "#9ca3af" } }, 
+                "Byt nem\u00E1 p\u0159i\u0159azen\u00E9ho n\u00E1jemn\u00EDka.",
+                React.createElement("br", null),
+                React.createElement("span", { style: { fontSize: "11px", color: "#d97706" } }, 
+                    "P\u0159ejd\u011Bte na N\u00E1jemn\u00EDci a p\u0159i\u0159a\u010Fte tomuto bytu n\u00E1jemn\u00EDka."))))));
 }
 // ── Tab: Hypotéka ──
 function RTHypoteka({ p }) {
@@ -5528,7 +5492,7 @@ function RTNajemnici({ p, onUpdate, notify }) {
     const [showMeridla, setShowMeridla] = (0, useState)(null);
 
     const save = (n) => {
-        const list = najemnici.find(x => x.id === n.id) ? najemnici.map(x => x.id === n.id ? n : x) : [...najemnici, n];
+        const list = najemnici.find(x => x.id === n.id) ? najemnici.map(x => x.id === n.id ? n : x) : najemnici.concat([n]);
         onUpdate(Object.assign(Object.assign({}, p), { najemnici: list }));
         setShowForm(false);
         notify("Nájemník uložen!");
@@ -5601,7 +5565,7 @@ function MeridlaPanel({ najemnik, onSave, notify }) {
 
     const add = () => {
         if (!novyStav) { alert("Zadejte stav měřidla"); return; }
-        const updated = [...meridla, { id: generateId(), typ: novyTyp, stav: parseFloat(novyStav.replace(",","."))||novyStav, datum: novyDatum, poznamka: novyPozn }];
+        const updated = meridla.concat([{ id: generateId(), typ: novyTyp, stav: parseFloat(novyStav.replace(",","."))||novyStav, datum: novyDatum, poznamka: novyPozn }]);
         setMeridla(updated);
         onSave(updated);
         setNovyStav(""); setNovyPozn("");
@@ -5639,7 +5603,7 @@ function MeridlaPanel({ najemnik, onSave, notify }) {
                 React.createElement("tr", { style: { background: "#e0f2fe" } },
                     ["Typ", "Stav", "Datum", "Poznámka", ""].map(h => React.createElement("th", { key: h, style: { padding: "6px 8px", textAlign: "left" } }, h)))),
             React.createElement("tbody", null,
-                [...meridla].sort((a,b) => new Date(b.datum) - new Date(a.datum)).map(m =>
+                meridla.slice().sort((a,b) => new Date(b.datum) - new Date(a.datum)).map(m =>
                     React.createElement("tr", { key: m.id, style: { borderBottom: "1px solid #e5e7eb" } },
                         React.createElement("td", { style: { padding: "5px 8px", fontWeight: "600" } }, m.typ),
                         React.createElement("td", { style: { padding: "5px 8px", fontFamily: "monospace", fontWeight: "700" } }, m.stav),
@@ -5790,7 +5754,7 @@ function NajemniciGlobal({ data, updateData, notify, setActiveTab }) {
     const save = (n) => {
         updateData(prev => {
             const list = (prev.najemnici || []);
-            const updated = list.find(x => x.id === n.id) ? list.map(x => x.id === n.id ? n : x) : [n, ...list];
+            const updated = list.find(x => x.id === n.id) ? list.map(x => x.id === n.id ? n : x) : [n].concat(list);
             return Object.assign(Object.assign({}, prev), { najemnici: updated });
         });
         setShowForm(false);
@@ -5916,7 +5880,25 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
     ];
     const genContract = () => {
         var _a, _b, _c, _d;
-        const oldEnd = p.tenant.contractEnd;
+        // ⭐ Hledej nájemníka přes data.najemnici (nová struktura)
+        const aktivniNajemnik = data ? (data.najemnici || []).find(function(n) {
+            if (n.nemovitostId !== p.id) return false;
+            if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+            return true;
+        }) : null;
+        // Fallback na p.tenant (stará struktura)
+        const tenant = aktivniNajemnik ? {
+            name: aktivniNajemnik.jmeno,
+            phone: aktivniNajemnik.telefon,
+            email: aktivniNajemnik.email,
+            deposit: aktivniNajemnik.kauce || ((p.tenant && p.tenant.deposit) || 0),
+            noticePeriod: aktivniNajemnik.vypovedniLhuta || 2,
+            contractEnd: aktivniNajemnik.datumOdchodu || (p.tenant && p.tenant.contractEnd) || "",
+            trvalaAdresa: aktivniNajemnik.trvalaAdresa || "",
+            datumNastupu: aktivniNajemnik.datumNastupu || ""
+        } : (p.tenant || {});
+        
+        const oldEnd = tenant.contractEnd;
         const z = p.zaloh || {};
         const totalZ = _sumZal(p);
         const today = new Date().toISOString().split("T")[0];
@@ -5930,16 +5912,17 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "Pronajímatel: (doplňte jméno, adresu, RČ/IČO)",
             "",
             "Nájemce:",
-            p.tenant.name,
-            p.tenant.phone ? "Tel.: " + p.tenant.phone : "",
-            p.tenant.email ? "Email: " + p.tenant.email : "",
+            tenant.name || "—",
+            tenant.trvalaAdresa ? "Adresa: " + tenant.trvalaAdresa : "",
+            tenant.phone ? "Tel.: " + tenant.phone : "",
+            tenant.email ? "Email: " + tenant.email : "",
             "",
             "BYT: " + p.address + " (" + p.type + ", " + p.area + " m²)",
             "",
             "PRODLOUŽENÍ NÁJMU",
-            "Původní smlouva do: " + _fmtCZ(oldEnd),
-            "Nový začátek: " + _fmtCZ(_nextDay(oldEnd)),
-            "Nový konec:   " + _fmtCZ(_addYear(oldEnd)),
+            "Původní smlouva do: " + (oldEnd ? _fmtCZ(oldEnd) : "na dobu neurčitou"),
+            oldEnd ? "Nový začátek: " + _fmtCZ(_nextDay(oldEnd)) : "",
+            oldEnd ? "Nový konec:   " + _fmtCZ(_addYear(oldEnd)) : "",
             "",
             "NÁJEMNÉ A ZÁLOHY",
             "Nájemné:         " + formatCZK(((_a = p.income) === null || _a === void 0 ? void 0 : _a.rent) || 0) + "/měs",
@@ -5961,8 +5944,8 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "",
             "Zálohy podléhají ročnímu vyúčtování (do 30.4.).",
             "",
-            "KAUCE: " + formatCZK(((_c = p.tenant) === null || _c === void 0 ? void 0 : _c.deposit) || 0) + " — zůstává v platnosti.",
-            "Výpovědní lhůta: " + (((_d = p.tenant) === null || _d === void 0 ? void 0 : _d.noticePeriod) || 2) + " měsíce.",
+            "KAUCE: " + formatCZK(tenant.deposit || 0) + " — zůstává v platnosti.",
+            "Výpovědní lhůta: " + (tenant.noticePeriod || 2) + " měsíce.",
             "",
             "Ostatní ujednání původní smlouvy zůstávají v platnosti.",
             "Vyhotoveno ve dvou stejnopisech.",
@@ -5970,7 +5953,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "─────────────────────────────",
             "Pronajímatel:          Nájemce:",
             "___________________    ___________________",
-            "podpis                 " + p.tenant.name,
+            "podpis                 " + (tenant.name || "—"),
             "",
             "V Praze dne ......     V Praze dne ......",
             "─────────────────────────────",
@@ -5980,8 +5963,21 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
         setContractText(text);
     };
     const genNotice = () => {
-        var _a, _b, _c;
-        const months = parseInt(((_a = p.tenant) === null || _a === void 0 ? void 0 : _a.noticePeriod) || 2);
+        // ⭐ Hledej nájemníka z nové struktury (data.najemnici)
+        const aktivniNajemnik = data ? (data.najemnici || []).find(function(n) {
+            if (n.nemovitostId !== p.id) return false;
+            if (n.datumOdchodu && new Date(n.datumOdchodu) < new Date()) return false;
+            return true;
+        }) : null;
+        // Fallback na p.tenant
+        const tenant = aktivniNajemnik ? {
+            name: aktivniNajemnik.jmeno,
+            noticePeriod: aktivniNajemnik.vypovedniLhuta || 2,
+            deposit: aktivniNajemnik.kauce || (p.tenant && p.tenant.deposit) || 0,
+            trvalaAdresa: aktivniNajemnik.trvalaAdresa || ""
+        } : (p.tenant || {});
+
+        const months = parseInt(tenant.noticePeriod || 2);
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + months + 1);
         endDate.setDate(0);
@@ -5994,7 +5990,8 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "",
             "Pronajímatel: (doplňte jméno, adresu, RČ/IČO)",
             "",
-            "Nájemce: " + ((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.name),
+            "Nájemce: " + (tenant.name || "—"),
+            tenant.trvalaAdresa ? "Trvalá adresa: " + tenant.trvalaAdresa : "",
             "Adresa bytu: " + p.address,
             "",
             "Tímto vypovídám nájem bytu:",
@@ -6004,7 +6001,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "Začátek lhůty:   " + _fmtCZ(today),
             "Konec nájmu:     " + _fmtCZ(endDate.toISOString().split("T")[0]),
             "",
-            "Kauce " + formatCZK(((_c = p.tenant) === null || _c === void 0 ? void 0 : _c.deposit) || 0) + " vrácena do 1 měs. od předání bytu.",
+            "Kauce " + formatCZK(tenant.deposit || 0) + " vrácena do 1 měs. od předání bytu.",
             "",
             "─────────────────────────────",
             "Pronajímatel:",
@@ -6015,7 +6012,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
             "─────────────────────────────",
             "Doporučujeme zaslat doporučeně s dodejkou.",
             "Důvody výpovědi ověřte dle § 2288 OZ.",
-        ].join("\n");
+        ].filter(l => l !== null).join("\n");
         setContractTitle("Výpověď z nájmu · " + p.name);
         setContractText(text);
     };
@@ -6058,7 +6055,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
         tab === "finance" && React.createElement(RTFinance, { p: p }),
         tab === "najem" && React.createElement(RTNajem, { p: p }),
         tab === "odpisy" && React.createElement(RTOdpisy, { p: p, onUpdate: onUpdate, notify: notify }),
-        tab === "smlouva" && React.createElement(RTSmlouva, { p: p, onContract: genContract, onNotice: genNotice }),
+        tab === "smlouva" && React.createElement(RTSmlouva, { p: p, onContract: genContract, onNotice: genNotice, data: data }),
         tab === "najemnici" && React.createElement(RTNajemnici, { p: p, onUpdate: onUpdate, notify: notify }),
         tab === "hypoteka" && React.createElement(RTHypoteka, { p: p }),
         tab === "dokumenty" && React.createElement(RTDokumenty, { p: p, onUpdate: onUpdate, notify: notify }),
@@ -6478,7 +6475,7 @@ function Nemovitosti({ data, updateData, notify }) {
         const idx = allProps.findIndex(x => x.id === p.id);
         const next = idx >= 0
             ? allProps.map(x => x.id === p.id ? p : x)
-            : [...allProps, p];
+            : allProps.concat([p]);
         saveAll(next);
         notify("Nemovitost uložena ✅");
         setSelId(p.id);
@@ -7130,48 +7127,50 @@ function PaymentsPanel({ data, updateData, notify }) {
     if (!match) return;
     
     if (match.type === 'invoice') {
-      updateData(prev => ({
-        ...prev,
-        faktury: prev.faktury.map(inv => 
-          inv.id === match.id 
-            ? { ...inv, stav: 'uhrazena', datumUhrady: payment.date }
-            : inv
-        ),
-        platby: [...(prev.platby || []), {
-          id: payment.id,
-          type: 'invoice',
-          invoiceId: match.id,
-          amount: payment.amount,
-          date: payment.date,
-          matched: true
-        }]
-      }));
+      updateData(function(prev) {
+        return Object.assign({}, prev, {
+          faktury: prev.faktury.map(function(inv) {
+            return inv.id === match.id 
+              ? Object.assign({}, inv, { stav: 'uhrazena', datumUhrady: payment.date })
+              : inv;
+          }),
+          platby: (prev.platby || []).concat([{
+            id: payment.id,
+            type: 'invoice',
+            invoiceId: match.id,
+            amount: payment.amount,
+            date: payment.date,
+            matched: true
+          }])
+        });
+      });
       
-      notify(`✅ Faktura ${match.cislo} označena jako uhrazená`);
+      notify('✅ Faktura ' + match.cislo + ' označena jako uhrazená');
     } else if (match.type === 'rental') {
       const month = new Date(payment.date).toISOString().slice(0, 7);
       
-      updateData(prev => ({
-        ...prev,
-        platby: [...(prev.platby || []), {
-          id: payment.id,
-          type: 'rental',
-          rentalId: match.id,
-          amount: payment.amount,
-          date: payment.date,
-          month: month,
-          matched: true
-        }]
-      }));
+      updateData(function(prev) {
+        return Object.assign({}, prev, {
+          platby: (prev.platby || []).concat([{
+            id: payment.id,
+            type: 'rental',
+            rentalId: match.id,
+            amount: payment.amount,
+            date: payment.date,
+            month: month,
+            matched: true
+          }])
+        });
+      });
       
-      notify(`✅ Nájem pro ${match.jmeno} (${month}) označen jako zaplacený`);
+      notify('✅ Nájem pro ' + match.jmeno + ' (' + month + ') označen jako zaplacený');
     }
     
     setTransactions(prev => prev.filter(t => t.id !== payment.id));
   }
   
   const saveFioToken = async () => {
-    updateData(prev => ({ ...prev, fioToken }));
+    updateData(prev => Object.assign({}, prev, { fioToken: fioToken }));
     notify('✅ Fio token uložen');
     
     // Zkus uložit také na Google Drive pokud je připojeno
@@ -7433,7 +7432,7 @@ function PaymentsPanel({ data, updateData, notify }) {
               }, '✓ Potvrdit párování'),
               React.createElement(Btn, { 
                 onClick: () => setMatchedPayments(prev => {
-                  const newMatched = {...prev};
+                  const newMatched = Object.assign({}, prev);
                   delete newMatched[payment.id];
                   return newMatched;
                 }),
@@ -7594,7 +7593,8 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
                     label: "\uD83E\uDDEA Resetovat na testovac\u00ED data",
                     message: "Nahradit data testovac\u00EDmi fakturami s emaily? Uv\u00EDd\u00EDte tla\u010D\u00EDtka pro upom\u00EDnky.",
                     onConfirm: () => {
-                        localStorage.removeItem("fakturace_app_v5");
+                        const testData = Object.assign({}, initialState, getTestData());
+                        localStorage.setItem("fakturace_app_v5", JSON.stringify(testData));
                         window.location.reload();
                     }
                 })),
