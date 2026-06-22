@@ -632,7 +632,9 @@ const calcDPHHlaseni = (faktury, rok, kvartalNeboMesic, perioda) => {
         mesice = kvartal === 1 ? [1,2,3] : kvartal === 2 ? [4,5,6] : kvartal === 3 ? [7,8,9] : [10,11,12];
     }
     const relevantni = faktury.filter((f) => {
-        const d = new Date(f.datumVystaveni);
+        // ⭐ OPRAVA: DPH se řídí datem DUZP (datumUskutecneni), ne datem vystavení!
+        // § 21 ZDPH: daňová povinnost vzniká ke dni uskutečnění zdanitelného plnění
+        const d = new Date(f.datumUskutecneni || f.datumVystaveni);
         return d.getFullYear() === rok && mesice.includes(d.getMonth() + 1);
     });
     const result = { zaklad21: 0, dph21: 0, zaklad12: 0, dph12: 0, zaklad0: 0, celkemOdvod: 0, faktury: relevantni };
