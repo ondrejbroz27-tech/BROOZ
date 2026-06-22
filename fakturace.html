@@ -105,6 +105,7 @@ const initialState = {
         email: "",
         telefon: "",
         platceDPH: false,
+        dphPerioda: "kvartal",  // "kvartal" nebo "mesic"
         splatnost: 14,
         c_ufo: "",
         zivnostEvidCislo: "",
@@ -598,7 +599,9 @@ const calcDPH = (zakladBezDPH, sazba) => {
 const calcFakturaTotal = (polozky) => {
     const groups = {};
     polozky.forEach((p) => {
-        const sazba = p.sazba || 21;
+        // ⭐ OPRAVA: p.sazba || 21 způsobovalo že sazba 0% = 21%
+        // Správně: pokud sazba není definována, použij 21, ale 0 je platná sazba
+        const sazba = (p.sazba !== undefined && p.sazba !== null) ? Number(p.sazba) : 21;
         if (!groups[sazba])
             groups[sazba] = { zaklad: 0, dph: 0 };
         const zaklad = p.mnozstvi * p.cena;
@@ -618,8 +621,16 @@ const calcFakturaTotal = (polozky) => {
         celkem: Math.round((totalZaklad + totalDPH) * 100) / 100,
     };
 };
-const calcDPHHlaseni = (faktury, rok, kvartal) => {
-    const mesice = kvartal === 1 ? [1, 2, 3] : kvartal === 2 ? [4, 5, 6] : kvartal === 3 ? [7, 8, 9] : [10, 11, 12];
+const calcDPHHlaseni = (faktury, rok, kvartalNeboMesic, perioda) => {
+    // perioda: "kvartal" nebo "mesic"
+    // kvartalNeboMesic: číslo kvartálu (1-4) nebo číslo měsíce (1-12)
+    let mesice;
+    if (perioda === "mesic") {
+        mesice = [kvartalNeboMesic]; // Konkrétní měsíc
+    } else {
+        const kvartal = kvartalNeboMesic;
+        mesice = kvartal === 1 ? [1,2,3] : kvartal === 2 ? [4,5,6] : kvartal === 3 ? [7,8,9] : [10,11,12];
+    }
     const relevantni = faktury.filter((f) => {
         const d = new Date(f.datumVystaveni);
         return d.getFullYear() === rok && mesice.includes(d.getMonth() + 1);
@@ -631,12 +642,10 @@ const calcDPHHlaseni = (faktury, rok, kvartal) => {
             if (Number(sazba) === 21) {
                 result.zaklad21 += g.zaklad;
                 result.dph21 += g.dph;
-            }
-            else if (Number(sazba) === 12) {
+            } else if (Number(sazba) === 12) {
                 result.zaklad12 += g.zaklad;
                 result.dph12 += g.dph;
-            }
-            else {
+            } else {
                 result.zaklad0 += g.zaklad;
             }
         });
@@ -4159,23 +4168,18 @@ function roundXml(n) {
 }
 
 // Daňové přiznání k DPH — dle vzoru EPO DPHDP3
-function generateDPXml(data, rok, kvartal, hlaseni, prijateDphOdpocet, prijateFaktury) {
+function generateDPXml(data, rok, kvartalNeboMesic, hlaseni, prijateDphOdpocet, prijateFaktury, perioda) {
     const firma = data.firma || {};
-    // DIČ — pouze číselná část bez prefixu CZ (vzor [0-9]{1,10})
     const dicCislo = (firma.dic || "").replace(/\s/g,"").replace(/^CZ/i,"").replace(/[^0-9]/g,"");
     const cufo = (firma.c_ufo || "1").replace(/[^0-9]/g,"") || "1";
-    // Formát datumu DD.MM.RRRR dle XSD dateInMultiFormat
     const fmtDate = (d) => padNum(d.getDate(),2)+"."+padNum(d.getMonth()+1,2)+"."+d.getFullYear();
     const dnes = fmtDate(new Date());
 
-    // Výstup — uskutečněná zdanitelná plnění (ř.1 = 21%, ř.2 = 12%)
     const obrat23 = Math.round(hlaseni.zaklad21);
     const dan23   = Math.round(hlaseni.dph21);
     const obrat5  = Math.round(hlaseni.zaklad12);
     const dan5    = Math.round(hlaseni.dph12);
 
-    // Vstup — přijatá zdanitelná plnění (ř.40 = 21%, ř.41 = 12%)
-    // od_zdp = základ, nar_zdp = nárok na odpočet (DPH)
     const prijate21 = prijateFaktury.filter(f => (f.sazba||21) === 21);
     const prijate12 = prijateFaktury.filter(f => (f.sazba||21) === 12);
     const od_zdp23  = Math.round(prijate21.reduce((s,f) => s+(f.castka||0), 0));
@@ -4185,14 +4189,19 @@ function generateDPXml(data, rok, kvartal, hlaseni, prijateDphOdpocet, prijateFa
 
     const nazev = (firma.nazev||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").substring(0,255);
 
+    // ⭐ Klíčový rozdíl: měsíční = atribut "mesic", kvartální = atribut "ctvrt"
+    const obdobiAttr = perioda === "mesic"
+        ? `mesic="${kvartalNeboMesic}"`
+        : `ctvrt="${kvartalNeboMesic}"`;
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Pisemnost nazevSW="FakturaceBROZ" verzeSW="1.0">
   <DPHDP3>
     <VetaD
       d_poddp="${dnes}"
-      ctvrt="${kvartal}"
+      ${obdobiAttr}
       rok="${rok}"
-      typ_platce="P"
+      typ_platce="${perioda === "mesic" ? "M" : "P"}"
       dapdph_forma="B"
       dokument="DP3"
       k_uladis="DPH"
@@ -4220,7 +4229,7 @@ function generateDPXml(data, rok, kvartal, hlaseni, prijateDphOdpocet, prijateFa
 }
 
 // Kontrolní hlášení DPH — dle schématu DPHKH1
-function generateKHXml(data, rok, kvartal, hlaseni, prijateFaktury) {
+function generateKHXml(data, rok, kvartalNeboMesic, hlaseni, prijateFaktury, perioda) {
     const firma = data.firma || {};
     const dicCislo = (firma.dic || "").replace(/\s/g,"").replace(/^CZ/i,"").replace(/[^0-9]/g,"");
     const cufo = (firma.c_ufo || "1").replace(/[^0-9]/g,"") || "1";
@@ -4293,7 +4302,7 @@ function generateKHXml(data, rok, kvartal, hlaseni, prijateFaktury) {
   <DPHKH1>
     <VetaD
       d_poddp="${dnes}"
-      ctvrt="${kvartal}"
+      ${perioda === "mesic" ? `mesic="${kvartalNeboMesic}"` : `ctvrt="${kvartalNeboMesic}"`}
       rok="${rok}"
       khdph_forma="B"
       dokument="KH1"
@@ -4326,25 +4335,48 @@ function downloadXml(content, filename) {
 function DPHSection({ data }) {
     const [printHtml, setPrintHtml] = (0, useState)(null);
     const [rok, setRok] = (0, useState)(new Date().getFullYear());
+    
+    // ⭐ Perioda z nastavení firmy, přepínatelná i zde
+    const [perioda, setPerioda] = (0, useState)((data.firma && data.firma.dphPerioda) || "kvartal");
+    
+    // Kvartál nebo měsíc podle periody
     const [kvartal, setKvartal] = (0, useState)(Math.ceil((new Date().getMonth() + 1) / 3));
-    const hlaseni = calcDPHHlaseni(data.faktury, rok, kvartal);
-    // Přijaté faktury DPH odpočet
+    const [mesic, setMesic] = (0, useState)(new Date().getMonth() + 1);
+    
+    // Aktivní období (kvartál nebo měsíc)
+    const aktivniObdobi = perioda === "mesic" ? mesic : kvartal;
+    
+    const hlaseni = calcDPHHlaseni(data.faktury, rok, aktivniObdobi, perioda);
+    
+    // Přijaté faktury filtrované podle periody
     const prijateFaktury = (data.prijateFaktury||[]).filter(f => {
         if (f.uplatnit === false) return false;
         const d = new Date(f.datumUskutecneni || f.datumPrijeti);
-        const q = Math.ceil((d.getMonth()+1)/3);
-        return d.getFullYear() === rok && q === kvartal;
+        if (d.getFullYear() !== rok) return false;
+        if (perioda === "mesic") {
+            return (d.getMonth() + 1) === mesic;
+        } else {
+            const q = Math.ceil((d.getMonth()+1)/3);
+            return q === kvartal;
+        }
     });
     const prijateDphOdpocet = prijateFaktury.reduce((s,f) => s + (f.dph||0), 0);
+    
+    // Popisek aktuálního období
+    const mesiceNazvy = ["","Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
+    const obdobiLabel = perioda === "mesic" 
+        ? mesiceNazvy[mesic] + " " + rok
+        : "Q" + kvartal + "/" + rok;
+    
     const printDPH = () => {
         const __html = `<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8">
-    <title>DPH Přiznání Q${kvartal}/${rok}</title>
+    <title>DPH Přiznání ${obdobiLabel}</title>
     <style>body{font-family:Arial;margin:20mm;font-size:12px}h1{color:#1a3a5c}table{width:100%;border-collapse:collapse;margin:16px 0}
     th{background:#1a3a5c;color:#fff;padding:8px}td{padding:8px;border:1px solid #ccc}.total{font-weight:bold;background:#f0f4fa}</style>
     </head><body>
     <h1>Přiznání k DPH</h1>
     <p>Firma: <strong>${data.firma.nazev}</strong> | DIČ: <strong>${data.firma.dic}</strong></p>
-    <p>Zdaňovací období: <strong>Q${kvartal}/${rok}</strong></p>
+    <p>Zdaňovací období: <strong>${obdobiLabel}</strong> (${perioda === "mesic" ? "měsíční plátce" : "čtvrtletní plátce"})</p>
     <table>
       <thead><tr><th>Řádek</th><th>Popis</th><th>Základ daně (Kč)</th><th>Daň (Kč)</th></tr></thead>
       <tbody>
@@ -4352,67 +4384,117 @@ function DPHSection({ data }) {
         <tr><td>2</td><td>Zdanitelná plnění 12%</td><td>${formatCZK(hlaseni.zaklad12)}</td><td>${formatCZK(hlaseni.dph12)}</td></tr>
         <tr><td>3</td><td>Osvobozená plnění 0%</td><td>${formatCZK(hlaseni.zaklad0)}</td><td>0,00 Kč</td></tr>
         <tr class="total"><td colspan="2"><strong>CELKEM K ODVODU</strong></td><td></td><td><strong>${formatCZK(hlaseni.celkemOdvod)}</strong></td></tr>
-        <tr style="background:#e0f2fe"><td colspan="4"><strong>Odpočet DPH na vstupu (přijaté faktury)</strong></td></tr>
-        <tr><td>40</td><td>DPH odpočet (přijaté faktury s nárokem)</td><td style="text-align:right">${formatCZK(prijateDphOdpocet)}</td><td></td></tr>
-        <tr class="total"><td colspan="2"><strong>DPH K ÚHRADĚ (odvod − odpočet)</strong></td><td></td><td><strong>${formatCZK(Math.max(0, hlaseni.celkemOdvod - prijateDphOdpocet))}</strong></td></tr>
+        <tr style="background:#e0f2fe"><td colspan="4"><strong>Odpočet DPH na vstupu</strong></td></tr>
+        <tr><td>40</td><td>DPH odpočet (přijaté faktury)</td><td style="text-align:right">${formatCZK(prijateDphOdpocet)}</td><td></td></tr>
+        <tr class="total"><td colspan="2"><strong>DPH K ÚHRADĚ</strong></td><td></td><td><strong>${formatCZK(Math.max(0, hlaseni.celkemOdvod - prijateDphOdpocet))}</strong></td></tr>
       </tbody>
     </table>
     <h2>Zahrnuté faktury (${hlaseni.faktury.length})</h2>
     <table><thead><tr><th>Číslo</th><th>Zákazník</th><th>Datum</th><th>Základ</th><th>DPH</th><th>Celkem</th></tr></thead>
     <tbody>${hlaseni.faktury.map(f => {
             const t = calcFakturaTotal(f.polozky || []);
-            return `<tr><td>${f.cislo}</td><td>${f.zakaznikNazev}</td><td>${formatDate(f.datumVystaveni)}</td>
-      <td>${formatCZK(t.zaklad)}</td><td>${formatCZK(t.dph)}</td><td>${formatCZK(t.celkem)}</td></tr>`;
+            return '<tr><td>' + f.cislo + '</td><td>' + f.zakaznikNazev + '</td><td>' + formatDate(f.datumVystaveni) + '</td><td>' + formatCZK(t.zaklad) + '</td><td>' + formatCZK(t.dph) + '</td><td>' + formatCZK(t.celkem) + '</td></tr>';
         }).join("")}
     </tbody></table>
-    <script>window.onload=()=>window.print()<\/script></body></html>`;
+    <scr` + `ipt>window.onload=()=>window.print()<\/scr` + `ipt></body></html>`;
         setPrintHtml(__html);
     };
+    
     return (React.createElement("div", null,
+        printHtml && React.createElement(PrintModal, { html: printHtml, title: "DPH " + obdobiLabel, onClose: () => setPrintHtml(null) }),
+        
+        // ⭐ PŘEPÍNAČ PERIODY
+        React.createElement(Card, { style: { marginBottom: "16px", background: "#f8fafc" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" } },
+                React.createElement("div", { style: { fontWeight: "700", fontSize: "14px", color: "#1a3a5c" } }, "\uD83D\uDCC5 Zdaňovac\u00ED obdob\u00ED:"),
+                React.createElement("div", { style: { display: "flex", gap: "6px" } },
+                    React.createElement("button", { 
+                        onClick: function() { setPerioda("kvartal"); },
+                        style: { padding: "8px 20px", border: "2px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                            borderColor: perioda === "kvartal" ? "#4f46e5" : "#d1d5db",
+                            background: perioda === "kvartal" ? "#4f46e5" : "#fff",
+                            color: perioda === "kvartal" ? "#fff" : "#374151" }
+                    }, "\uD83D\uDCC6 \u010Ctvrtletn\u00ED"),
+                    React.createElement("button", { 
+                        onClick: function() { setPerioda("mesic"); },
+                        style: { padding: "8px 20px", border: "2px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                            borderColor: perioda === "mesic" ? "#4f46e5" : "#d1d5db",
+                            background: perioda === "mesic" ? "#4f46e5" : "#fff",
+                            color: perioda === "mesic" ? "#fff" : "#374151" }
+                    }, "\uD83D\uDCC5 M\u011Bs\u00ED\u010Dn\u00ED")),
+                React.createElement("div", { style: { fontSize: "12px", color: "#6b7280", fontStyle: "italic" } },
+                    perioda === "kvartal" 
+                        ? "Čtvrtletní plátce → XML pole ctvrt=, typ_platce=P" 
+                        : "Měsíční plátce → XML pole mesic=, typ_platce=M"))),
+        
+        // VÝBĚR ROKU
+        React.createElement("div", { style: { marginBottom: "16px" } },
+            React.createElement("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
+                Array.from({ length: 5 }, function(_, i) { return new Date().getFullYear() - 2 + i; }).map(function(y) {
+                    return React.createElement("button", { key: y, onClick: function() { return setRok(y); }, style: {
+                        padding: "7px 16px", border: "1px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "600", cursor: "pointer",
+                        borderColor: rok === y ? "#1a3a5c" : "#d1d5db",
+                        background: rok === y ? "#1a3a5c" : "#fff",
+                        color: rok === y ? "#fff" : "#374151"
+                    } }, y);
+                }))),
+        
+        // ⭐ VÝBĚR OBDOBÍ - kvartál nebo měsíc
         React.createElement("div", { style: { marginBottom: "20px" } },
-            React.createElement("div", { style: { display: "flex", gap: "6px", marginBottom: "10px", flexWrap: "wrap" } }, Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (React.createElement("button", { key: y, onClick: () => setRok(y), style: {
-                    padding: "7px 16px", border: "1px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "600", cursor: "pointer",
-                    borderColor: rok === y ? "#1a3a5c" : "#d1d5db",
-                    background: rok === y ? "#1a3a5c" : "#fff",
-                    color: rok === y ? "#fff" : "#374151"
-                } }, y)))),
-            React.createElement("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" } },
-                [[1, "Q1", "Led–Bře"], [2, "Q2", "Dub–Čer"], [3, "Q3", "Čec–Zář"], [4, "Q4", "Říj–Pro"]].map(([q, label, months]) => (React.createElement("button", { key: q, onClick: () => setKvartal(q), style: {
-                        padding: "7px 18px", border: "1px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "600", cursor: "pointer",
-                        borderColor: kvartal === q ? "#4f46e5" : "#d1d5db",
-                        background: kvartal === q ? "#4f46e5" : "#fff",
-                        color: kvartal === q ? "#fff" : "#374151"
-                    } },
-                    label,
-                    " ",
-                    React.createElement("span", { style: { fontSize: "11px", opacity: 0.7 } },
-                        "(",
-                        months,
-                        ")")))),
-                React.createElement(Btn, { onClick: printDPH, variant: "secondary" }, "\uD83D\uDDA8\uFE0F Tisk p\u0159izn\u00E1n\u00ED"),
-                React.createElement(Btn, { onClick: () => {
-                    const xml = generateDPXml(data, rok, kvartal, hlaseni, prijateDphOdpocet, prijateFaktury);
-                    downloadXml(xml, `DPH_priznani_Q${kvartal}_${rok}.xml`);
-                }, variant: "secondary" }, "\uD83D\uDCE5 XML Přiznání DPH"),
-                React.createElement(Btn, { onClick: () => {
-                    const xml = generateKHXml(data, rok, kvartal, hlaseni, prijateFaktury);
-                    downloadXml(xml, `Kontrolni_hlaseni_Q${kvartal}_${rok}.xml`);
-                }, variant: "secondary" }, "\uD83D\uDCE5 XML Kontrolní hlášení"))),
+            perioda === "kvartal" ? 
+                // Čtvrtletní výběr
+                React.createElement("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" } },
+                    [[1,"Q1","Led–Bře"],[2,"Q2","Dub–Čer"],[3,"Q3","Čec–Zář"],[4,"Q4","Říj–Pro"]].map(function(row) {
+                        const q = row[0]; const label = row[1]; const months = row[2];
+                        return React.createElement("button", { key: q, onClick: function() { return setKvartal(q); }, style: {
+                            padding: "8px 18px", border: "1px solid", borderRadius: "20px", fontSize: "13px", fontWeight: "600", cursor: "pointer",
+                            borderColor: kvartal === q ? "#4f46e5" : "#d1d5db",
+                            background: kvartal === q ? "#4f46e5" : "#fff",
+                            color: kvartal === q ? "#fff" : "#374151"
+                        } }, label, " ", React.createElement("span", { style: { fontSize: "11px", opacity: 0.7 } }, "(", months, ")"));
+                    })) :
+                // Měsíční výběr
+                React.createElement("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
+                    [["Led",1],["Úno",2],["Bře",3],["Dub",4],["Kvě",5],["Čvn",6],
+                     ["Čvc",7],["Srp",8],["Zář",9],["Říj",10],["Lis",11],["Pro",12]].map(function(row) {
+                        const label = row[0]; const m = row[1];
+                        return React.createElement("button", { key: m, onClick: function() { return setMesic(m); }, style: {
+                            padding: "7px 12px", border: "1px solid", borderRadius: "16px", fontSize: "12px", fontWeight: "600", cursor: "pointer",
+                            borderColor: mesic === m ? "#4f46e5" : "#d1d5db",
+                            background: mesic === m ? "#4f46e5" : "#fff",
+                            color: mesic === m ? "#fff" : "#374151",
+                            minWidth: "48px"
+                        } }, label);
+                    }))),
+        
+        // AKCE TLAČÍTKA
+        React.createElement("div", { style: { display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "20px" } },
+            React.createElement(Btn, { onClick: printDPH, variant: "secondary" }, "\uD83D\uDDA8\uFE0F Tisk p\u0159izn\u00E1n\u00ED"),
+            React.createElement(Btn, { onClick: function() {
+                const xml = generateDPXml(data, rok, aktivniObdobi, hlaseni, prijateDphOdpocet, prijateFaktury, perioda);
+                const suffix = perioda === "mesic" ? "M" + String(aktivniObdobi).padStart(2,"0") : "Q" + aktivniObdobi;
+                downloadXml(xml, "DPH_priznani_" + suffix + "_" + rok + ".xml");
+            }, variant: "secondary" }, "\uD83D\uDCE5 XML P\u0159izn\u00E1n\u00ED DPH"),
+            React.createElement(Btn, { onClick: function() {
+                const xml = generateKHXml(data, rok, aktivniObdobi, hlaseni, prijateFaktury, perioda);
+                const suffix = perioda === "mesic" ? "M" + String(aktivniObdobi).padStart(2,"0") : "Q" + aktivniObdobi;
+                downloadXml(xml, "Kontrolni_hlaseni_" + suffix + "_" + rok + ".xml");
+            }, variant: "secondary" }, "\uD83D\uDCE5 XML Kontroln\u00ED hl\u00E1\u0161en\u00ED")),
+        
+        // STATS
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "16px", marginBottom: "24px" } },
             React.createElement(StatCard, { label: "Z\u00E1klad 21%", value: formatCZK(hlaseni.zaklad21), color: "#1a3a5c" }),
             React.createElement(StatCard, { label: "DPH 21%", value: formatCZK(hlaseni.dph21), color: "#dc2626" }),
-            React.createElement(StatCard, { label: "DPH odpočet (přijaté fakt.)", value: formatCZK(prijateDphOdpocet), color: "#16a34a" }),
-            React.createElement(StatCard, { label: "DPH K ÚHRADĚ", value: formatCZK(Math.max(0, hlaseni.celkemOdvod - prijateDphOdpocet)), color: "#7c3aed" }),
+            React.createElement(StatCard, { label: "DPH odpo\u010Det (p\u0159ijat\u00E9 fakt.)", value: formatCZK(prijateDphOdpocet), color: "#16a34a" }),
+            React.createElement(StatCard, { label: "DPH K \u00DAHRAD\u011A", value: formatCZK(Math.max(0, hlaseni.celkemOdvod - prijateDphOdpocet)), color: "#7c3aed" }),
             React.createElement(StatCard, { label: "Z\u00E1klad 12%", value: formatCZK(hlaseni.zaklad12), color: "#1a3a5c" }),
             React.createElement(StatCard, { label: "DPH 12%", value: formatCZK(hlaseni.dph12), color: "#d97706" }),
             React.createElement(StatCard, { label: "Osvobozen. 0%", value: formatCZK(hlaseni.zaklad0), color: "#16a34a" }),
             React.createElement(StatCard, { label: "CELKEM K ODVODU", value: formatCZK(hlaseni.celkemOdvod), color: "#7c3aed" })),
         React.createElement(Card, null,
             React.createElement("h3", { style: { marginTop: 0, color: "#1a3a5c" } },
-                "Zahrnut\u00E9 faktury Q",
-                kvartal,
-                "/",
-                rok),
+                "Zahrnut\u00E9 faktury \u2014 ",
+                obdobiLabel),
             React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                 React.createElement("thead", null,
                     React.createElement("tr", { style: { background: "#f8fafc" } }, ["Číslo", "Zákazník", "Datum DUZP", "Základ 21%", "DPH 21%", "Základ 12%", "DPH 12%", "Celkem"].map(h => React.createElement("th", { key: h, style: { padding: "8px 12px", textAlign: "left", fontSize: "12px", fontWeight: "600",
@@ -7558,6 +7640,29 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
             React.createElement(Input, { label: "Telefon", value: firma.telefon, onChange: v => set("telefon", v) }),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
                 React.createElement(Input, { label: "V\u00FDchoz\u00ED splatnost (dny)", type: "number", value: firma.splatnost, onChange: v => set("splatnost", parseInt(v) || 14) })),
+            React.createElement("div", { style: { borderTop: "1px solid #e5e7eb", paddingTop: "12px", marginTop: "4px" } },
+                React.createElement("div", { style: { fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "10px" } }, "\uD83D\uDCCA DPH — Zdaňovac\u00ED obdob\u00ED"),
+                React.createElement("div", { style: { display: "flex", gap: "8px" } },
+                    React.createElement("button", {
+                        type: "button",
+                        onClick: function() { set("dphPerioda", "kvartal"); },
+                        style: { padding: "8px 18px", border: "2px solid", borderRadius: "16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                            borderColor: (firma.dphPerioda || "kvartal") === "kvartal" ? "#4f46e5" : "#d1d5db",
+                            background: (firma.dphPerioda || "kvartal") === "kvartal" ? "#4f46e5" : "#fff",
+                            color: (firma.dphPerioda || "kvartal") === "kvartal" ? "#fff" : "#374151" }
+                    }, "\uD83D\uDCC6 \u010Ctvrtletn\u00ED plátce"),
+                    React.createElement("button", {
+                        type: "button",
+                        onClick: function() { set("dphPerioda", "mesic"); },
+                        style: { padding: "8px 18px", border: "2px solid", borderRadius: "16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                            borderColor: firma.dphPerioda === "mesic" ? "#4f46e5" : "#d1d5db",
+                            background: firma.dphPerioda === "mesic" ? "#4f46e5" : "#fff",
+                            color: firma.dphPerioda === "mesic" ? "#fff" : "#374151" }
+                    }, "\uD83D\uDCC5 M\u011Bs\u00ED\u010Dn\u00ED plátce")),
+                React.createElement("div", { style: { fontSize: "11px", color: "#6b7280", marginTop: "6px" } },
+                    (firma.dphPerioda || "kvartal") === "kvartal"
+                        ? "\u2139\uFE0F XML: atribut ctvrt=, typ_platce=P"
+                        : "\u2139\uFE0F XML: atribut mesic=, typ_platce=M")),
             React.createElement("div", { style: { borderTop: "1px solid #e5e7eb", paddingTop: "12px", marginTop: "4px" } },
                 React.createElement("div", { style: { fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "8px" } }, "\uD83D\uDCCB \u017divnostensk\u00FD list — \u00FAdaje na fakturu"),
                 React.createElement(Input, { label: "Ev. č. ŽL", value: firma.zivnostEvidCislo||"", onChange: v => set("zivnostEvidCislo", v), placeholder: "nap\u0159. 340701-1707" }),
