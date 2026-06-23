@@ -426,32 +426,32 @@ const saveData = (data) => {
 // ⭐ TESTOVACÍ DATA - oddělena od produkčního initialState
 const getTestData = () => ({
     zakaznici: [
-        { id: "zak_test_001", nazev: "Test Zákazník s.r.o.", ico: "12345678", dic: "CZ12345678",
-          email: "test@example.com", ulice: "Testovací 123", mesto: "Praha", psc: "110 00", aktivni: true },
-        { id: "zak_test_002", nazev: "Ondřej Testovací", ico: "87654321", dic: "",
-          email: "ondrej.test@gmail.com", ulice: "Zkušební 456", mesto: "Brno", psc: "602 00", aktivni: true }
+        { id: "zak_test_001", nazev: "FPC Bohemia s.r.o.", ico: "09744894", dic: "CZ09744894",
+          email: "info@fpcbohemia.cz", ulice: "Teslova 1202/3", mesto: "Plzeň", psc: "301 00", aktivni: true },
+        { id: "zak_test_002", nazev: "Jan Novotný", ico: "87654321", dic: "",
+          email: "jan.novotny@email.cz", ulice: "Korunní 15", mesto: "Praha 2", psc: "120 00", aktivni: true }
     ],
     faktury: [
         { id: "fv_test_001", cislo: "FV20260001", datumVystaveni: "2026-02-01",
-          datumSplatnosti: "2026-02-15", datumUskutecneni: "2026-02-01",
-          zakaznikId: "zak_test_001", zakaznikNazev: "Test Zákazník s.r.o.",
-          zakaznikIco: "12345678", zakaznikDic: "CZ12345678", zakaznikEmail: "test@example.com",
-          zakaznikAdresa: "Testovací 123, 110 00 Praha",
-          polozky: [{ id: "pol_001", typ: "sluzba", popis: "Webový vývoj", mnozstvi: 10, jednotka: "hod", cena: 1000, sazba: 21 }],
+          datumSplatnosti: "2026-05-25", datumUskutecneni: "2026-02-01",
+          zakaznikId: "zak_test_001", zakaznikNazev: "FPC Bohemia s.r.o.",
+          zakaznikIco: "09744894", zakaznikDic: "CZ09744894", zakaznikEmail: "info@fpcbohemia.cz",
+          zakaznikAdresa: "Teslova 1202/3, 301 00 Plzeň",
+          polozky: [{ id: "pol_001", typ: "sluzba", popis: "Koncepční návrh turbodmychadel V12", mnozstvi: 156, jednotka: "ks", cena: 750, sazba: 21 }],
           stav: "vystavena", zpusobPlatby: "Převodem", variabilniSymbol: "20260001", poznamka: "" },
         { id: "fv_test_002", cislo: "FV20260002", datumVystaveni: "2026-02-10",
           datumSplatnosti: "2026-02-24", datumUskutecneni: "2026-02-10",
-          zakaznikId: "zak_test_002", zakaznikNazev: "Ondřej Testovací",
-          zakaznikIco: "87654321", zakaznikDic: "", zakaznikEmail: "ondrej.test@gmail.com",
-          zakaznikAdresa: "Zkušební 456, 602 00 Brno",
+          zakaznikId: "zak_test_002", zakaznikNazev: "Jan Novotný",
+          zakaznikIco: "87654321", zakaznikDic: "", zakaznikEmail: "jan.novotny@email.cz",
+          zakaznikAdresa: "Korunní 15, 120 00 Praha 2",
           polozky: [{ id: "pol_002", typ: "sluzba", popis: "Konzultace", mnozstvi: 5, jednotka: "hod", cena: 1500, sazba: 21 }],
           stav: "vystavena", zpusobPlatby: "Převodem", variabilniSymbol: "20260002", poznamka: "" },
         { id: "fv_test_003", cislo: "FV20260003", datumVystaveni: "2026-03-01",
           datumSplatnosti: "2026-03-15", datumUskutecneni: "2026-03-01",
-          zakaznikId: "zak_test_001", zakaznikNazev: "Test Zákazník s.r.o.",
-          zakaznikIco: "12345678", zakaznikDic: "CZ12345678", zakaznikEmail: "test@example.com",
-          zakaznikAdresa: "Testovací 123, 110 00 Praha",
-          polozky: [{ id: "pol_003", typ: "sluzba", popis: "Údržba webu", mnozstvi: 1, jednotka: "měsíc", cena: 5000, sazba: 21 }],
+          zakaznikId: "zak_test_001", zakaznikNazev: "FPC Bohemia s.r.o.",
+          zakaznikIco: "09744894", zakaznikDic: "CZ09744894", zakaznikEmail: "info@fpcbohemia.cz",
+          zakaznikAdresa: "Teslova 1202/3, 301 00 Plzeň",
+          polozky: [{ id: "pol_003", typ: "sluzba", popis: "Technická dokumentace", mnozstvi: 1, jednotka: "měsíc", cena: 5000, sazba: 21 }],
           stav: "uhrazena", zpusobPlatby: "Převodem", variabilniSymbol: "20260003", poznamka: "" }
     ]
 });
@@ -532,7 +532,22 @@ const migrateNemovitosti = (properties) => (properties || []).map(function(p) {
         dalsi3Castka: 0   // ⭐ NOVÉ
     }, p.expenses || {});
     
-    return Object.assign({}, p, { zaloh: zaloh, expenses: expenses });
+    return Object.assign({}, p, { zaloh: zaloh, expenses: expenses, 
+        // ⭐ Migrace najemZmeny - pokud neexistuje, vytvoř první záznam z aktuálních hodnot
+        najemZmeny: p.najemZmeny && p.najemZmeny.length > 0 ? p.najemZmeny : (
+            (p.income && p.income.rent > 0) ? [{
+                id: 'nz_migrace_' + (p.id || 'x'),
+                platnostOd: (p.tenant && p.tenant.since) || "2000-01-01",
+                najem: (p.income && p.income.rent) || 0,
+                zalohyEnergie: Object.assign({
+                    elektrina: 0, esp: 0, plyn: 0, voda: 0, teplo: 0,
+                    vytah: 0, svj: 0, internet: 0, odpad: 0,
+                    dalsi1Castka: 0, dalsi2Castka: 0, dalsi3Castka: 0
+                }, p.zaloh || {}),
+                poznamka: "Importováno z původní verze"
+            }] : []
+        )
+    });
 });
 
 const loadData = () => {
@@ -738,10 +753,20 @@ const calcRocniPrijmy = (faktury, nemovitosti, rok, metoda9) => {
     const fakturaceZaplacene = fakturyRoku.filter(f => f.stav === "uhrazena"); // OPRAVA: "uhrazena" ne "zaplacena"
     const fakturacePrijmy = fakturaceZaplacene.reduce((sum, f) => sum + calcFakturaTotal(f.polozky || []).zaklad, 0);
     
-    const fakturaceNezaplacene = fakturyRoku.filter(f => f.stav === "vystavena"); // OPRAVA: explicitně jen "vystavena"
+    const fakturaceNezaplacene = fakturyRoku.filter(f => f.stav === "vystavena");
     const fakturacePrijmyNezapl = fakturaceNezaplacene.reduce((sum, f) => sum + calcFakturaTotal(f.polozky || []).zaklad, 0);
+    // ⭐ OPRAVA: Příjmy z nájmů přes historii (ne income.rent × 12)
     const nemovitostPrijmy = (nemovitosti.properties || [])
-        .reduce((sum, p) => { var _a, _b; return sum + ((((_a = p.income) === null || _a === void 0 ? void 0 : _a.rent) || 0) + (((_b = p.income) === null || _b === void 0 ? void 0 : _b.other) || 0)) * 12; }, 0);
+        .reduce(function(sum, p) {
+            // Pokud má história, použij přesný výpočet per měsíc
+            if (p.najemZmeny && p.najemZmeny.length > 0) {
+                var prehled = getPrijemZNajmuProRok(p, rok);
+                return sum + prehled.celkemNajem + prehled.celkemZalohy + ((p.income && p.income.other) || 0);
+            }
+            // Fallback: stará logika (pro nemovitosti bez historie)
+            var _a = p.income, _b = p.income;
+            return sum + (((_a) ? _a.rent : 0) || 0) * 12 + (((_b) ? _b.other : 0) || 0) * 12;
+        }, 0);
     // Výdaje pronajímatele (měsíční × 12) — bez odpisů a pojistění (ty se přidávají zvlášť)
     const nemovitostVydajeMesicni = (nemovitosti.properties || [])
         .reduce((sum, p) => { var _a; return sum + (Object.values(p.expenses || {}).reduce((a, b) => a + (b || 0), 0) + (((_a = p.fondOprav) === null || _a === void 0 ? void 0 : _a.mesicne) || 0)) * 12; }, 0);
@@ -5131,24 +5156,20 @@ const _addYear = (ds) => { const d = new Date(ds); d.setFullYear(d.getFullYear()
 const _fmtBytes = (b) => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(0) + " kB" : (b / 1048576).toFixed(1) + " MB";
 const _calcCF = (p) => {
     var _a, _b, _c, _d;
-    if (!p)
-        return 0;
-    const inc = (((_a = p.income) === null || _a === void 0 ? void 0 : _a.rent) || 0) + (((_b = p.income) === null || _b === void 0 ? void 0 : _b.other) || 0);
-    // Výdaje vlastníka - přidáme fondVlastnik, daň/12, pojištění/12
-    const exp = Object.values(p.expenses || {}).reduce(function(a, v) { return a + (+v || 0); }, 0);
-    const fondVlastnik = ((p.expenses && p.expenses.fondVlastnik) || 0);
-    // Daň a pojištění jsou roční - přepočítáme na měsíc
-    const danMesicne = (((p.expenses && p.expenses.tax) || 0) / 12);
-    const pojisteniMesicne = (((p.expenses && p.expenses.insurance) || 0) / 12);
-    const mort = ((_c = p.mortgage) === null || _c === void 0 ? void 0 : _c.monthly) || 0;
-    const fond = ((_d = p.fondOprav) === null || _d === void 0 ? void 0 : _d.mesicne) || 0;
-    // Zálohy - všechna nová pole
-    const z = p.zaloh || {};
-    const zalP = z.plati === "pronajimatel" ? _sumZal(p) : 0;
-    // CF = příjmy - výdaje - hypotéka - fond oprav - zálohy hrazené pronajímatelem
-    // Odečteme jen měsíční položky (daň a pojištění jsou roční, přepočítáme)
-    const expMesicni = exp - ((p.expenses && p.expenses.tax) || 0) - ((p.expenses && p.expenses.insurance) || 0) + danMesicne + pojisteniMesicne;
-    return inc - expMesicni - mort - fond - zalP;
+    if (!p) return 0;
+    // ⭐ Aktuální nájem z history (pokud existuje), jinak z income.rent
+    var aktualniNajem = getAktualniNajem(p);
+    var aktNajem = aktualniNajem.najem;
+    var aktZalohy = aktualniNajem.zalohy;
+    var inc = aktNajem + aktZalohy + (((_b = p.income) === null || _b === void 0 ? void 0 : _b.other) || 0);
+    // Výdaje vlastníka
+    var exp = Object.values(p.expenses || {}).reduce(function(a, v) { return a + (+v || 0); }, 0);
+    var danMesicne = (((p.expenses && p.expenses.tax) || 0) / 12);
+    var pojisteniMesicne = (((p.expenses && p.expenses.insurance) || 0) / 12);
+    var mort = ((_c = p.mortgage) === null || _c === void 0 ? void 0 : _c.monthly) || 0;
+    var fond = ((_d = p.fondOprav) === null || _d === void 0 ? void 0 : _d.mesicne) || 0;
+    var expMesicni = exp - ((p.expenses && p.expenses.tax) || 0) - ((p.expenses && p.expenses.insurance) || 0) + danMesicne + pojisteniMesicne;
+    return inc - expMesicni - mort - fond;
 };
 const _sumZal = (p) => {
     const z = (p === null || p === void 0 ? void 0 : p.zaloh) || {};
@@ -5171,8 +5192,101 @@ const _newProp = () => ({
     mortgage: { monthly: 0, remaining: 0, rate: 0, endDate: "", fixationEnd: "", bank: "" },
     tenant: { name: "Volný", phone: "", email: "", since: "", contractEnd: "", deposit: 0, depositStatus: "skladena", depositAccount: "bezny", noticePeriod: "2" },
     notes: "", documents: [],
+    najemZmeny: [],  // ⭐ Historie změn nájmu
 });
-// ── shared sub-components ──
+// ════════════════════════════════════════════════════════════
+// HISTÓRIA NÁJMU - výpočetní funkce
+// ════════════════════════════════════════════════════════════
+
+// Součet záloh z jednoho záznamu najemZmeny
+const _sumZalZmena = function(zalohyEnergie) {
+    if (!zalohyEnergie) return 0;
+    return (zalohyEnergie.elektrina || 0) + (zalohyEnergie.esp || 0) +
+           (zalohyEnergie.plyn || 0) + (zalohyEnergie.voda || 0) +
+           (zalohyEnergie.teplo || 0) + (zalohyEnergie.vytah || 0) +
+           (zalohyEnergie.svj || 0) + (zalohyEnergie.internet || 0) +
+           (zalohyEnergie.odpad || 0) + (zalohyEnergie.dalsi1Castka || 0) +
+           (zalohyEnergie.dalsi2Castka || 0) + (zalohyEnergie.dalsi3Castka || 0);
+};
+
+// Najdi platnou změnu nájmu pro daný datum
+const _getZmenaProDatum = function(najemZmeny, datum) {
+    if (!najemZmeny || najemZmeny.length === 0) return null;
+    var d = typeof datum === 'string' ? new Date(datum) : datum;
+    var platne = najemZmeny.filter(function(z) {
+        return new Date(z.platnostOd) <= d;
+    });
+    if (platne.length === 0) return null;
+    // Seřaď sestupně - nejnovější platná = první
+    platne.sort(function(a, b) {
+        return new Date(b.platnostOd) - new Date(a.platnostOd);
+    });
+    return platne[0];
+};
+
+// Hlavní funkce: příjmy z nájmu pro daný rok
+// Vrátí { celkemNajem, celkemZalohy, rozpad[], mesicuPronajato }
+const getPrijemZNajmuProRok = function(nemovitost, rok) {
+    var zmeny = nemovitost.najemZmeny || [];
+    var celkemNajem = 0;
+    var celkemZalohy = 0;
+    var mesicuPronajato = 0;
+    var rozpad = [];
+
+    for (var mesic = 1; mesic <= 12; mesic++) {
+        // Používáme 15. den měsíce jako referenční datum
+        var datum = new Date(rok, mesic - 1, 15);
+        var zmena = _getZmenaProDatum(zmeny, datum);
+
+        if (!zmena || zmena.najem === 0) {
+            rozpad.push({ mesic: mesic, najem: 0, zalohy: 0, stav: zmena ? "volny" : "bez_zaznamu" });
+            continue;
+        }
+
+        var zalohy = _sumZalZmena(zmena.zalohyEnergie);
+        celkemNajem += zmena.najem;
+        celkemZalohy += zalohy;
+        mesicuPronajato++;
+        rozpad.push({
+            mesic: mesic,
+            najem: zmena.najem,
+            zalohy: zalohy,
+            stav: "pronajato",
+            zmenaId: zmena.id
+        });
+    }
+
+    return {
+        celkemNajem: celkemNajem,
+        celkemZalohy: celkemZalohy,
+        celkemPrijmy: celkemNajem + celkemZalohy,
+        mesicuPronajato: mesicuPronajato,
+        rozpad: rozpad
+    };
+};
+
+// Aktuálně platný nájem (pro Dashboard, zobrazení)
+const getAktualniNajem = function(nemovitost) {
+    var zmena = _getZmenaProDatum(nemovitost.najemZmeny || [], new Date());
+    if (!zmena) return { najem: (nemovitost.income && nemovitost.income.rent) || 0, zalohy: _sumZal(nemovitost) };
+    return { najem: zmena.najem, zalohy: _sumZalZmena(zmena.zalohyEnergie) };
+};
+
+const _newNajemZmena = function(nemovitost) {
+    // Výchozí hodnoty pro nový záznam = kopie aktuálního stavu
+    var current = _getZmenaProDatum(nemovitost.najemZmeny || [], new Date());
+    return {
+        id: generateId(),
+        platnostOd: getToday(),
+        najem: current ? current.najem : ((nemovitost.income && nemovitost.income.rent) || 0),
+        zalohyEnergie: current ? Object.assign({}, current.zalohyEnergie) : Object.assign({
+            elektrina: 0, esp: 0, plyn: 0, voda: 0, teplo: 0,
+            vytah: 0, svj: 0, internet: 0, odpad: 0,
+            dalsi1Castka: 0, dalsi2Castka: 0, dalsi3Castka: 0
+        }, nemovitost.zaloh || {}),
+        poznamka: ""
+    };
+};
 const RSH = ({ label }) => (React.createElement("div", { style: { fontSize: "10px", color: "#4f46e5", fontWeight: "700", textTransform: "uppercase",
         letterSpacing: "0.12em", margin: "20px 0 8px", borderBottom: "2px solid #e0e7ff", paddingBottom: "5px" } }, label));
 const RRow = ({ label, value, color }) => (React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -5345,6 +5459,248 @@ function RTFinance({ p }) {
             React.createElement("div", { style: { fontWeight: "700", fontSize: "13px", color: c } }, v)))))));
 }
 // ── Tab: Nájem & zálohy ──
+// ── Tab: Historie nájmu ──
+function RTHistorieNajmu({ p, onUpdate, notify }) {
+    const mesiceNazvy = ["","Led","Úno","Bře","Dub","Kvě","Čvn","Čvc","Srp","Zář","Říj","Lis","Pro"];
+    const rokAkt = new Date().getFullYear();
+    const [rokPrehled, setRokPrehled] = (0, useState)(rokAkt);
+    const [editZmena, setEditZmena] = (0, useState)(null);
+    const [showForm, setShowForm] = (0, useState)(false);
+
+    const zmeny = (p.najemZmeny || []).slice().sort(function(a, b) {
+        return new Date(a.platnostOd) - new Date(b.platnostOd);
+    });
+
+    const prehled = getPrijemZNajmuProRok(p, rokPrehled);
+
+    const saveZmena = function(z) {
+        var existing = (p.najemZmeny || []).findIndex(function(x) { return x.id === z.id; });
+        var novyList = existing >= 0
+            ? (p.najemZmeny || []).map(function(x) { return x.id === z.id ? z : x; })
+            : (p.najemZmeny || []).concat([z]);
+        // Seřadit chronologicky
+        novyList.sort(function(a, b) { return new Date(a.platnostOd) - new Date(b.platnostOd); });
+        // Aktualizovat income.rent na nejnovější platný nájem
+        var aktualniZmena = _getZmenaProDatum(novyList, new Date());
+        var novyRent = aktualniZmena ? aktualniZmena.najem : p.income.rent;
+        var novyZaloh = aktualniZmena ? aktualniZmena.zalohyEnergie : p.zaloh;
+        onUpdate(Object.assign({}, p, {
+            najemZmeny: novyList,
+            income: Object.assign({}, p.income, { rent: novyRent }),
+            zaloh: Object.assign({}, p.zaloh, novyZaloh || {})
+        }));
+        setShowForm(false);
+        setEditZmena(null);
+        notify("✅ Záznam nájmu uložen");
+    };
+
+    const deleteZmena = function(id) {
+        if (zmeny.length <= 1) { notify("❌ Nelze smazat poslední záznam"); return; }
+        var novyList = (p.najemZmeny || []).filter(function(z) { return z.id !== id; });
+        var aktualniZmena = _getZmenaProDatum(novyList, new Date());
+        var novyRent = aktualniZmena ? aktualniZmena.najem : 0;
+        onUpdate(Object.assign({}, p, {
+            najemZmeny: novyList,
+            income: Object.assign({}, p.income, { rent: novyRent })
+        }));
+        notify("✅ Záznam smazán");
+    };
+
+    return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "12px" } },
+
+        // ── FORMULÁŘ EDITACE ──
+        showForm && editZmena && React.createElement(Modal, { 
+            title: editZmena._isNew ? "Přidat změnu nájmu" : "Upravit změnu nájmu",
+            onClose: function() { setShowForm(false); setEditZmena(null); }, wide: true },
+            React.createElement(NajemZmenaForm, {
+                zmena: editZmena,
+                onSave: saveZmena,
+                onClose: function() { setShowForm(false); setEditZmena(null); }
+            })),
+
+        // ── AKTUÁLNÍ STAV ──
+        React.createElement(Card, { style: { background: "#eff6ff", border: "1px solid #93c5fd" } },
+            React.createElement(RSH, { label: "Aktuálně platný nájem" }),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" } },
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontSize: "11px", color: "#6b7280" } }, "Nájem/měs"),
+                    React.createElement("div", { style: { fontSize: "20px", fontWeight: "700", color: "#1e40af" } },
+                        formatCZK(p.income && p.income.rent || 0))),
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontSize: "11px", color: "#6b7280" } }, "Zálohy/měs"),
+                    React.createElement("div", { style: { fontSize: "20px", fontWeight: "700", color: "#4f46e5" } },
+                        formatCZK(_sumZal(p)))),
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontSize: "11px", color: "#6b7280" } }, "Celkem/měs"),
+                    React.createElement("div", { style: { fontSize: "20px", fontWeight: "700", color: "#16a34a" } },
+                        formatCZK((p.income && p.income.rent || 0) + _sumZal(p)))))),
+
+        // ── ROČNÍ PŘEHLED ──
+        React.createElement(Card, null,
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" } },
+                React.createElement(RSH, { label: "Roční přehled příjmů" }),
+                React.createElement("div", { style: { display: "flex", gap: "6px" } },
+                    [rokAkt-1, rokAkt, rokAkt+1].map(function(r) {
+                        return React.createElement("button", { key: r, onClick: function() { setRokPrehled(r); }, style: {
+                            padding: "5px 12px", border: "1px solid", borderRadius: "14px", fontSize: "12px",
+                            fontWeight: "600", cursor: "pointer",
+                            borderColor: rokPrehled === r ? "#4f46e5" : "#d1d5db",
+                            background: rokPrehled === r ? "#4f46e5" : "#fff",
+                            color: rokPrehled === r ? "#fff" : "#374151"
+                        } }, r);
+                    }))),
+            // Sumarizace roku
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px", marginBottom: "14px" } },
+                React.createElement("div", { style: { background: "#f0fdf4", borderRadius: "8px", padding: "10px 12px" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "PRONAJATO"),
+                    React.createElement("div", { style: { fontSize: "18px", fontWeight: "700", color: "#16a34a" } }, prehled.mesicuPronajato, " měs.")),
+                React.createElement("div", { style: { background: "#eff6ff", borderRadius: "8px", padding: "10px 12px" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "PŘÍJEM NÁJEM"),
+                    React.createElement("div", { style: { fontSize: "15px", fontWeight: "700", color: "#1e40af" } }, formatCZK(prehled.celkemNajem))),
+                React.createElement("div", { style: { background: "#f5f3ff", borderRadius: "8px", padding: "10px 12px" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "ZÁLOHY ENERGIE"),
+                    React.createElement("div", { style: { fontSize: "15px", fontWeight: "700", color: "#4f46e5" } }, formatCZK(prehled.celkemZalohy))),
+                React.createElement("div", { style: { background: "#fef3c7", borderRadius: "8px", padding: "10px 12px" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "CELKEM §9"),
+                    React.createElement("div", { style: { fontSize: "15px", fontWeight: "700", color: "#92400e" } }, formatCZK(prehled.celkemPrijmy)))),
+            // Rozpad po měsících - tabulka
+            React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: "12px" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", { style: { background: "#f8fafc" } },
+                            React.createElement("th", { style: { padding: "6px 8px", textAlign: "left", color: "#6b7280", fontWeight: "600", borderBottom: "1px solid #e5e7eb" } }, "Měsíc"),
+                            React.createElement("th", { style: { padding: "6px 8px", textAlign: "right", color: "#6b7280", fontWeight: "600", borderBottom: "1px solid #e5e7eb" } }, "Nájem"),
+                            React.createElement("th", { style: { padding: "6px 8px", textAlign: "right", color: "#6b7280", fontWeight: "600", borderBottom: "1px solid #e5e7eb" } }, "Zálohy"),
+                            React.createElement("th", { style: { padding: "6px 8px", textAlign: "right", color: "#6b7280", fontWeight: "600", borderBottom: "1px solid #e5e7eb" } }, "Celkem"),
+                            React.createElement("th", { style: { padding: "6px 8px", textAlign: "center", color: "#6b7280", fontWeight: "600", borderBottom: "1px solid #e5e7eb" } }, "Stav"))),
+                    React.createElement("tbody", null,
+                        prehled.rozpad.map(function(r) {
+                            var isVolny = r.stav === "volny" || r.stav === "bez_zaznamu";
+                            var isCurrent = (rokPrehled === rokAkt) && (r.mesic === new Date().getMonth() + 1);
+                            return React.createElement("tr", { key: r.mesic, style: {
+                                background: isCurrent ? "#fffbeb" : isVolny ? "#fef2f2" : "#fff",
+                                borderBottom: "1px solid #f3f4f6"
+                            } },
+                                React.createElement("td", { style: { padding: "6px 8px", fontWeight: isCurrent ? "700" : "400" } },
+                                    mesiceNazvy[r.mesic], " ", rokPrehled),
+                                React.createElement("td", { style: { padding: "6px 8px", textAlign: "right", color: isVolny ? "#9ca3af" : "#1e40af", fontWeight: "600" } },
+                                    isVolny ? "—" : formatCZK(r.najem)),
+                                React.createElement("td", { style: { padding: "6px 8px", textAlign: "right", color: isVolny ? "#9ca3af" : "#4f46e5" } },
+                                    isVolny ? "—" : formatCZK(r.zalohy)),
+                                React.createElement("td", { style: { padding: "6px 8px", textAlign: "right", fontWeight: "700", color: isVolny ? "#9ca3af" : "#374151" } },
+                                    isVolny ? "—" : formatCZK(r.najem + r.zalohy)),
+                                React.createElement("td", { style: { padding: "6px 8px", textAlign: "center" } },
+                                    isVolny
+                                        ? React.createElement("span", { style: { fontSize: "10px", background: "#fee2e2", color: "#dc2626", padding: "2px 6px", borderRadius: "8px" } }, "Volný")
+                                        : React.createElement("span", { style: { fontSize: "10px", background: "#dcfce7", color: "#16a34a", padding: "2px 6px", borderRadius: "8px" } }, "✓ Pronajato")));
+                        }))))),
+
+        // ── TIMELINE ZMĚN ──
+        React.createElement(Card, null,
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" } },
+                React.createElement(RSH, { label: "Timeline změn nájmu" }),
+                React.createElement(Btn, { onClick: function() {
+                    setEditZmena(Object.assign({ _isNew: true }, _newNajemZmena(p)));
+                    setShowForm(true);
+                } }, "+ Přidat změnu")),
+            zmeny.length === 0
+                ? React.createElement("p", { style: { color: "#9ca3af", fontSize: "13px", textAlign: "center" } },
+                    "Zatím žádné záznamy. Přidejte první změnu nájmu.")
+                : zmeny.map(function(z, idx) {
+                    var isAktivni = _getZmenaProDatum(zmeny, new Date()) && _getZmenaProDatum(zmeny, new Date()).id === z.id;
+                    var dalsiZmena = zmeny[idx + 1];
+                    var zalohy = _sumZalZmena(z.zalohyEnergie);
+                    return React.createElement("div", { key: z.id, style: { display: "flex", gap: "12px", marginBottom: "12px" } },
+                        // Timeline linka
+                        React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", minWidth: "20px" } },
+                            React.createElement("div", { style: {
+                                width: "12px", height: "12px", borderRadius: "50%", flexShrink: 0, marginTop: "4px",
+                                background: isAktivni ? "#16a34a" : "#93c5fd",
+                                border: "2px solid " + (isAktivni ? "#15803d" : "#3b82f6")
+                            } }),
+                            idx < zmeny.length - 1 && React.createElement("div", { style: { width: "2px", flex: 1, background: "#e5e7eb", marginTop: "4px" } })),
+                        // Obsah
+                        React.createElement("div", { style: {
+                            flex: 1, background: isAktivni ? "#f0fdf4" : "#f8fafc",
+                            border: "1px solid " + (isAktivni ? "#86efac" : "#e5e7eb"),
+                            borderRadius: "10px", padding: "12px", marginBottom: idx < zmeny.length - 1 ? "0" : "0"
+                        } },
+                            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } },
+                                React.createElement("div", null,
+                                    React.createElement("div", { style: { fontSize: "12px", color: "#6b7280" } },
+                                        "od ", React.createElement("strong", null, _fmtCZ(z.platnostOd)),
+                                        dalsiZmena ? React.createElement("span", null, " do ", _fmtCZ(
+                                            new Date(new Date(dalsiZmena.platnostOd) - 86400000).toISOString().split('T')[0]
+                                        )) : React.createElement("span", { style: { color: "#16a34a", fontWeight: "600" } }, " — dosud")),
+                                    z.najem === 0
+                                        ? React.createElement("div", { style: { fontSize: "15px", fontWeight: "700", color: "#dc2626", marginTop: "4px" } }, "🏚️ Prázdný byt")
+                                        : React.createElement("div", { style: { fontSize: "15px", fontWeight: "700", color: "#1a3a5c", marginTop: "4px" } },
+                                            formatCZK(z.najem), "/měs",
+                                            React.createElement("span", { style: { fontSize: "12px", color: "#6b7280", fontWeight: "400", marginLeft: "8px" } },
+                                                "+ zálohy ", formatCZK(zalohy), " = ", formatCZK(z.najem + zalohy))),
+                                    z.poznamka && React.createElement("div", { style: { fontSize: "11px", color: "#6b7280", marginTop: "4px", fontStyle: "italic" } }, z.poznamka)),
+                                React.createElement("div", { style: { display: "flex", gap: "6px" } },
+                                    React.createElement("button", {
+                                        onClick: function() { setEditZmena(Object.assign({}, z)); setShowForm(true); },
+                                        style: { background: "#eff6ff", border: "1px solid #93c5fd", borderRadius: "6px", padding: "4px 10px", fontSize: "11px", cursor: "pointer", color: "#1e40af" }
+                                    }, "✏️ Upravit"),
+                                    zmeny.length > 1 && React.createElement("button", {
+                                        onClick: function() { deleteZmena(z.id); },
+                                        style: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "6px", padding: "4px 10px", fontSize: "11px", cursor: "pointer", color: "#dc2626" }
+                                    }, "🗑 Smazat")))));
+                })));
+}
+
+// ── Formulář pro editaci záznamu najemZmeny ──
+function NajemZmenaForm({ zmena, onSave, onClose }) {
+    const [f, setF] = (0, useState)(zmena);
+    const setZ = function(k, v) { setF(function(p) { return Object.assign({}, p, { [k]: v }); }); };
+    const setZal = function(k, v) {
+        setF(function(p) {
+            return Object.assign({}, p, {
+                zalohyEnergie: Object.assign({}, p.zalohyEnergie, { [k]: parseFloat(v) || 0 })
+            });
+        });
+    };
+    const zal = f.zalohyEnergie || {};
+    const totalZal = _sumZalZmena(zal);
+
+    return React.createElement("div", null,
+        // Datum platnosti
+        React.createElement("div", { style: { background: "#eff6ff", padding: "12px", borderRadius: "8px", marginBottom: "12px" } },
+            React.createElement("h4", { style: { margin: "0 0 8px 0", color: "#1e40af", fontSize: "13px" } }, "📅 Platnost"),
+            React.createElement(Input, { label: "Platnost od *", type: "date", value: f.platnostOd || "", onChange: v => setZ("platnostOd", v), required: true }),
+            React.createElement(Input, { label: "Poznámka (důvod změny)", value: f.poznamka || "", onChange: v => setZ("poznamka", v), placeholder: "např. Navýšení dle CPI, Nový nájemník, Prázdný byt..." })),
+        // Nájem
+        React.createElement("div", { style: { background: f.najem === 0 ? "#fef2f2" : "#f0fdf4", padding: "12px", borderRadius: "8px", marginBottom: "12px" } },
+            React.createElement("h4", { style: { margin: "0 0 8px 0", fontSize: "13px", color: f.najem === 0 ? "#991b1b" : "#15803d" } },
+                f.najem === 0 ? "🏚️ Prázdný byt" : "💰 Výše nájmu"),
+            React.createElement(Input, { label: "Měsíční nájem (Kč) — zadejte 0 pro prázdný byt", type: "number", value: f.najem || 0, onChange: v => setZ("najem", parseFloat(v) || 0) }),
+            f.najem === 0 && React.createElement("p", { style: { fontSize: "11px", color: "#dc2626", margin: "4px 0 0" } },
+                "ℹ️ Nájem 0 = byt je prázdný v tomto období. Zálohy se také neúčtují.")),
+        // Zálohy
+        f.najem > 0 && React.createElement("div", { style: { background: "#fafafa", padding: "12px", borderRadius: "8px", marginBottom: "12px", border: "1px solid #e5e7eb" } },
+            React.createElement("h4", { style: { margin: "0 0 8px 0", fontSize: "13px", color: "#374151" } },
+                "⚡ Zálohy na energie — celkem: ", React.createElement("strong", { style: { color: "#4f46e5" } }, formatCZK(totalZal), "/měs")),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" } },
+                React.createElement(Input, { label: "⚡ Elektřina (byt)", type: "number", value: zal.elektrina || 0, onChange: v => setZal("elektrina", v) }),
+                React.createElement(Input, { label: "🔌 ESP (spol. prostory)", type: "number", value: zal.esp || 0, onChange: v => setZal("esp", v) }),
+                React.createElement(Input, { label: "🔥 Plyn", type: "number", value: zal.plyn || 0, onChange: v => setZal("plyn", v) }),
+                React.createElement(Input, { label: "💧 Voda", type: "number", value: zal.voda || 0, onChange: v => setZal("voda", v) }),
+                React.createElement(Input, { label: "☀️ Teplo/TV", type: "number", value: zal.teplo || 0, onChange: v => setZal("teplo", v) }),
+                React.createElement(Input, { label: "🛗 Výtah", type: "number", value: zal.vytah || 0, onChange: v => setZal("vytah", v) }),
+                React.createElement(Input, { label: "🏢 SVJ/správa", type: "number", value: zal.svj || 0, onChange: v => setZal("svj", v) }),
+                React.createElement(Input, { label: "📡 Internet/SAT", type: "number", value: zal.internet || 0, onChange: v => setZal("internet", v) }),
+                React.createElement(Input, { label: "🗑️ Odpad", type: "number", value: zal.odpad || 0, onChange: v => setZal("odpad", v) }))),
+        // Tlačítka
+        React.createElement("div", { style: { display: "flex", gap: "12px", justifyContent: "flex-end" } },
+            React.createElement(Btn, { onClick: onClose, variant: "secondary" }, "Zrušit"),
+            React.createElement(Btn, { onClick: function() {
+                if (!f.platnostOd) { alert("Vyplňte datum platnosti"); return; }
+                onSave(f);
+            } }, "💾 Uložit")));
+}
+
 function RTNajem({ p, data }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const z = p.zaloh || {};
@@ -6085,6 +6441,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
         { id: "prehled", label: "Přehled" },
         { id: "finance", label: "Finance" },
         { id: "najem", label: "Nájem & zálohy" },
+        { id: "historie", label: "📈 Historie nájmu" },
         { id: "odpisy", label: "🏠 Odpisy & daň" },
         { id: "smlouva", label: "Smlouva" },
         { id: "hypoteka", label: "Hypotéka" },
@@ -6267,6 +6624,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
         tab === "prehled" && React.createElement(RTPrehled, { p: p, data: data }),
         tab === "finance" && React.createElement(RTFinance, { p: p }),
         tab === "najem" && React.createElement(RTNajem, { p: p, data: data }),
+        tab === "historie" && React.createElement(RTHistorieNajmu, { p: p, onUpdate: onUpdate, notify: notify }),
         tab === "odpisy" && React.createElement(RTOdpisy, { p: p, onUpdate: onUpdate, notify: notify }),
         tab === "smlouva" && React.createElement(RTSmlouva, { p: p, onContract: genContract, onNotice: genNotice, data: data }),
         tab === "najemnici" && React.createElement(RTNajemnici, { p: p, onUpdate: onUpdate, notify: notify }),
@@ -7752,8 +8110,8 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
                 React.createElement("div", { style: { fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "4px" } }, "\uD83D\uDCCA DPH XML — \u00FAdaje fyzick\u00E9 osoby"),
                 React.createElement("p", { style: { fontSize: "11px", color: "#6b7280", marginBottom: "10px", marginTop: 0 } }, "Tato pole se pou\u017Eij\u00ED ve vygenerovan\u00E9m XML p\u0159izn\u00E1n\u00ED DPH m\u00EDsto obecn\u00E9ho n\u00E1zvu firmy."),
                 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "12px" } },
-                    React.createElement(Input, { label: "P\u0159\u00EDjmen\u00ED", value: firma.prijmeni||"", onChange: v => set("prijmeni", v), placeholder: "nap\u0159. Bro\u017E" }),
-                    React.createElement(Input, { label: "Jm\u00E9no", value: firma.jmeno||"", onChange: v => set("jmeno", v), placeholder: "nap\u0159. Ond\u0159ej" }),
+                    React.createElement(Input, { label: "P\u0159\u00EDjmen\u00ED", value: firma.prijmeni||"", onChange: v => set("prijmeni", v), placeholder: "nap\u0159. Novotn\u00FD" }),
+                    React.createElement(Input, { label: "Jm\u00E9no", value: firma.jmeno||"", onChange: v => set("jmeno", v), placeholder: "nap\u0159. Jan" }),
                     React.createElement(Input, { label: "Titul", value: firma.titul||"", onChange: v => set("titul", v), placeholder: "Bc." })),
                 React.createElement(Input, { label: "Hlavn\u00ED ekonomick\u00E1 \u010dinnost", value: firma.hlavniCinnost||"", onChange: v => set("hlavniCinnost", v), placeholder: "nap\u0159. V\u00FDZKUM A V\u00DDVOJ V OBLASTI P\u0158\u00CDRODNICH A TECHNICK\u00DDCH V\u011aD" }),
                 React.createElement("div", { style: { fontSize: "11px", color: "#6b7280", marginTop: "4px" } }, "\u2139\uFE0F Adresa se bere automaticky z pol\u00ED Ulice / M\u011bsto / PS\u010c v\u00FD\u0161e. Telefon a email tak\u00E9.")),
@@ -7820,17 +8178,9 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
                     label: "\uD83D\uDDD1\uFE0F Vymazat v\u0161echna data",
                     message: "Opravdu smazat v\u0161echna data? Nastaven\u00ED firmy z\u016Fstane.",
                     onConfirm: () => {
-                        updateData(prev => Object.assign({}, prev, {
-                            faktury: [],
-                            zakaznici: [],
-                            majetek: [],
-                            danNaklady: {},
-                            prijateFaktury: [],
-                            dodavatele: [],
-                            najemnici: [],
-                            nemovitosti: { properties: [] }
-                        }));
-                        notify("\u2705 Data smazána!");
+                        const prazdna = Object.assign({}, initialState, { firma: data.firma });
+                        localStorage.setItem("fakturace_app_v5", JSON.stringify(prazdna));
+                        window.location.reload();
                     }
                 }),
                 React.createElement("div", { style: { marginTop: "8px" } }),
@@ -7838,7 +8188,7 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
                     label: "\uD83E\uDDEA Resetovat na testovac\u00ED data",
                     message: "Nahradit data testovac\u00EDmi fakturami s emaily? Uv\u00EDd\u00EDte tla\u010D\u00EDtka pro upom\u00EDnky.",
                     onConfirm: () => {
-                        const testData = Object.assign({}, initialState, getTestData());
+                        const testData = Object.assign({}, initialState, getTestData(), { firma: data.firma });
                         localStorage.setItem("fakturace_app_v5", JSON.stringify(testData));
                         window.location.reload();
                     }
