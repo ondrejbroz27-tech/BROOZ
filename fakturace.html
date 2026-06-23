@@ -105,9 +105,15 @@ const initialState = {
         email: "",
         telefon: "",
         platceDPH: false,
-        dphPerioda: "kvartal",  // "kvartal" nebo "mesic"
+        dphPerioda: "kvartal",
         splatnost: 14,
         c_ufo: "",
+        // ⭐ DPH XML - fyzická osoba
+        prijmeni: "",       // Příjmení (fyzická osoba)
+        jmeno: "",          // Jméno (fyzická osoba)
+        titul: "",          // Titul (Bc., Ing., atd.)
+        hlavniCinnost: "",  // Hlavní ekonomická činnost (text)
+        // Adresa - pro XML (pokud se liší od ulice/mesto/psc)
         zivnostEvidCislo: "",
         zivnostCj: "",
         zivnostVydal: "",
@@ -4172,29 +4178,66 @@ function roundXml(n) {
 // Daňové přiznání k DPH — dle vzoru EPO DPHDP3
 function generateDPXml(data, rok, kvartalNeboMesic, hlaseni, prijateDphOdpocet, prijateFaktury, perioda) {
     const firma = data.firma || {};
+
+    // ── Pomocné funkce ──
+    const xmlEsc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const dicCislo = (firma.dic || "").replace(/\s/g,"").replace(/^CZ/i,"").replace(/[^0-9]/g,"");
-    const cufo = (firma.c_ufo || "1").replace(/[^0-9]/g,"") || "1";
-    const fmtDate = (d) => padNum(d.getDate(),2)+"."+padNum(d.getMonth()+1,2)+"."+d.getFullYear();
-    const dnes = fmtDate(new Date());
+    const icoNum   = (firma.ico || "").replace(/\s/g,"").replace(/[^0-9]/g,"");
+    const cufo     = (firma.c_ufo || "").replace(/[^0-9]/g,"") || "1";
+    const fmtDate  = (d) => padNum(d.getDate(),2)+"."+padNum(d.getMonth()+1,2)+"."+d.getFullYear();
+    const dnes     = fmtDate(new Date());
 
-    const obrat23 = Math.round(hlaseni.zaklad21);
-    const dan23   = Math.round(hlaseni.dph21);
-    const obrat5  = Math.round(hlaseni.zaklad12);
-    const dan5    = Math.round(hlaseni.dph12);
+    // ── Identifikace fyzické osoby ──
+    // Pokud jsou vyplněna příjmení/jméno → fyzická osoba (typ_ds=F)
+    // Jinak použij nazev jako zkrobchjm (právnická osoba)
+    const isFO = !!(firma.prijmeni || firma.jmeno);
+    const prijmeni = xmlEsc((firma.prijmeni || "").substring(0, 60));
+    const jmeno    = xmlEsc((firma.jmeno || "").substring(0, 60));
+    const titul    = xmlEsc((firma.titul || "").substring(0, 20));
 
-    const prijate21 = prijateFaktury.filter(f => (f.sazba||21) === 21);
-    const prijate12 = prijateFaktury.filter(f => (f.sazba||21) === 12);
+    // ── Adresa (z nastavení firmy) ──
+    // Rozdělí ulici na název a číslo popisné, např. "Náměstí 12" → ulice="Náměstí" c_pop="12"
+    // Pokusíme se rozdělit ulici na název a číslo
+    const uliceRaw = (firma.ulice || "").trim();
+    const uliceMatch = uliceRaw.match(/^(.*?)\s+(\d+[a-zA-Z]?\/?[0-9a-zA-Z]*)$/);
+    const uliceNazev = xmlEsc(uliceMatch ? uliceMatch[1] : uliceRaw).substring(0, 50);
+    const uliceCislo = xmlEsc(uliceMatch ? uliceMatch[2] : "").substring(0, 10);
+    const obec = xmlEsc((firma.mesto || "").substring(0, 50));
+    const psc  = (firma.psc || "").replace(/\s/g,"").substring(0, 5);
+
+    // ── Kontakt ──
+    const tel    = xmlEsc((firma.telefon || "").replace(/\s/g,"").substring(0, 20));
+    const email  = xmlEsc((firma.email || "").substring(0, 80));
+
+    // ── Hlavní činnost ──
+    const hc = xmlEsc((firma.hlavniCinnost || "").substring(0, 100));
+
+    // ── Výpočtové hodnoty ──
+    const obrat23   = Math.round(hlaseni.zaklad21);
+    const dan23     = Math.round(hlaseni.dph21);
+    const obrat5    = Math.round(hlaseni.zaklad12);
+    const dan5      = Math.round(hlaseni.dph12);
+
+    // Přijatá plnění - ř. 40 (21%) a ř. 41 (12%)
+    // ⭐ OPRAVA: sazba||21 nesprávná pro 0%, ale přijatá mají vždy sazbu explicitně
+    const prijate21 = prijateFaktury.filter(f => Number(f.sazba) === 21 || (!f.sazba && f.sazba !== 0));
+    const prijate12 = prijateFaktury.filter(f => Number(f.sazba) === 12);
     const od_zdp23  = Math.round(prijate21.reduce((s,f) => s+(f.castka||0), 0));
     const nar_zdp23 = Math.round(prijate21.reduce((s,f) => s+(f.dph||0), 0));
     const od_zdp5   = Math.round(prijate12.reduce((s,f) => s+(f.castka||0), 0));
     const nar_zdp5  = Math.round(prijate12.reduce((s,f) => s+(f.dph||0), 0));
 
-    const nazev = (firma.nazev||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").substring(0,255);
-
-    // ⭐ Klíčový rozdíl: měsíční = atribut "mesic", kvartální = atribut "ctvrt"
+    // ── Zdaňovací období ──
     const obdobiAttr = perioda === "mesic"
         ? `mesic="${kvartalNeboMesic}"`
         : `ctvrt="${kvartalNeboMesic}"`;
+
+    // ── VetaP - identifikace poplatníka ──
+    // Pro fyzickou osobu: prijmeni, jmeno, titul + ic (IČ)
+    // Pro PO: zkrobchjm (název) + ic
+    const vetaP_fo = isFO
+        ? `prijmeni="${prijmeni}" jmeno="${jmeno}"${titul ? ` titul="${titul}"` : ""}`
+        : `zkrobchjm="${xmlEsc((firma.nazev||"").substring(0,255))}"`;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Pisemnost nazevSW="FakturaceBROZ" verzeSW="1.0">
@@ -4211,21 +4254,29 @@ function generateDPXml(data, rok, kvartalNeboMesic, hlaseni, prijateDphOdpocet, 
     <VetaP
       c_ufo="${cufo}"
       dic="${dicCislo}"
-      zkrobchjm="${nazev}"
-      typ_ds="F"
+      ic="${icoNum}"
+      ${vetaP_fo}
+      typ_ds="F"${obec ? `
+      naz_obce="${obec}"` : ""}${psc ? `
+      psc="${psc}"` : ""}${uliceNazev ? `
+      ulice="${uliceNazev}"` : ""}${uliceCislo ? `
+      c_pop="${uliceCislo}"` : ""}${tel ? `
+      tel_ds="${tel}"` : ""}${email ? `
+      email_ds="${email}"` : ""}${hc ? `
+      hc="${hc}"` : ""}
     />
     <Veta1
       obrat23="${roundXml(obrat23)}"
-      dan23="${roundXml(dan23)}"
+      dan23="${roundXml(dan23)}"${obrat5 > 0 ? `
       obrat5="${roundXml(obrat5)}"
-      dan5="${roundXml(dan5)}"
-    />
+      dan5="${roundXml(dan5)}"` : ""}
+    />${od_zdp23 > 0 || od_zdp5 > 0 ? `
     <Veta4
       od_zdp23="${roundXml(od_zdp23)}"
-      nar_zdp23="${roundXml(nar_zdp23)}"
+      nar_zdp23="${roundXml(nar_zdp23)}"${od_zdp5 > 0 ? `
       od_zdp5="${roundXml(od_zdp5)}"
-      nar_zdp5="${roundXml(nar_zdp5)}"
-    />
+      nar_zdp5="${roundXml(nar_zdp5)}"` : ""}
+    />` : ""}
   </DPHDP3>
 </Pisemnost>`;
 }
@@ -4233,18 +4284,36 @@ function generateDPXml(data, rok, kvartalNeboMesic, hlaseni, prijateDphOdpocet, 
 // Kontrolní hlášení DPH — dle schématu DPHKH1
 function generateKHXml(data, rok, kvartalNeboMesic, hlaseni, prijateFaktury, perioda) {
     const firma = data.firma || {};
+    const xmlEsc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const dicCislo = (firma.dic || "").replace(/\s/g,"").replace(/^CZ/i,"").replace(/[^0-9]/g,"");
-    const cufo = (firma.c_ufo || "1").replace(/[^0-9]/g,"") || "1";
-    const nazev = (firma.nazev||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").substring(0,255);
-    // Formát datumu DD.MM.RRRR
-    const fmtDate = (d) => padNum(d.getDate(),2)+"."+padNum(d.getMonth()+1,2)+"."+d.getFullYear();
-    const dnes = fmtDate(new Date());
+    const icoNum   = (firma.ico || "").replace(/\s/g,"").replace(/[^0-9]/g,"");
+    const cufo     = (firma.c_ufo || "").replace(/[^0-9]/g,"") || "1";
+    const nazev    = xmlEsc((firma.nazev||"").substring(0,255));
+    const fmtDate  = (d) => padNum(d.getDate(),2)+"."+padNum(d.getMonth()+1,2)+"."+d.getFullYear();
+    const dnes     = fmtDate(new Date());
 
-    // Helper: z DIČ "CZ12345678" nebo "12345678" → jen číslice
+    // Fyzická osoba
+    const isFO     = !!(firma.prijmeni || firma.jmeno);
+    const prijmeni = xmlEsc((firma.prijmeni || "").substring(0, 60));
+    const jmeno    = xmlEsc((firma.jmeno || "").substring(0, 60));
+    const titul    = xmlEsc((firma.titul || "").substring(0, 20));
+
+    // Adresa
+    const uliceRaw   = (firma.ulice || "").trim();
+    const uliceMatch = uliceRaw.match(/^(.*?)\s+(\d+[a-zA-Z]?\/?[0-9a-zA-Z]*)$/);
+    const uliceNazev = xmlEsc(uliceMatch ? uliceMatch[1] : uliceRaw).substring(0, 50);
+    const uliceCislo = xmlEsc(uliceMatch ? uliceMatch[2] : "").substring(0, 10);
+    const obec       = xmlEsc((firma.mesto || "").substring(0, 50));
+    const psc        = (firma.psc || "").replace(/\s/g,"").substring(0, 5);
+    const tel        = xmlEsc((firma.telefon || "").replace(/\s/g,"").substring(0, 20));
+    const email      = xmlEsc((firma.email || "").substring(0, 80));
+
+    const vetaP_fo = isFO
+        ? `prijmeni="${prijmeni}" jmeno="${jmeno}"${titul ? ` titul="${titul}"` : ""}`
+        : `zkrobchjm="${nazev}"`;
+
+    // Helper: z DIČ → jen číslice
     const dicNum = (dic) => (dic||"").replace(/\s/g,"").replace(/^CZ/i,"").replace(/[^0-9]/g,"");
-    // Helper: z čísla faktury vyextrahuj číselnout část pro c_evid_dd (max 60 znaků)
-    // c_evid_dd = pouze číslice z čísla faktury (např. FV20260001 → 20260001)
-    // c_evid_dd musí být POUZE číslice (FV20260001 → 20260001)
     const evCislo = (cislo) => (cislo||"").replace(/[^0-9]/g,"").substring(0,20) || "0";
 
     // A4 — vydané faktury nad 10 000 Kč základ (§ 100 odst. 1 DPH)
@@ -4313,8 +4382,15 @@ function generateKHXml(data, rok, kvartalNeboMesic, hlaseni, prijateFaktury, per
     <VetaP
       c_ufo="${cufo}"
       dic="${dicCislo}"
-      zkrobchjm="${nazev}"
-      typ_ds="F"
+      ic="${icoNum}"
+      ${vetaP_fo}
+      typ_ds="F"${obec ? `
+      naz_obce="${obec}"` : ""}${psc ? `
+      psc="${psc}"` : ""}${uliceNazev ? `
+      ulice="${uliceNazev}"` : ""}${uliceCislo ? `
+      c_pop="${uliceCislo}"` : ""}${tel ? `
+      tel_ds="${tel}"` : ""}${email ? `
+      email_ds="${email}"` : ""}
     />
 ${a4Rows}
     <VetaA5 zakl_dane1="${roundXml(Math.round(a5z1))}" dan1="${roundXml(Math.round(a5d1))}" zakl_dane2="${roundXml(Math.round(a5z2))}" dan2="${roundXml(Math.round(a5d2))}"/>
@@ -7672,6 +7748,15 @@ function Nastaveni({ data, updateData, notify, emailTemplatesExpandedFaktury, se
                     React.createElement(Input, { label: "\u010c.j.", value: firma.zivnostCj||"", onChange: v => set("zivnostCj", v), placeholder: "nap\u0159. 1/197/2001" }),
                     React.createElement(Input, { label: "Datum vyd\u00e1n\u00ed", value: firma.zivnostDatum||"", onChange: v => set("zivnostDatum", v), placeholder: "nap\u0159. 19.11.2001" })),
                 React.createElement(Input, { label: "Vyd\u00e1n vyd\u00e1n (\u00fa\u0159ad)", value: firma.zivnostVydal||"", onChange: v => set("zivnostVydal", v), placeholder: "nap\u0159. ŽÚ MÚ Kralovice" })),
+            React.createElement("div", { style: { borderTop: "1px solid #e5e7eb", paddingTop: "12px", marginTop: "4px" } },
+                React.createElement("div", { style: { fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "4px" } }, "\uD83D\uDCCA DPH XML — \u00FAdaje fyzick\u00E9 osoby"),
+                React.createElement("p", { style: { fontSize: "11px", color: "#6b7280", marginBottom: "10px", marginTop: 0 } }, "Tato pole se pou\u017Eij\u00ED ve vygenerovan\u00E9m XML p\u0159izn\u00E1n\u00ED DPH m\u00EDsto obecn\u00E9ho n\u00E1zvu firmy."),
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "12px" } },
+                    React.createElement(Input, { label: "P\u0159\u00EDjmen\u00ED", value: firma.prijmeni||"", onChange: v => set("prijmeni", v), placeholder: "nap\u0159. Bro\u017E" }),
+                    React.createElement(Input, { label: "Jm\u00E9no", value: firma.jmeno||"", onChange: v => set("jmeno", v), placeholder: "nap\u0159. Ond\u0159ej" }),
+                    React.createElement(Input, { label: "Titul", value: firma.titul||"", onChange: v => set("titul", v), placeholder: "Bc." })),
+                React.createElement(Input, { label: "Hlavn\u00ED ekonomick\u00E1 \u010dinnost", value: firma.hlavniCinnost||"", onChange: v => set("hlavniCinnost", v), placeholder: "nap\u0159. V\u00FDZKUM A V\u00DDVOJ V OBLASTI P\u0158\u00CDRODNICH A TECHNICK\u00DDCH V\u011aD" }),
+                React.createElement("div", { style: { fontSize: "11px", color: "#6b7280", marginTop: "4px" } }, "\u2139\uFE0F Adresa se bere automaticky z pol\u00ED Ulice / M\u011bsto / PS\u010c v\u00FD\u0161e. Telefon a email tak\u00E9.")),
             React.createElement("div", { style: { display: "flex", gap: "12px", marginTop: "4px" } },
                 React.createElement(Btn, { onClick: save }, "\uD83D\uDCBE Ulo\u017Eit nastaven\u00ED"))),
         React.createElement("div", null,
