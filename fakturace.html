@@ -5330,8 +5330,11 @@ function RUrgency({ days, label, endDate }) {
 // ── Tab: Přehled ──
 function RTPrehled({ p, data }) {
     var _a, _b;
+    // ⭐ Aktuální nájem z najemZmeny (jeden zdroj pravdy)
+    const aktNajemData = getAktualniNajem(p);
+    const aktNajem = aktNajemData.najem;
     const zh = p.purchasePrice > 0 ? (((p.currentPrice - p.purchasePrice) / p.purchasePrice) * 100).toFixed(1) : "0.0";
-    const hy = p.currentPrice > 0 ? ((p.income.rent * 12) / p.currentPrice * 100).toFixed(2) : "0.00";
+    const hy = p.currentPrice > 0 ? ((aktNajem * 12) / p.currentPrice * 100).toFixed(2) : "0.00";
     
     // Najdi přiřazeného nájemníka
     const najemnici = (data && data.najemnici) || [];
@@ -5393,6 +5396,12 @@ function RTPrehled({ p, data }) {
                         React.createElement("div", null, 
                             React.createElement("div", { style: { color: "#6b7280", fontSize: "11px" } }, "V\u00FDpov\u011Bdn\u00ED lh\u016Fta:"),
                             React.createElement("strong", null, (aktivniNajemnik.vypovedniLhuta || "2"), " m\u011Bs.")),
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { color: "#6b7280", fontSize: "11px" } }, "N\u00E1jem/m\u011Bs:"),
+                            React.createElement("strong", { style: { color: "#16a34a" } }, formatCZK(aktNajem))),
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { color: "#6b7280", fontSize: "11px" } }, "Z\u00E1lohy/m\u011Bs:"),
+                            React.createElement("strong", { style: { color: "#4f46e5" } }, formatCZK(aktNajemData.zalohy))),
                         aktivniNajemnik.trvalaAdresa && React.createElement("div", { style: { gridColumn: "1 / -1" } }, 
                             React.createElement("div", { style: { color: "#6b7280", fontSize: "11px" } }, "Trval\u00E1 adresa:"),
                             React.createElement("strong", null, aktivniNajemnik.trvalaAdresa)),
@@ -5703,9 +5712,17 @@ function NajemZmenaForm({ zmena, onSave, onClose }) {
 
 function RTNajem({ p, data }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-    const z = p.zaloh || {};
-    const totalZ = _sumZal(p);
-    const platitTxt = { najemnik: "Nájemník přímo", pronajimatel: "Pronajímatel (z nájmu)", mix: "Mix" }[z.plati || "najemnik"];
+    
+    // ⭐ JEDEN ZDROJ PRAVDY: zálohy z aktuálního záznamu najemZmeny
+    // Fallback na p.zaloh pro zpětnou kompatibilitu
+    const aktualniZmena = _getZmenaProDatum(p.najemZmeny || [], new Date());
+    const z = (aktualniZmena && aktualniZmena.zalohyEnergie) ? aktualniZmena.zalohyEnergie : (p.zaloh || {});
+    const totalZ = _sumZalZmena(z);
+    const platitTxt = { najemnik: "Nájemník přímo", pronajimatel: "Pronajímatel (z nájmu)", mix: "Mix" }[(p.zaloh && p.zaloh.plati) || "najemnik"];
+    
+    // Aktuální nájem z najemZmeny
+    const aktNajem = aktualniZmena ? aktualniZmena.najem : ((p.income && p.income.rent) || 0);
+    
     // ⭐ Hledej nájemníka z nové struktury
     const aktivniNajemnik = data ? (data.najemnici || []).find(function(n) {
         if (n.nemovitostId !== p.id) return false;
@@ -5716,7 +5733,22 @@ function RTNajem({ p, data }) {
     const kauce = (aktivniNajemnik && aktivniNajemnik.kauce) || (((_a = p.tenant) === null || _a === void 0 ? void 0 : _a.deposit) || 0);
     const depAccTxt = { sporici: "Spořicí účet", bezny: "Běžný účet", hotovost: "Hotovost" }[((_b = p.tenant) === null || _b === void 0 ? void 0 : _b.depositAccount) || "bezny"];
     const depStaTxt = { skladena: "Složena ✅", vracena: "Vrácena", castecne: "Část. vrácena ⚠️" }[((_c = p.tenant) === null || _c === void 0 ? void 0 : _c.depositStatus) || "skladena"];
+    
     return (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "12px" } },
+        // Info o zdroji dat
+        aktualniZmena && React.createElement("div", { style: { background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", color: "#15803d" } },
+            "\u2139\uFE0F Zobrazeny hodnoty z z\u00E1znamu Historie n\u00E1jmu platn\u00E9ho od ",
+            React.createElement("strong", null, _fmtCZ(aktualniZmena.platnostOd)),
+            ". Zm\u011Bny prov\u00E1d\u011Bjte v z\u00E1lo\u017Ece \u201E\uD83D\uDCC8 Historie n\u00E1jmu\u201C."),
+        React.createElement(Card, null,
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } },
+                React.createElement(RSH, { label: "N\u00E1jem / m\u011Bs\u00EDc" }),
+                aktNajem === 0 && React.createElement("span", { style: { background: "#fee2e2", color: "#dc2626", fontSize: "11px", padding: "2px 8px", borderRadius: "8px", fontWeight: "700" } }, "\uD83C\uDFDA\uFE0F Voln\u00FD byt")),
+            React.createElement(RRow, { label: "M\u011Bs\u00ED\u010Dn\u00ED n\u00E1jem", value: formatCZK(aktNajem), color: aktNajem > 0 ? "#16a34a" : "#9ca3af" }),
+            React.createElement(RRow, { label: "Z\u00E1lohy celkem", value: formatCZK(totalZ), color: "#4f46e5" }),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", paddingTop: "10px", fontWeight: "700", fontSize: "14px", borderTop: "1px solid #f3f4f6" } },
+                React.createElement("span", null, "Celkem / m\u011Bs"),
+                React.createElement("span", { style: { color: "#16a34a" } }, formatCZK(aktNajem + totalZ)))),
         React.createElement(Card, null,
             React.createElement(RSH, { label: "Z\u00E1lohy na energie / m\u011Bs\u00EDc" }),
             React.createElement("div", { style: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px",
@@ -5753,7 +5785,7 @@ function RTNajem({ p, data }) {
             React.createElement(RRow, { label: "V\u00FD\u0161e kauce", value: formatCZK(kauce), color: "#16a34a" }),
             React.createElement(RRow, { label: "Stav kauce", value: depStaTxt, color: ((_g = p.tenant) === null || _g === void 0 ? void 0 : _g.depositStatus) === "skladena" ? "#16a34a" : "#d97706" }),
             React.createElement(RRow, { label: "Ulo\u017Een\u00ED kauce", value: depAccTxt, color: "#4f46e5" }),
-            React.createElement(RRow, { label: "N\u00E1sobek n\u00E1jmu", value: ((_h = p.income) === null || _h === void 0 ? void 0 : _h.rent) > 0 ? (kauce / p.income.rent).toFixed(1) + "\u00D7 n\u00E1jmu" : "—", color: "#0891b2" }),
+            React.createElement(RRow, { label: "N\u00E1sobek n\u00E1jmu", value: aktNajem > 0 ? (kauce / aktNajem).toFixed(1) + "\u00D7 n\u00E1jmu" : "—", color: "#0891b2" }),
             React.createElement("div", { style: { background: "#f8fafc", borderRadius: "8px", padding: "8px 10px",
                     fontSize: "11px", color: "#6b7280", marginTop: "10px" } }, "\u2139\uFE0F Max. 3\u00D7 n\u00E1jem (\u00A7 2254 OZ). Vr\u00E1cen\u00ED do 1 m\u011Bs. od skon\u010Den\u00ED n\u00E1jmu."))));
 }
@@ -6430,8 +6462,8 @@ function NajemniciGlobal({ data, updateData, notify, setActiveTab }) {
 }
 
 
-function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
-    const [tab, setTab] = (0, useState)("prehled");
+function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data, initialTab }) {
+    const [tab, setTab] = (0, useState)(initialTab || "prehled");
     const [contractText, setContractText] = (0, useState)(null);
     const [contractTitle, setContractTitle] = (0, useState)("");
     const [printNemHtml, setPrintNemHtml] = (0, useState)(null);
@@ -6590,7 +6622,8 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
         React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" } },
             React.createElement(Btn, { onClick: onBack, variant: "secondary", small: true }, "\u2190 Zp\u011Bt"),
             React.createElement("div", { style: { display: "flex", gap: "6px" } },
-                React.createElement(Btn, { onClick: onEdit, variant: "secondary", small: true }, "\u270F\uFE0F Upravit"),
+                React.createElement(Btn, { onClick: function() { setTab("historie"); }, variant: "secondary", small: true }, "\uD83D\uDCC8 Zm\u011Bnit n\u00E1jem/z\u00E1lohy"),
+                React.createElement(Btn, { onClick: onEdit, variant: "secondary", small: true }, "\u270F\uFE0F Upravit detaily"),
                 React.createElement(Btn, { onClick: onDelete, variant: "danger", small: true }, "\uD83D\uDDD1 Smazat"))),
         React.createElement("h2", { style: { margin: "0 0 4px", fontSize: "20px", color: "#1a3a5c" } }, p.name),
         React.createElement("div", { style: { fontSize: "12px", color: "#9ca3af", marginBottom: "8px" } },
@@ -6667,7 +6700,7 @@ function RDetail({ p, onBack, onEdit, onDelete, onUpdate, notify, data }) {
                         } }, "\uD83D\uDDA8\uFE0F Tisk / PDF")))))));
 }
 // ── Property Form ──
-function RForm({ initial, onSave, onBack }) {
+function RForm({ initial, onSave, onBack, onHistorie }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6;
     const [f, setF] = (0, useState)(() => JSON.parse(JSON.stringify(initial)));
     const set = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { [k]: v })));
@@ -6677,6 +6710,10 @@ function RForm({ initial, onSave, onBack }) {
     const setFond = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { fondOprav: Object.assign(Object.assign({}, p.fondOprav), { [k]: +v || 0 }) })));
     const setMort = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { mortgage: Object.assign(Object.assign({}, p.mortgage), { [k]: (typeof v === "string" && isNaN(+v)) ? v : +v || 0 }) })));
     const setTen = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { tenant: Object.assign(Object.assign({}, p.tenant), { [k]: v }) })));
+    // ⭐ Aktuální nájem/zálohy z najemZmeny pro readonly náhled
+    const aktZmena = _getZmenaProDatum(f.najemZmeny || [], new Date());
+    const aktNajem = aktZmena ? aktZmena.najem : ((f.income && f.income.rent) || 0);
+    const aktZalohy = aktZmena ? _sumZalZmena(aktZmena.zalohyEnergie) : _sumZal(f);
     return (React.createElement("div", null,
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" } },
             React.createElement(Btn, { onClick: onBack, variant: "secondary", small: true }, "\u2190 Zp\u011Bt"),
@@ -6696,35 +6733,33 @@ function RForm({ initial, onSave, onBack }) {
                 background: f.status === s ? "#1a3a5c" : "#fff",
                 color: f.status === s ? "#fff" : "#374151",
                 fontSize: "12px", cursor: "pointer", fontWeight: "600" } }, s)))),
-        React.createElement(RSH, { label: "P\u0159\u00EDjmy" }),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
-            React.createElement(Input, { label: "N\u00E1jemn\u00E9/m\u011Bs", type: "number", value: ((_a = f.income) === null || _a === void 0 ? void 0 : _a.rent) || 0, onChange: v => setInc("rent", v) }),
-            React.createElement(Input, { label: "Ostatn\u00ED p\u0159\u00EDjmy (z\u00E1lohy na energie)/m\u011Bs", type: "number", value: ((_b = f.income) === null || _b === void 0 ? void 0 : _b.other) || 0, onChange: v => setInc("other", v) })),
-        React.createElement(RSH, { label: "Z\u00E1lohy na energie (m\u011Bs) - plat\u00ED n\u00E1jemn\u00EDk" }),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
-            React.createElement(Input, { label: "\u26A1 Elekt\u0159ina (byt)", type: "number", value: ((_c = f.zaloh) === null || _c === void 0 ? void 0 : _c.elektrina) || 0, onChange: v => setZal("elektrina", v) }),
-            React.createElement(Input, { label: "\uD83D\uDD0C Elekt\u0159ina spole\u010Dn\u00FDch prostor (ESP)", type: "number", value: ((_c = f.zaloh) === null || _c === void 0 ? void 0 : _c.esp) || 0, onChange: v => setZal("esp", v) }),
-            React.createElement(Input, { label: "\uD83D\uDD25 Plyn", type: "number", value: ((_d = f.zaloh) === null || _d === void 0 ? void 0 : _d.plyn) || 0, onChange: v => setZal("plyn", v) }),
-            React.createElement(Input, { label: "\uD83D\uDCA7 Voda", type: "number", value: ((_e = f.zaloh) === null || _e === void 0 ? void 0 : _e.voda) || 0, onChange: v => setZal("voda", v) }),
-            React.createElement(Input, { label: "\u2668\uFE0F Teplo/TV", type: "number", value: ((_f = f.zaloh) === null || _f === void 0 ? void 0 : _f.teplo) || 0, onChange: v => setZal("teplo", v) }),
-            React.createElement(Input, { label: "\uD83D\uDEC2 V\u00FDtah", type: "number", value: ((_f = f.zaloh) === null || _f === void 0 ? void 0 : _f.vytah) || 0, onChange: v => setZal("vytah", v) }),
-            React.createElement(Input, { label: "\uD83C\uDFE2 SVJ/spr\u00E1va", type: "number", value: ((_g = f.zaloh) === null || _g === void 0 ? void 0 : _g.svj) || 0, onChange: v => setZal("svj", v) }),
-            React.createElement(Input, { label: "\uD83D\uDCE1 Internet/SAT", type: "number", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.internet) || 0, onChange: v => setZal("internet", v) }),
-            React.createElement(Input, { label: "\uD83D\uDDD1\uFE0F Odpad", type: "number", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.odpad) || 0, onChange: v => setZal("odpad", v) })),
-        
-        // ⭐ 3× DALŠÍ POLE - vlastní název + částka
-        React.createElement(RSH, { label: "Dal\u0161\u00ED z\u00E1lohy (vlastn\u00ED n\u00E1zev)" }),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px", marginBottom: "8px" } },
-            React.createElement(Input, { label: "N\u00E1zev dal\u0161\u00ED polo\u017Eky 1", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi1Nazev) || "", onChange: v => setZal("dalsi1Nazev", v), placeholder: "nap\u0159. Prav\u00E1 kl\u00ED\u010D\u016F" }),
-            React.createElement(Input, { label: "\u010C\u00E1stka/m\u011Bs", type: "number", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi1Castka) || 0, onChange: v => setZal("dalsi1Castka", v) })),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px", marginBottom: "8px" } },
-            React.createElement(Input, { label: "N\u00E1zev dal\u0161\u00ED polo\u017Eky 2", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi2Nazev) || "", onChange: v => setZal("dalsi2Nazev", v), placeholder: "nap\u0159. Gar\u00E1\u017E" }),
-            React.createElement(Input, { label: "\u010C\u00E1stka/m\u011Bs", type: "number", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi2Castka) || 0, onChange: v => setZal("dalsi2Castka", v) })),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px", marginBottom: "12px" } },
-            React.createElement(Input, { label: "N\u00E1zev dal\u0161\u00ED polo\u017Eky 3", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi3Nazev) || "", onChange: v => setZal("dalsi3Nazev", v), placeholder: "nap\u0159. Sklep" }),
-            React.createElement(Input, { label: "\u010C\u00E1stka/m\u011Bs", type: "number", value: ((_h = f.zaloh) === null || _h === void 0 ? void 0 : _h.dalsi3Castka) || 0, onChange: v => setZal("dalsi3Castka", v) })),
-        
-        React.createElement(Select, { label: "Z\u00E1lohy plat\u00ED", value: ((_j = f.zaloh) === null || _j === void 0 ? void 0 : _j.plati) || "najemnik", onChange: v => setZal("plati", v), options: [{ value: "najemnik", label: "Nájemník přímo" }, { value: "pronajimatel", label: "Pronajímatel (z nájmu)" }, { value: "mix", label: "Mix" }] }),
+        React.createElement(RSH, { label: "P\u0159\u00EDjmy z n\u00E1jmu" }),
+        React.createElement("div", { style: { background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "10px", padding: "14px 16px", marginBottom: "8px" } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" } },
+                React.createElement("div", { style: { fontSize: "12px", color: "#15803d", fontWeight: "600" } }, "\u2139\uFE0F Hodnoty ze z\u00E1znamu Historie n\u00E1jmu (pouze n\u00E1hled)"),
+                React.createElement("button", {
+                    type: "button",
+                    onClick: onHistorie,
+                    style: { background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", padding: "6px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }
+                }, "\uD83D\uDCC8 Zm\u011Bnit n\u00E1jem / z\u00E1lohy")),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" } },
+                React.createElement("div", { style: { background: "#fff", borderRadius: "8px", padding: "10px 12px", border: "1px solid #dcfce7" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "N\u00E1JEM / M\u011AS\u00CD C"),
+                    React.createElement("div", { style: { fontSize: "18px", fontWeight: "700", color: "#15803d" } }, formatCZK(aktNajem))),
+                React.createElement("div", { style: { background: "#fff", borderRadius: "8px", padding: "10px 12px", border: "1px solid #dcfce7" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "Z\u00C1LOHY / M\u011AS\u00CD C"),
+                    React.createElement("div", { style: { fontSize: "18px", fontWeight: "700", color: "#4f46e5" } }, formatCZK(aktZalohy))),
+                React.createElement("div", { style: { background: "#fff", borderRadius: "8px", padding: "10px 12px", border: "1px solid #dcfce7" } },
+                    React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "CELKEM / M\u011AS\u00CD C"),
+                    React.createElement("div", { style: { fontSize: "18px", fontWeight: "700", color: "#0369a1" } }, formatCZK(aktNajem + aktZalohy)))),
+            aktZmena && React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginTop: "8px" } },
+                "Platn\u00E9 od: ", React.createElement("strong", null, _fmtCZ(aktZmena.platnostOd)),
+                aktZmena.poznamka ? " \u00B7 " + aktZmena.poznamka : "")),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" } },
+            React.createElement("div", { style: { background: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "10px 12px" } },
+                React.createElement("div", { style: { fontSize: "10px", color: "#6b7280", marginBottom: "2px" } }, "OSTATN\u00CD P\u0158\u00CD JEMY / M\u011AS (spravte v Upravit detaily)"),
+                React.createElement("div", { style: { fontSize: "15px", fontWeight: "600", color: "#374151" } }, formatCZK((f.income && f.income.other) || 0))),
+            React.createElement(Input, { label: "Ostatn\u00ED p\u0159\u00EDjmy/m\u011Bs (nep\u0159\u00EDjmy z n\u00E1jmu)", type: "number", value: (f.income && f.income.other) || 0, onChange: v => setInc("other", v) })),
         React.createElement(RSH, { label: "Fond oprav" }),
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
             React.createElement(Input, { label: "P\u0159\u00EDsp\u011Bvek/m\u011Bs", type: "number", value: ((_k = f.fondOprav) === null || _k === void 0 ? void 0 : _k.mesicne) || 0, onChange: v => setFond("mesicne", v) }),
@@ -7065,13 +7100,20 @@ function Nemovitosti({ data, updateData, notify }) {
         saveAll(allProps.map(x => x.id === p.id ? p : x));
     };
     // Navigation helpers — no stale closures, screen passed explicitly
+    const [detailInitTab, setDetailInitTab] = (0, useState)("prehled");
     const showList = () => setScreen("list");
     const showDetail = (id) => { setSelId(id); setScreen("detail"); };
     const showAdd = () => { setFormData(_newProp()); setScreen("add"); };
     const showEdit = (p) => { setFormData(JSON.parse(JSON.stringify(p))); setScreen("edit"); };
+    const showHistorie = (p) => { setSelId(p.id); setDetailInitTab("historie"); setScreen("detail"); };
     // FORM screens (add or edit)
     if ((screen === "add" || screen === "edit") && formData) {
-        return React.createElement(RForm, { initial: formData, onSave: handleSave, onBack: () => screen === "edit" ? setScreen("detail") : setScreen("list") });
+        return React.createElement(RForm, { 
+            initial: formData, 
+            onSave: handleSave, 
+            onBack: () => { screen === "edit" ? setScreen("detail") : setScreen("list"); },
+            onHistorie: screen === "edit" ? () => showHistorie(formData) : null
+        });
     }
     // DETAIL screen
     if (screen === "detail") {
@@ -7080,7 +7122,7 @@ function Nemovitosti({ data, updateData, notify }) {
                 React.createElement("p", null, "Nemovitost nenalezena."),
                 React.createElement(Btn, { onClick: showList, variant: "secondary" }, "\u2190 Zp\u011Bt")));
         }
-        return React.createElement(RDetail, { p: selProp, onBack: showList, onEdit: () => showEdit(selProp), onDelete: () => handleDelete(selProp.id), onUpdate: handleUpdate, notify: notify, data: data });
+        return React.createElement(RDetail, { p: selProp, onBack: () => { setDetailInitTab("prehled"); showList(); }, onEdit: () => showEdit(selProp), onDelete: () => handleDelete(selProp.id), onUpdate: handleUpdate, notify: notify, data: data, initialTab: detailInitTab });
     }
     // LIST / DASHBOARD (default)
     return React.createElement(RDashboard, { properties: allProps, onOpen: showDetail, onAdd: showAdd, data: data, updateData: updateData, notify: notify });
