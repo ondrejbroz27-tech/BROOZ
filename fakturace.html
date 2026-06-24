@@ -3421,7 +3421,7 @@ function Dashboard({ data, notify }) {
                         });
                     });
                     
-                    const maxHodin = Math.max(...hodinyPerMesic, 1);
+                    const maxHodin = Math.max(...hodinyPerMesic, 200); // minimum 200h na ose
                     const celkemHodin = hodinyPerMesic.reduce(function(s, h) { return s + h; }, 0);
                     const aktualniMesicIdx = rok === rokAkt ? new Date().getMonth() : 11;
                     const pocetMesicu = rok === rokAkt ? aktualniMesicIdx + 1 : 12;
@@ -3430,7 +3430,9 @@ function Dashboard({ data, notify }) {
                     const barW = 32;
                     const barGap = 8;
                     const chartH = 160;
+                    const topPad = 18;  // prostor nad sloupci pro čísla
                     const totalW = 12 * (barW + barGap) - barGap;
+                    const svgH = chartH + topPad + 30; // celková výška SVG
                     
                     return React.createElement("div", null,
                         React.createElement("div", { style: { display: "flex", gap: "16px", marginBottom: "20px", flexWrap: "wrap" } },
@@ -3447,17 +3449,17 @@ function Dashboard({ data, notify }) {
                         // Sloupcový graf - SVG
                         React.createElement("div", { style: { overflowX: "auto" } },
                             React.createElement("svg", {
-                                viewBox: "0 0 " + (totalW + 40) + " " + (chartH + 50),
-                                style: { width: "100%", minWidth: "400px", maxHeight: "220px" }
+                                viewBox: "0 0 " + (totalW + 50) + " " + svgH,
+                                style: { width: "100%", minWidth: "400px", maxHeight: "240px" }
                             },
-                                // Mřížka
+                                // Mřížka (posunutá o topPad dolů)
                                 [0, 0.25, 0.5, 0.75, 1].map(function(frac, i) {
-                                    const y = Math.round(chartH * (1 - frac)) + 4;
+                                    const y = topPad + Math.round(chartH * (1 - frac));
                                     const val = Math.round(maxHodin * frac);
                                     return React.createElement("g", { key: i },
                                         React.createElement("line", { x1: "36", y1: y, x2: totalW + 40, y2: y,
                                             stroke: "#f3f4f6", strokeWidth: "1" }),
-                                        val > 0 && React.createElement("text", { x: "32", y: y + 4,
+                                        React.createElement("text", { x: "32", y: y + 4,
                                             textAnchor: "end", fontSize: "9", fill: "#9ca3af" }, val));
                                 }),
                                 
@@ -3465,25 +3467,24 @@ function Dashboard({ data, notify }) {
                                 hodinyPerMesic.map(function(hod, i) {
                                     const x = 40 + i * (barW + barGap);
                                     const barH = hod > 0 ? Math.max(4, Math.round((hod / maxHodin) * chartH)) : 0;
-                                    const y = chartH - barH + 4;
+                                    const y = topPad + chartH - barH; // posunuté o topPad
                                     const isCurrent = (rok === rokAkt) && (i === aktualniMesicIdx);
                                     const barColor = isCurrent ? "#3b82f6" : hod > prumerMesic ? "#10b981" : "#93c5fd";
                                     
                                     return React.createElement("g", { key: i },
-                                        // Sloupec
                                         barH > 0 && React.createElement("rect", {
                                             x: x, y: y, width: barW, height: barH,
                                             fill: barColor, rx: "4"
                                         }),
-                                        // Počet hodin nad sloupcem
+                                        // Číslo nad sloupcem - je v topPad prostoru → vždy viditelné
                                         hod > 0 && React.createElement("text", {
-                                            x: x + barW / 2, y: y - 3,
-                                            textAnchor: "middle", fontSize: "9", fontWeight: "600",
+                                            x: x + barW / 2, y: y - 4,
+                                            textAnchor: "middle", fontSize: "9", fontWeight: "700",
                                             fill: isCurrent ? "#1e40af" : "#374151"
                                         }, hod),
-                                        // Název měsíce
+                                        // Název měsíce pod grafem
                                         React.createElement("text", {
-                                            x: x + barW / 2, y: chartH + 20,
+                                            x: x + barW / 2, y: topPad + chartH + 16,
                                             textAnchor: "middle", fontSize: "10",
                                             fill: isCurrent ? "#1e40af" : "#6b7280",
                                             fontWeight: isCurrent ? "700" : "400"
@@ -3493,14 +3494,14 @@ function Dashboard({ data, notify }) {
                                 
                                 // Průměrná linka
                                 prumerMesic > 0 && React.createElement("line", {
-                                    x1: "40", y1: chartH - Math.round((prumerMesic / maxHodin) * chartH) + 4,
-                                    x2: totalW + 40, y2: chartH - Math.round((prumerMesic / maxHodin) * chartH) + 4,
+                                    x1: "40", y1: topPad + chartH - Math.round((prumerMesic / maxHodin) * chartH),
+                                    x2: totalW + 40, y2: topPad + chartH - Math.round((prumerMesic / maxHodin) * chartH),
                                     stroke: "#f59e0b", strokeWidth: "1.5", strokeDasharray: "4,3"
                                 }),
                                 prumerMesic > 0 && React.createElement("text", {
-                                    x: totalW + 42, y: chartH - Math.round((prumerMesic / maxHodin) * chartH) + 8,
+                                    x: totalW + 42, y: topPad + chartH - Math.round((prumerMesic / maxHodin) * chartH) + 4,
                                     fontSize: "9", fill: "#f59e0b"
-                                }, "⌀")
+                                }, "\u2300")
                             )
                         ),
                         
